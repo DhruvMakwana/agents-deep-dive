@@ -38,4 +38,4 @@ mkdocs gh-deploy
 
 ## Standing rules for this project
 
-See `../PLAN.md` section 5 ("How each page gets researched") and `../BLOG-PROJECT-LEARNINGS.md` for the house rules carried over from the RAG project: run every code claim in a fresh venv, state findings as facts (never narrate the build), report negative results honestly, research each page fresh against live sources, and stamp every fast-moving claim (versions, protocol specs, benchmark scores) with the date it was checked.
+See `../PLAN.md` sections 5 ("How each page gets researched") and 6 ("Standing project rules") for the full list, kept in sync with Claude's own memory of the same rules: Claude-only models (Haiku for simple tasks, Sonnet for complex ones), no private/employer data, run every code claim in a fresh venv, state findings as facts (never narrate the build — a real finding about model behavior stays, a fixed bug in the page-author's own code doesn't), report negative results honestly, research each page fresh against live sources, and stamp every fast-moving claim (versions, protocol specs, benchmark scores) with the date it was checked.
