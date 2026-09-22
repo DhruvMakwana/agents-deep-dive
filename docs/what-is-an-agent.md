@@ -49,19 +49,18 @@ Same 5-entry FAQ knowledge base for both:
 ```
 
 !!! success "A real, unforced run — both pipelines given the same misclassification"
-    Test query: *"My storage suddenly shows as full even though I deleted a bunch of files last week, and now I can't upload anything — is there some sync delay, or did I lose data?"* Run against a local `qwen3:4b` (Ollama) — see the recipe README for the full setup.
+    Test query: *"My storage suddenly shows as full even though I deleted a bunch of files last week, and now I can't upload anything — is there some sync delay, or did I lose data?"* One real run against Claude Haiku 4.5 — see the recipe README for the full setup.
 
     Both pipelines' `classify_intent` step picked `storage_limits` — a reasonable-sounding guess given the word "storage," and the wrong bucket for what's actually being asked (this isn't a tier-size question).
 
     **Workflow**, stuck with that FAQ entry, replied:
-    > "Your storage showing full after deletion isn't explained by the FAQ. The FAQ only states tier sizes (5GB Free, 2TB Pro) — it doesn't address sync delays or data loss. Check your actual storage usage."
+    > "I don't have enough information in the provided FAQ entry to answer your question. The FAQ only states storage limits for different tiers, but doesn't address sync delays, data loss, or why your storage might still show as full after deletion. [...] I'd recommend contacting support directly so they can investigate your account specifically."
 
-    A genuinely honest finding worth stating plainly: `qwen3:4b` *hedged on its own* here rather than confidently inventing an answer — so the standard "naive pipeline confidently makes something up" framing doesn't automatically hold for every model. What the workflow structurally still lacks, regardless of how the wording comes out, is a **mechanism to act** on that doubt: whatever the generation step says, that's the final message back to the customer. There's no next step for it to take.
+    A genuinely honest finding worth stating plainly: Claude *declined on its own* here rather than confidently inventing an answer, and did so more explicitly than that — it named exactly what the FAQ doesn't cover and pointed the customer elsewhere. So the standard "naive pipeline confidently makes something up" framing doesn't automatically hold, and this held for both a small local model and a frontier one on this same query. What the workflow structurally still lacks, regardless of how well the wording comes out, is a **mechanism to act** on that doubt: whatever the generation step says, that's the final message back to the customer. There's no next step for it to take.
 
-    **Agent**, with the identical misclassification, ran its judge step, got `sufficient: false`, and the model itself chose `CLARIFY`:
-    > "Could you say a bit more about what you're trying to do? That'll help me find the right answer."
+    **Agent**, with the identical misclassification, ran its judge step, got `sufficient: false`, and the model itself chose `CLARIFY` — the one real decision point in this recipe's design. (The clarifying question it triggers is a fixed reply in this minimal version, not model-generated text; what's real here is the *action choice* itself, not its wording.)
 
-    Same initial mistake. The difference isn't a smarter classifier — it's that the agent's architecture gave the model somewhere to go with its own uncertainty, and the workflow's didn't.
+    Same initial mistake, same model. The difference isn't a smarter classifier — it's that the agent's architecture gave the model somewhere to go with its own uncertainty, and the workflow's didn't.
 
 ## Definitions genuinely disagree — and that's fine to say out loud
 
@@ -113,7 +112,7 @@ This is a favorite trade-off question, and the strong answer leads with cost, no
 
 ## Build it yourself — 30 minutes
 
-1. Pick a small, narrow knowledge base (5 or so entries is enough) and a `classify -> retrieve -> generate` pipeline over it, using any provider (Ollama is free and local — see the [recipe](https://github.com/DhruvMakwana/agents-cookbook/tree/main/what-is-an-agent) for a working `llm.py`).
+1. Pick a small, narrow knowledge base (5 or so entries is enough) and a `classify -> retrieve -> generate` pipeline over it, using any provider — see the [recipe](https://github.com/DhruvMakwana/agents-cookbook/tree/main/what-is-an-agent) for a working `llm.py` (Claude by default; a free local Ollama model also works).
 2. Find a query that breaks it — something with vocabulary mismatch, so classification picks the wrong bucket.
 3. Add exactly one thing: a judge step that asks the model "does this actually answer the question?" and, if not, a step where the **model** — not your code — picks the next action from a short menu (try again with a different category, ask a clarifying question, escalate).
 4. Run the same broken query through both versions and compare. You now have a working, honest answer to "show me the difference between a workflow and an agent" instead of a definition.
