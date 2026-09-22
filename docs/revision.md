@@ -45,15 +45,15 @@ Every page's TL;DR in one place, every page's Scenario Check merged into one com
           "scenario": "A support system does classify -> retrieve -> generate over 50 FAQ categories, chosen by embedding similarity. When the best match's similarity score falls below a fixed threshold, the code shows the customer 3 candidate articles instead of generating one answer.",
           "question": "Does the threshold branch make this system an agent?",
           "options": [
-            "Yes \u2014 showing multiple candidates instead of one means the system is adapting its behavior to retrieval quality, which is the decision-point behavior that defines an agent",
-            "No \u2014 the branch (one answer vs. three candidates) is triggered by a fixed numeric threshold check in code, not by the model choosing what to do next based on its own judgment",
-            "It depends on whether the embedding model or the generation model owns the threshold",
-            "Yes, because the system now has more than one possible output path depending on the input"
+            "No \u2014 a fixed numeric threshold in code decides the branch; the model never gets to choose what happens next",
+            "Yes \u2014 showing candidates instead of one answer means the system is adapting to retrieval quality, which is exactly the decision-point behavior that defines an agent",
+            "It depends on whether the embedding model or the generation model owns the threshold value",
+            "Yes, because the system now has more than one possible output path depending on what the input is"
           ],
-          "correct": 1,
+          "correct": 0,
           "explanations": [
-            "This is the tempting trap: the system's output genuinely does vary with live data (the similarity score), which sounds like the 'depends on the outcome of a previous action' criterion. But varying output isn't the same as the model deciding \u2014 a lookup table that branches on a number is still just a lookup table, however adaptive it looks from outside.",
             "Correct. A fixed threshold in code is choosing the next step, not the model. Nothing here lets the model itself decide what happens next based on its own read of the situation \u2014 replace the threshold with any other number and the architecture is identical.",
+            "This is the tempting trap: the system's output genuinely does vary with live data (the similarity score), which sounds like the 'depends on the outcome of a previous action' criterion. But varying output isn't the same as the model deciding \u2014 a lookup table that branches on a number is still just a lookup table, however adaptive it looks from outside.",
             "The threshold lives in application code either way, regardless of which model's score it reads \u2014 this doesn't change who's making the branching decision.",
             "Multiple possible output paths is necessary but nowhere near sufficient \u2014 a large if/elif chain has many output paths and is still a workflow. The test is who picks the path at runtime, not how many paths exist."
           ],
@@ -64,16 +64,16 @@ Every page's TL;DR in one place, every page's Scenario Check merged into one com
           "scenario": "A pipeline generates an answer, then makes a second LLM call asking 'Is this answer good enough? Reply yes or no.' If the reply is 'no,' the code regenerates once more (hard-capped at 2 total attempts) and returns whichever attempt was produced last, regardless of what the second judgment says.",
           "question": "Where does this system sit?",
           "options": [
-            "It's an agent \u2014 an LLM is making the 'good enough' judgment, and that judgment is a real decision",
-            "It's a workflow \u2014 the LLM's yes/no only gates a branch that fixed code already wired in (retry once, then stop and return whatever you have); the model never gets to choose a different action, only fill in a pre-built slot",
-            "It's an agent on the second attempt only, since that's the point where branching happens",
-            "It's ambiguous, and the answer depends on which provider is used for the judgment call"
+            "It's an agent \u2014 an LLM is making the 'good enough' judgment here, and any real judgment call counts as agentic behavior",
+            "It's an agent on the second attempt only, since that specific point is where the branching actually happens",
+            "It's a workflow \u2014 the yes/no only gates a branch fixed code already wired in; the model never picks a different action",
+            "It's ambiguous \u2014 the answer depends on which provider or model is used to make the judgment call"
           ],
-          "correct": 1,
+          "correct": 2,
           "explanations": [
             "This is the most common wrong intuition on this whole page: an LLM call is involved in the decision, so it feels agentic. But this is exactly the pattern Anthropic names 'evaluator-optimizer' and classifies as a workflow \u2014 the LLM fills in a yes/no gate whose consequences (retry once, cap at 2, return regardless of the second verdict) were fully decided by the code author in advance.",
-            "Correct. The action space here has exactly two pre-wired outcomes (retry once, or don't), chosen by code, not model-selected from live options. Compare this to this page's own recipe: the judge step there feeds into a decision where the model picks among BROADEN/CLARIFY/ESCALATE \u2014 a genuinely open action set, not a single fixed retry slot.",
             "Branching happening at a specific point doesn't retroactively make earlier or later steps agentic or non-agentic \u2014 the whole system is one architecture, evaluated by the same rule throughout.",
+            "Correct. The action space here has exactly two pre-wired outcomes (retry once, or don't), chosen by code, not model-selected from live options. Compare this to this page's own recipe: the judge step there feeds into a decision where the model picks among BROADEN/CLARIFY/ESCALATE \u2014 a genuinely open action set, not a single fixed retry slot.",
             "The provider generating the yes/no token is irrelevant to this distinction \u2014 the question is about who controls the consequence of that token, and that's fixed code regardless of vendor."
           ],
           "source": "What Is an Agent?",
@@ -84,16 +84,16 @@ Every page's TL;DR in one place, every page's Scenario Check merged into one com
           "question": "What's the strongest response?",
           "options": [
             "Build it as an agent anyway \u2014 future request types outside the current 12 might appear, so agent flexibility future-proofs the system now",
-            "Build it as a workflow \u2014 the correct procedure for each of the 12 cases is already known and doesn't branch on live results, so an agent's dynamic decision-making adds cost, latency, and non-determinism without buying anything this task needs; revisit the decision if and when new request types actually appear",
-            "It must be an agent, because customer-facing workflows are inherently unpredictable",
-            "Build it as an agent, because letting the model choose the procedure is more reliable than hard-coded step selection on a fully known task"
+            "It must be an agent, because customer-facing systems are inherently unpredictable",
+            "Build it as an agent, because letting the model choose the procedure is more reliable than hard-coded step selection on a fully known task",
+            "Build it as a workflow \u2014 the 12 procedures are already known and don't branch on live results, so agentic overhead buys nothing here"
           ],
-          "correct": 1,
+          "correct": 3,
           "explanations": [
             "A real and common engineering trap \u2014 over-building for imagined future flexibility the task doesn't currently need. If new request types show up later, that's the moment to reconsider, not a reason to pay agentic costs today for a fully solved, fully verified problem.",
-            "Correct. This is the 'When you would not build an agent' trade-off from this page, applied to a concrete case instead of asked in the abstract \u2014 the task is fully known and doesn't need branching on live feedback, so a fixed pipeline is strictly more reliable and cheaper here.",
             "An unfounded generalization \u2014 the scenario explicitly states the procedures are verified and deterministic. 'Customer-facing' doesn't imply unpredictable; the two are independent.",
-            "False, and worth catching directly: an LLM choosing among known, verified procedures is not more reliable than the verified procedures themselves \u2014 on a fully known task, hard-coded logic doesn't fail in the ways a model's live judgment can."
+            "False, and worth catching directly: an LLM choosing among known, verified procedures is not more reliable than the verified procedures themselves \u2014 on a fully known task, hard-coded logic doesn't fail in the ways a model's live judgment can.",
+            "Correct. This is the 'When you would not build an agent' trade-off from this page, applied to a concrete case instead of asked in the abstract \u2014 the task is fully known and doesn't need branching on live feedback, so a fixed pipeline is strictly more reliable and cheaper here."
           ],
           "source": "What Is an Agent?",
           "sourceUrl": "what-is-an-agent.md"
@@ -102,10 +102,10 @@ Every page's TL;DR in one place, every page's Scenario Check merged into one com
           "scenario": "A candidate is asked how LLM agents improve over a deployment's lifetime, given they don't get gradient updates from a reward signal the way RL agents do. The candidate answers: 'They don't really improve \u2014 each session starts fresh with the same weights, so there's no real analog to RL's learning.'",
           "question": "What's the best critique of this answer?",
           "options": [
-            "The candidate is basically right \u2014 without fine-tuning, there's no improvement mechanism at all",
-            "The candidate is missing the in-context mechanisms (reflection notes, accumulated memory, refined tools/prompts carried forward across sessions) plus the fact that RL-style training (GRPO, DPO on trajectories) is increasingly applied on top of the deployed loop, not as a one-time pretraining step",
+            "The candidate is basically right \u2014 without fine-tuning applied mid-conversation, there is no real improvement mechanism happening at all",
+            "The candidate is missing the in-context mechanisms (reflection, memory, refined tools) that persist across sessions, plus RL applied on top of the deployed loop",
             "The candidate is wrong because model weights are automatically updated after every conversation",
-            "The candidate is right for closed-source models but wrong for open-weight models, which retrain continuously between sessions"
+            "The candidate is right for closed-source models, but wrong for open-weight models, since publicly released weights are retrained continuously as usage data comes in between sessions"
           ],
           "correct": 1,
           "explanations": [
@@ -121,17 +121,17 @@ Every page's TL;DR in one place, every page's Scenario Check merged into one com
           "scenario": "A candidate explains tool calling this way: 'When the model calls a tool, it directly invokes your Python function through the API \u2014 the SDK handles the actual execution for you, which is why you never see the return value show up as a separate message.'",
           "question": "What's the strongest critique of this explanation?",
           "options": [
-            "Nothing is wrong with it \u2014 this is an accurate description",
-            "The model never directly invokes anything. It generates a structured request (a tool_use block naming a function and arguments); your own code parses that, runs the real function, and sends the result back as a distinct new message the model reads on its next turn. The SDK transports messages, it doesn't execute your functions",
-            "It's correct for Anthropic specifically, but OpenAI's API does execute functions server-side, so the explanation doesn't generalize",
-            "It's mostly right, except the return value gets appended silently into the same message instead of arriving as a new one"
+            "The model never directly invokes anything \u2014 it generates a structured tool_use request that your own code parses, executes, and sends back as a new message",
+            "It's correct for Anthropic's API specifically, but OpenAI's function-calling API actually executes the functions server-side on your behalf, so the explanation doesn't generalize across providers",
+            "It's mostly right, except the return value gets appended silently into the same message instead of arriving as a new one",
+            "Nothing is wrong with it \u2014 this is an accurate, complete description of how tool calling works"
           ],
-          "correct": 1,
+          "correct": 0,
           "explanations": [
-            "This is exactly the weak interview answer this page's Interview angle section warns about \u2014 it skips the entire mechanism.",
             "Correct. No mainstream provider's tool-calling API executes your functions for you \u2014 Anthropic, OpenAI, and Google all require the caller to parse the request, run the real code, and send the result back explicitly. That round trip is the whole mechanism.",
             "A tempting 'maybe it varies by vendor' hedge, but false \u2014 execution is the caller's responsibility across every major provider's tool-calling API, not just Anthropic's.",
-            "A specific, plausible-sounding technical detail that happens to be wrong: results travel back as their own distinct message (a tool_result), not appended silently onto an existing one \u2014 this page's own loop code makes that explicit."
+            "A specific, plausible-sounding technical detail that happens to be wrong: results travel back as their own distinct message (a tool_result), not appended silently onto an existing one \u2014 this page's own loop code makes that explicit.",
+            "This is exactly the weak interview answer this page's Interview angle section warns about \u2014 it skips the entire mechanism."
           ],
           "source": "The Agent Loop From Scratch",
           "sourceUrl": "agent-loop-from-scratch.md"
@@ -141,16 +141,16 @@ Every page's TL;DR in one place, every page's Scenario Check merged into one com
           "question": "What's the strongest critique of this proposal?",
           "options": [
             "It's a good fix \u2014 fewer tools in the schema means less chance of tool confusion",
-            "It doesn't remove the selection problem, it moves it \u2014 from the model choosing among 40 well-described, schema-validated tools, into a keyword matcher inside your own code choosing among 40 possible actions from unstructured text. That trades a visible, improvable failure mode for a hidden, harder-to-debug one, and throws away the argument validation the model was actually doing reasonably well",
-            "It's correct, because with a single tool the model never has to make a selection decision at all",
-            "It's wrong only because free-text instructions can't be validated by JSON Schema \u2014 everything else about the idea is sound"
+            "It's correct, because collapsing everything into a single tool means the model genuinely never has to make any kind of selection decision at all",
+            "It's wrong only because free-text instructions can't be validated by JSON Schema \u2014 everything else about the idea is sound",
+            "It doesn't remove the selection problem, it just moves it into a hidden, harder-to-debug keyword matcher inside your own code"
           ],
-          "correct": 1,
+          "correct": 3,
           "explanations": [
             "The naive read: fewer visible tools, less confusion. But the selection decision hasn't gone away, it's just moved somewhere you can't see it or fix it the same way.",
-            "Correct. The model still has to figure out which of 40 things you mean from a free-text instruction, and now that decision happens inside an internal keyword matcher instead of the model's tool selection \u2014 which is typically less capable at exactly this kind of disambiguation and much harder to debug when it picks wrong.",
             "The selection decision still exists, it's just been relocated from the model's tool choice into your dispatch code's keyword matching \u2014 'no decision' is not what happened here.",
-            "A half-right trap: schema validation loss is real, but framing it as the *only* problem misses the bigger one \u2014 you've hidden the selection logic where you can no longer inspect, test, or improve it the way you could with 40 separate tool descriptions."
+            "A half-right trap: schema validation loss is real, but framing it as the *only* problem misses the bigger one \u2014 you've hidden the selection logic where you can no longer inspect, test, or improve it the way you could with 40 separate tool descriptions.",
+            "Correct. The model still has to figure out which of 40 things you mean from a free-text instruction, and now that decision happens inside an internal keyword matcher instead of the model's tool selection \u2014 which is typically less capable at exactly this kind of disambiguation and much harder to debug when it picks wrong."
           ],
           "source": "The Agent Loop From Scratch",
           "sourceUrl": "agent-loop-from-scratch.md"
@@ -160,7 +160,7 @@ Every page's TL;DR in one place, every page's Scenario Check merged into one com
           "question": "Is the teammate right?",
           "options": [
             "No \u2014 max_iterations bounds the number of LLM round-trips, which is what actually matters for cost, and per-tool latency is a separate, unrelated concern",
-            "Yes \u2014 an iteration cap bounds how many times the loop goes around, but says nothing about how long any single tool call is allowed to take. A production loop needs a per-call timeout on each tool execution too, independent of the iteration count",
+            "Yes \u2014 an iteration cap bounds how many times the loop goes around, but says nothing about how long any single tool call is allowed to take",
             "No \u2014 the model itself automatically times out and returns control if a tool call runs too long",
             "Yes, but only because this example specifically used 10 iterations \u2014 a higher cap would fix the problem"
           ],
@@ -179,15 +179,15 @@ Every page's TL;DR in one place, every page's Scenario Check merged into one com
           "question": "What's the more accurate read of what actually happened?",
           "options": [
             "The colleague is right \u2014 the baseline's arithmetic was wrong, and the calculator tool corrected it",
-            "The baseline actually got every arithmetic step right on its own. What it lacked was the exchange rate, which isn't a math problem at all \u2014 it's a live-data problem that no amount of arithmetic skill solves without a real source, which is exactly what the currency tool provided",
-            "The colleague is right, but only for multiplication and division \u2014 the baseline's addition and subtraction steps were reliable",
+            "The colleague is right, but only for multiplication and division specifically \u2014 the baseline's addition and subtraction steps happened to be fully reliable throughout",
+            "The baseline got every arithmetic step right on its own \u2014 the real gap was the exchange rate, a live-data problem no arithmetic skill solves without a real source",
             "The gap is because Haiku is too small a model for this task \u2014 a larger model would have matched the tool-using answer with no tools at all"
           ],
-          "correct": 1,
+          "correct": 2,
           "explanations": [
             "The clich\u00e9 conclusion, and specifically the wrong read of this run: the recipe README's real trace shows the baseline's tip, total, and per-person arithmetic were all correct \u2014 the number it was honestly unsure about was the exchange rate, not any arithmetic step.",
-            "Correct \u2014 and this is the point worth remembering past this page: a gap that looks like a capability failure is sometimes a data-access failure instead, and the fix (a tool that supplies the missing data) is different from the fix for a genuine reasoning failure (a better model, or a different prompt).",
             "An oddly specific and fabricated distinction \u2014 nothing in the actual run supports operation-by-operation reliability differences; the model's addition, multiplication, and division were all correct in this trace.",
+            "Correct \u2014 and this is the point worth remembering past this page: a gap that looks like a capability failure is sometimes a data-access failure instead, and the fix (a tool that supplies the missing data) is different from the fix for a genuine reasoning failure (a better model, or a different prompt).",
             "A tempting but wrong appeal to scale: model size doesn't create access to a live exchange rate that was never in the prompt or the model's training data at query time \u2014 this is a knowledge-access gap, not a capacity gap, and no larger model closes it without an actual data source."
           ],
           "source": "The Agent Loop From Scratch",
@@ -198,16 +198,16 @@ Every page's TL;DR in one place, every page's Scenario Check merged into one com
           "question": "What's the strongest reason to keep the explicit gate?",
           "options": [
             "Removing the gate saves a call and is strictly better, since fewer steps always means lower cost",
-            "The gate is what makes a chain failure legible and cheap to catch. Without it, a missing concept becomes the expansion step's problem to silently improvise around, and you'd only find out by reading the final output closely -- the gate turns an invisible quality gap into an explicit, checkable, early stop",
             "The gate is unnecessary, because the same model that wrote the outline will remember what it intended when it expands, so nothing is actually at risk of being dropped",
-            "The gate should be removed, but only because a 3-item checklist is too rigid -- gates only add value when checking more than 3 concepts"
+            "The gate should be removed, but only because a 3-item checklist is too rigid -- gates only add value when checking more than 3 concepts",
+            "The gate makes a chain failure legible and cheap to catch \u2014 without it, a missing concept becomes the expansion step's problem to silently improvise around"
           ],
-          "correct": 1,
+          "correct": 3,
           "explanations": [
-            "A real cost consideration, but 'fewer steps' isn't automatically 'strictly better' -- it ignores the downstream cost of an unnoticed quality gap reaching the final output undetected.",
-            "Correct. The gate's value isn't the check itself, it's making a specific kind of failure visible and cheap at the point it happens, instead of buried in a longer final output where it's expensive to notice and hard to attribute to a specific missing piece.",
-            "A plausible-sounding but ungrounded claim -- there's no mechanism that guarantees the expansion step 'remembers' anything beyond what's literally present in the outline text it's given. If the outline is missing a concept, there's nothing to recall.",
-            "An arbitrary, fabricated threshold with no basis -- nothing about gate value scales specifically with item count past some cutoff."
+            "A real cost consideration, but 'fewer steps' isn't automatically 'strictly better' \u2014 it ignores the downstream cost of an unnoticed quality gap reaching the final output undetected.",
+            "A plausible-sounding but ungrounded claim \u2014 there's no mechanism that guarantees the expansion step 'remembers' anything beyond what's literally present in the outline text it's given. If the outline is missing a concept, there's nothing to recall.",
+            "An arbitrary, fabricated threshold with no basis \u2014 nothing about gate value scales specifically with item count past some cutoff.",
+            "Correct. The gate's value isn't the check itself, it's making a specific kind of failure visible and cheap at the point it happens, instead of buried in a longer final output where it's expensive to notice and hard to attribute to a specific missing piece."
           ],
           "source": "Workflow Patterns",
           "sourceUrl": "workflow-patterns.md"
@@ -216,17 +216,17 @@ Every page's TL;DR in one place, every page's Scenario Check merged into one com
           "scenario": "In this page's real run, the parallel 'technical accuracy' reviewer found no issues, while the 'clarity' and 'grammar' reviewers both found real, correct problems in the same paragraph.",
           "question": "What's the correct conclusion to draw from this?",
           "options": [
+            "One dimension finding nothing in a specific run isn't evidence it's worthless \u2014 different runs or inputs can trigger different subsets of real issues",
             "The technical-accuracy dimension is unnecessary and should be dropped from future runs, since it found nothing this time",
-            "One dimension finding nothing in a specific run isn't evidence the dimension is worthless -- different runs or different input text can trigger different subsets of real issues; sectioning's value is giving each dimension focused attention, not guaranteeing every dimension always fires",
-            "The reviewers must be poorly prompted, since a genuinely useful reviewer should always find at least one issue to justify its cost",
+            "The reviewers must be poorly prompted or under-specified, since a genuinely useful reviewer should always find at least one real issue to justify running it at all",
             "This proves parallel dispatch produces lower-quality reviews than sequential dispatch would have"
           ],
-          "correct": 1,
+          "correct": 0,
           "explanations": [
-            "Generalizing from one clean pass to 'drop this dimension permanently' is exactly the kind of overreaction a single data point doesn't support -- a different input, or the same input reviewed again, could easily trigger a real technical-accuracy finding.",
-            "Correct. A reviewer correctly reporting nothing wrong is a legitimate, honest outcome -- the same logic as this page's evaluator-optimizer passing on its first attempt. Sectioning's job is giving each dimension a focused, uncontested look, not guaranteeing every dimension produces a finding on every run.",
-            "A tempting but backwards assumption -- a reviewer's job is to report accurately, and 'accurately found nothing' is not evidence of a bad prompt, it's the correct behavior when there's genuinely nothing to flag on that dimension.",
-            "Confuses concurrency (how the calls are dispatched) with content quality (what each call finds) -- these are unrelated. Running the same three prompts sequentially instead of concurrently changes wall-clock time, not what any individual call returns."
+            "Correct. A reviewer correctly reporting nothing wrong is a legitimate, honest outcome \u2014 the same logic as this page's evaluator-optimizer passing on its first attempt. Sectioning's job is giving each dimension a focused, uncontested look, not guaranteeing every dimension produces a finding on every run.",
+            "Generalizing from one clean pass to 'drop this dimension permanently' is exactly the kind of overreaction a single data point doesn't support \u2014 a different input, or the same input reviewed again, could easily trigger a real technical-accuracy finding.",
+            "A tempting but backwards assumption \u2014 a reviewer's job is to report accurately, and 'accurately found nothing' is not evidence of a bad prompt, it's the correct behavior when there's genuinely nothing to flag on that dimension.",
+            "Confuses concurrency (how the calls are dispatched) with content quality (what each call finds) \u2014 these are unrelated. Running the same three prompts sequentially instead of concurrently changes wall-clock time, not what any individual call returns."
           ],
           "source": "Workflow Patterns",
           "sourceUrl": "workflow-patterns.md"
@@ -235,17 +235,17 @@ Every page's TL;DR in one place, every page's Scenario Check merged into one com
           "scenario": "Two engineers debate whether a system is 'parallelization' or 'orchestrator-workers.' It takes a user's topic and always dispatches exactly 3 fixed, hardcoded reviewer prompts (accuracy, clarity, grammar) concurrently, then combines the results. The second engineer argues: 'That's still parallelization -- it only becomes orchestrator-workers once the SET of sub-tasks itself is decided by a model at runtime instead of being fixed by the code ahead of time.'",
           "question": "Who's right?",
           "options": [
-            "The first framing is right -- dispatching multiple concurrent LLM calls on subtasks makes it orchestrator-workers by definition, regardless of how those subtasks were chosen",
-            "The second engineer is right -- the defining feature of orchestrator-workers is that a planning call decides the number and nature of sub-tasks dynamically, per input; a fixed, developer-chosen set dispatched concurrently is parallelization (sectioning) no matter how many sub-tasks there are",
+            "The first framing is right \u2014 dispatching multiple concurrent LLM calls to handle different subtasks makes a system orchestrator-workers by definition, no matter how those specific subtasks happened to be chosen",
             "Neither -- the real distinction is whether the sub-tasks run concurrently (parallelization) or sequentially (orchestrator-workers)",
+            "The second engineer is right \u2014 orchestrator-workers means a planning call decides the sub-tasks dynamically; a fixed, developer-chosen set is parallelization no matter the count",
             "The first engineer is right, but only because there are exactly 3 fixed subtasks -- orchestrator-workers specifically requires more than 3"
           ],
-          "correct": 1,
+          "correct": 2,
           "explanations": [
-            "This is the exact confusion this page's Interview angle section names directly -- concurrency is an implementation detail available to both patterns, not what separates them.",
-            "Correct. Who decides the sub-tasks, and when, is the actual distinguishing feature -- a hardcoded set of 3 dispatched concurrently is parallelization regardless of scale; the moment a planning call reads the input and decides the breakdown itself, it's orchestrator-workers.",
-            "A genuinely tempting but wrong mechanism claim -- orchestrator-workers' worker calls can also run concurrently (this recipe's do), and parallelization's calls could in principle run sequentially too. Execution order is orthogonal to this distinction.",
-            "An arbitrary, fabricated numeric threshold -- nothing about the pattern's definition depends on a specific sub-task count."
+            "This is the exact confusion this page's Interview angle section names directly \u2014 concurrency is an implementation detail available to both patterns, not what separates them.",
+            "A genuinely tempting but wrong mechanism claim \u2014 orchestrator-workers' worker calls can also run concurrently (this recipe's do), and parallelization's calls could in principle run sequentially too. Execution order is orthogonal to this distinction.",
+            "Correct. Who decides the sub-tasks, and when, is the actual distinguishing feature \u2014 a hardcoded set of 3 dispatched concurrently is parallelization regardless of scale; the moment a planning call reads the input and decides the breakdown itself, it's orchestrator-workers.",
+            "An arbitrary, fabricated numeric threshold \u2014 nothing about the pattern's definition depends on a specific sub-task count."
           ],
           "source": "Workflow Patterns",
           "sourceUrl": "workflow-patterns.md"
@@ -255,16 +255,16 @@ Every page's TL;DR in one place, every page's Scenario Check merged into one com
           "question": "What's the most defensible reaction to this data?",
           "options": [
             "Remove the loop -- if it almost never retries, it isn't doing anything useful",
-            "Keep the loop as-is -- a low retry rate is exactly what a correctly-tuned safety net looks like: it costs almost nothing on the common case and catches the rare, real failures it was built for, without needing to fire often to be worth having",
+            "Keep the loop as-is \u2014 a low retry rate is what a correctly-tuned safety net looks like: cheap on the common case, catching the rare real failures it exists for",
             "The high pass rate proves the evaluator's criteria are too lenient and should be made stricter to justify the loop's existence",
-            "The low retry rate means the model's outputs are now reliable enough that the deterministic checks can be removed entirely, with no checks left in place"
+            "The low retry rate means the model's outputs have become reliable enough now that the deterministic checks can safely be removed entirely, leaving no checks in place at all"
           ],
           "correct": 1,
           "explanations": [
-            "This is the exact 'if it rarely fires it must be useless' trap this page's own evaluator-optimizer run was written to push back on directly -- a rare failure is still a real failure, and the loop's cost on the 95%+ common case is negligible.",
+            "This is the exact 'if it rarely fires it must be useless' trap this page's own evaluator-optimizer run was written to push back on directly \u2014 a rare failure is still a real failure, and the loop's cost on the 95%+ common case is negligible.",
             "Correct. The loop was built because occasional real violations were observed; a low retry rate after shipping means it's catching those rare cases cheaply, which is success, not evidence the loop is unnecessary.",
-            "Backwards reasoning -- a low failure rate doesn't imply the bar is too easy; the bar was presumably set at the actual requirement (word limit, banned words), and rarely failing it is the desired outcome, not a sign to tighten further.",
-            "Confuses 'usually passes' with 'will always pass' -- removing a cheap, deterministic check because failures are rare (not impossible) reintroduces exactly the bug the loop was built to catch, the next time a rare case shows up."
+            "Backwards reasoning \u2014 a low failure rate doesn't imply the bar is too easy; the bar was presumably set at the actual requirement (word limit, banned words), and rarely failing it is the desired outcome, not a sign to tighten further.",
+            "Confuses 'usually passes' with 'will always pass' \u2014 removing a cheap, deterministic check because failures are rare (not impossible) reintroduces exactly the bug the loop was built to catch, the next time a rare case shows up."
           ],
           "source": "Workflow Patterns",
           "sourceUrl": "workflow-patterns.md"

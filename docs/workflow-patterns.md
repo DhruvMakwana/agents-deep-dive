@@ -102,50 +102,50 @@ Generate, evaluate the output against a concrete criterion, and if it fails, ret
       "question": "What's the strongest reason to keep the explicit gate?",
       "options": [
         "Removing the gate saves a call and is strictly better, since fewer steps always means lower cost",
-        "The gate is what makes a chain failure legible and cheap to catch. Without it, a missing concept becomes the expansion step's problem to silently improvise around, and you'd only find out by reading the final output closely -- the gate turns an invisible quality gap into an explicit, checkable, early stop",
         "The gate is unnecessary, because the same model that wrote the outline will remember what it intended when it expands, so nothing is actually at risk of being dropped",
-        "The gate should be removed, but only because a 3-item checklist is too rigid -- gates only add value when checking more than 3 concepts"
+        "The gate should be removed, but only because a 3-item checklist is too rigid -- gates only add value when checking more than 3 concepts",
+        "The gate makes a chain failure legible and cheap to catch \u2014 without it, a missing concept becomes the expansion step's problem to silently improvise around"
       ],
-      "correct": 1,
+      "correct": 3,
       "explanations": [
-        "A real cost consideration, but 'fewer steps' isn't automatically 'strictly better' -- it ignores the downstream cost of an unnoticed quality gap reaching the final output undetected.",
-        "Correct. The gate's value isn't the check itself, it's making a specific kind of failure visible and cheap at the point it happens, instead of buried in a longer final output where it's expensive to notice and hard to attribute to a specific missing piece.",
-        "A plausible-sounding but ungrounded claim -- there's no mechanism that guarantees the expansion step 'remembers' anything beyond what's literally present in the outline text it's given. If the outline is missing a concept, there's nothing to recall.",
-        "An arbitrary, fabricated threshold with no basis -- nothing about gate value scales specifically with item count past some cutoff."
+        "A real cost consideration, but 'fewer steps' isn't automatically 'strictly better' \u2014 it ignores the downstream cost of an unnoticed quality gap reaching the final output undetected.",
+        "A plausible-sounding but ungrounded claim \u2014 there's no mechanism that guarantees the expansion step 'remembers' anything beyond what's literally present in the outline text it's given. If the outline is missing a concept, there's nothing to recall.",
+        "An arbitrary, fabricated threshold with no basis \u2014 nothing about gate value scales specifically with item count past some cutoff.",
+        "Correct. The gate's value isn't the check itself, it's making a specific kind of failure visible and cheap at the point it happens, instead of buried in a longer final output where it's expensive to notice and hard to attribute to a specific missing piece."
       ]
     },
     {
       "scenario": "In this page's real run, the parallel 'technical accuracy' reviewer found no issues, while the 'clarity' and 'grammar' reviewers both found real, correct problems in the same paragraph.",
       "question": "What's the correct conclusion to draw from this?",
       "options": [
+        "One dimension finding nothing in a specific run isn't evidence it's worthless \u2014 different runs or inputs can trigger different subsets of real issues",
         "The technical-accuracy dimension is unnecessary and should be dropped from future runs, since it found nothing this time",
-        "One dimension finding nothing in a specific run isn't evidence the dimension is worthless -- different runs or different input text can trigger different subsets of real issues; sectioning's value is giving each dimension focused attention, not guaranteeing every dimension always fires",
-        "The reviewers must be poorly prompted, since a genuinely useful reviewer should always find at least one issue to justify its cost",
+        "The reviewers must be poorly prompted or under-specified, since a genuinely useful reviewer should always find at least one real issue to justify running it at all",
         "This proves parallel dispatch produces lower-quality reviews than sequential dispatch would have"
       ],
-      "correct": 1,
+      "correct": 0,
       "explanations": [
-        "Generalizing from one clean pass to 'drop this dimension permanently' is exactly the kind of overreaction a single data point doesn't support -- a different input, or the same input reviewed again, could easily trigger a real technical-accuracy finding.",
-        "Correct. A reviewer correctly reporting nothing wrong is a legitimate, honest outcome -- the same logic as this page's evaluator-optimizer passing on its first attempt. Sectioning's job is giving each dimension a focused, uncontested look, not guaranteeing every dimension produces a finding on every run.",
-        "A tempting but backwards assumption -- a reviewer's job is to report accurately, and 'accurately found nothing' is not evidence of a bad prompt, it's the correct behavior when there's genuinely nothing to flag on that dimension.",
-        "Confuses concurrency (how the calls are dispatched) with content quality (what each call finds) -- these are unrelated. Running the same three prompts sequentially instead of concurrently changes wall-clock time, not what any individual call returns."
+        "Correct. A reviewer correctly reporting nothing wrong is a legitimate, honest outcome \u2014 the same logic as this page's evaluator-optimizer passing on its first attempt. Sectioning's job is giving each dimension a focused, uncontested look, not guaranteeing every dimension produces a finding on every run.",
+        "Generalizing from one clean pass to 'drop this dimension permanently' is exactly the kind of overreaction a single data point doesn't support \u2014 a different input, or the same input reviewed again, could easily trigger a real technical-accuracy finding.",
+        "A tempting but backwards assumption \u2014 a reviewer's job is to report accurately, and 'accurately found nothing' is not evidence of a bad prompt, it's the correct behavior when there's genuinely nothing to flag on that dimension.",
+        "Confuses concurrency (how the calls are dispatched) with content quality (what each call finds) \u2014 these are unrelated. Running the same three prompts sequentially instead of concurrently changes wall-clock time, not what any individual call returns."
       ]
     },
     {
       "scenario": "Two engineers debate whether a system is 'parallelization' or 'orchestrator-workers.' It takes a user's topic and always dispatches exactly 3 fixed, hardcoded reviewer prompts (accuracy, clarity, grammar) concurrently, then combines the results. The second engineer argues: 'That's still parallelization -- it only becomes orchestrator-workers once the SET of sub-tasks itself is decided by a model at runtime instead of being fixed by the code ahead of time.'",
       "question": "Who's right?",
       "options": [
-        "The first framing is right -- dispatching multiple concurrent LLM calls on subtasks makes it orchestrator-workers by definition, regardless of how those subtasks were chosen",
-        "The second engineer is right -- the defining feature of orchestrator-workers is that a planning call decides the number and nature of sub-tasks dynamically, per input; a fixed, developer-chosen set dispatched concurrently is parallelization (sectioning) no matter how many sub-tasks there are",
+        "The first framing is right \u2014 dispatching multiple concurrent LLM calls to handle different subtasks makes a system orchestrator-workers by definition, no matter how those specific subtasks happened to be chosen",
         "Neither -- the real distinction is whether the sub-tasks run concurrently (parallelization) or sequentially (orchestrator-workers)",
+        "The second engineer is right \u2014 orchestrator-workers means a planning call decides the sub-tasks dynamically; a fixed, developer-chosen set is parallelization no matter the count",
         "The first engineer is right, but only because there are exactly 3 fixed subtasks -- orchestrator-workers specifically requires more than 3"
       ],
-      "correct": 1,
+      "correct": 2,
       "explanations": [
-        "This is the exact confusion this page's Interview angle section names directly -- concurrency is an implementation detail available to both patterns, not what separates them.",
-        "Correct. Who decides the sub-tasks, and when, is the actual distinguishing feature -- a hardcoded set of 3 dispatched concurrently is parallelization regardless of scale; the moment a planning call reads the input and decides the breakdown itself, it's orchestrator-workers.",
-        "A genuinely tempting but wrong mechanism claim -- orchestrator-workers' worker calls can also run concurrently (this recipe's do), and parallelization's calls could in principle run sequentially too. Execution order is orthogonal to this distinction.",
-        "An arbitrary, fabricated numeric threshold -- nothing about the pattern's definition depends on a specific sub-task count."
+        "This is the exact confusion this page's Interview angle section names directly \u2014 concurrency is an implementation detail available to both patterns, not what separates them.",
+        "A genuinely tempting but wrong mechanism claim \u2014 orchestrator-workers' worker calls can also run concurrently (this recipe's do), and parallelization's calls could in principle run sequentially too. Execution order is orthogonal to this distinction.",
+        "Correct. Who decides the sub-tasks, and when, is the actual distinguishing feature \u2014 a hardcoded set of 3 dispatched concurrently is parallelization regardless of scale; the moment a planning call reads the input and decides the breakdown itself, it's orchestrator-workers.",
+        "An arbitrary, fabricated numeric threshold \u2014 nothing about the pattern's definition depends on a specific sub-task count."
       ]
     },
     {
@@ -153,16 +153,16 @@ Generate, evaluate the output against a concrete criterion, and if it fails, ret
       "question": "What's the most defensible reaction to this data?",
       "options": [
         "Remove the loop -- if it almost never retries, it isn't doing anything useful",
-        "Keep the loop as-is -- a low retry rate is exactly what a correctly-tuned safety net looks like: it costs almost nothing on the common case and catches the rare, real failures it was built for, without needing to fire often to be worth having",
+        "Keep the loop as-is \u2014 a low retry rate is what a correctly-tuned safety net looks like: cheap on the common case, catching the rare real failures it exists for",
         "The high pass rate proves the evaluator's criteria are too lenient and should be made stricter to justify the loop's existence",
-        "The low retry rate means the model's outputs are now reliable enough that the deterministic checks can be removed entirely, with no checks left in place"
+        "The low retry rate means the model's outputs have become reliable enough now that the deterministic checks can safely be removed entirely, leaving no checks in place at all"
       ],
       "correct": 1,
       "explanations": [
-        "This is the exact 'if it rarely fires it must be useless' trap this page's own evaluator-optimizer run was written to push back on directly -- a rare failure is still a real failure, and the loop's cost on the 95%+ common case is negligible.",
+        "This is the exact 'if it rarely fires it must be useless' trap this page's own evaluator-optimizer run was written to push back on directly \u2014 a rare failure is still a real failure, and the loop's cost on the 95%+ common case is negligible.",
         "Correct. The loop was built because occasional real violations were observed; a low retry rate after shipping means it's catching those rare cases cheaply, which is success, not evidence the loop is unnecessary.",
-        "Backwards reasoning -- a low failure rate doesn't imply the bar is too easy; the bar was presumably set at the actual requirement (word limit, banned words), and rarely failing it is the desired outcome, not a sign to tighten further.",
-        "Confuses 'usually passes' with 'will always pass' -- removing a cheap, deterministic check because failures are rare (not impossible) reintroduces exactly the bug the loop was built to catch, the next time a rare case shows up."
+        "Backwards reasoning \u2014 a low failure rate doesn't imply the bar is too easy; the bar was presumably set at the actual requirement (word limit, banned words), and rarely failing it is the desired outcome, not a sign to tighten further.",
+        "Confuses 'usually passes' with 'will always pass' \u2014 removing a cheap, deterministic check because failures are rare (not impossible) reintroduces exactly the bug the loop was built to catch, the next time a rare case shows up."
       ]
     }
   ]

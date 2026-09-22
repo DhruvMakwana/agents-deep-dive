@@ -86,71 +86,71 @@ Worth being precise about what this cap does and doesn't cover: it bounds how ma
 {
   "questions": [
     {
-      "scenario": "A candidate explains tool calling this way: 'When the model calls a tool, it directly invokes your Python function through the API — the SDK handles the actual execution for you, which is why you never see the return value show up as a separate message.'",
+      "scenario": "A candidate explains tool calling this way: 'When the model calls a tool, it directly invokes your Python function through the API \u2014 the SDK handles the actual execution for you, which is why you never see the return value show up as a separate message.'",
       "question": "What's the strongest critique of this explanation?",
       "options": [
-        "Nothing is wrong with it — this is an accurate description",
-        "The model never directly invokes anything. It generates a structured request (a tool_use block naming a function and arguments); your own code parses that, runs the real function, and sends the result back as a distinct new message the model reads on its next turn. The SDK transports messages, it doesn't execute your functions",
-        "It's correct for Anthropic specifically, but OpenAI's API does execute functions server-side, so the explanation doesn't generalize",
-        "It's mostly right, except the return value gets appended silently into the same message instead of arriving as a new one"
+        "The model never directly invokes anything \u2014 it generates a structured tool_use request that your own code parses, executes, and sends back as a new message",
+        "It's correct for Anthropic's API specifically, but OpenAI's function-calling API actually executes the functions server-side on your behalf, so the explanation doesn't generalize across providers",
+        "It's mostly right, except the return value gets appended silently into the same message instead of arriving as a new one",
+        "Nothing is wrong with it \u2014 this is an accurate, complete description of how tool calling works"
       ],
-      "correct": 1,
+      "correct": 0,
       "explanations": [
-        "This is exactly the weak interview answer this page's Interview angle section warns about — it skips the entire mechanism.",
-        "Correct. No mainstream provider's tool-calling API executes your functions for you — Anthropic, OpenAI, and Google all require the caller to parse the request, run the real code, and send the result back explicitly. That round trip is the whole mechanism.",
-        "A tempting 'maybe it varies by vendor' hedge, but false — execution is the caller's responsibility across every major provider's tool-calling API, not just Anthropic's.",
-        "A specific, plausible-sounding technical detail that happens to be wrong: results travel back as their own distinct message (a tool_result), not appended silently onto an existing one — this page's own loop code makes that explicit."
+        "Correct. No mainstream provider's tool-calling API executes your functions for you \u2014 Anthropic, OpenAI, and Google all require the caller to parse the request, run the real code, and send the result back explicitly. That round trip is the whole mechanism.",
+        "A tempting 'maybe it varies by vendor' hedge, but false \u2014 execution is the caller's responsibility across every major provider's tool-calling API, not just Anthropic's.",
+        "A specific, plausible-sounding technical detail that happens to be wrong: results travel back as their own distinct message (a tool_result), not appended silently onto an existing one \u2014 this page's own loop code makes that explicit.",
+        "This is exactly the weak interview answer this page's Interview angle section warns about \u2014 it skips the entire mechanism."
       ]
     },
     {
       "scenario": "A team has 40 tools registered for one agent and notices frequent wrong-tool selection and invented arguments. An engineer proposes collapsing all 40 into a single 'do_anything' tool that takes one free-text 'instruction' string and dispatches internally via keyword matching, reasoning that a single tool means the model can't pick the wrong one.",
       "question": "What's the strongest critique of this proposal?",
       "options": [
-        "It's a good fix — fewer tools in the schema means less chance of tool confusion",
-        "It doesn't remove the selection problem, it moves it — from the model choosing among 40 well-described, schema-validated tools, into a keyword matcher inside your own code choosing among 40 possible actions from unstructured text. That trades a visible, improvable failure mode for a hidden, harder-to-debug one, and throws away the argument validation the model was actually doing reasonably well",
-        "It's correct, because with a single tool the model never has to make a selection decision at all",
-        "It's wrong only because free-text instructions can't be validated by JSON Schema — everything else about the idea is sound"
+        "It's a good fix \u2014 fewer tools in the schema means less chance of tool confusion",
+        "It's correct, because collapsing everything into a single tool means the model genuinely never has to make any kind of selection decision at all",
+        "It's wrong only because free-text instructions can't be validated by JSON Schema \u2014 everything else about the idea is sound",
+        "It doesn't remove the selection problem, it just moves it into a hidden, harder-to-debug keyword matcher inside your own code"
       ],
-      "correct": 1,
+      "correct": 3,
       "explanations": [
         "The naive read: fewer visible tools, less confusion. But the selection decision hasn't gone away, it's just moved somewhere you can't see it or fix it the same way.",
-        "Correct. The model still has to figure out which of 40 things you mean from a free-text instruction, and now that decision happens inside an internal keyword matcher instead of the model's tool selection — which is typically less capable at exactly this kind of disambiguation and much harder to debug when it picks wrong.",
-        "The selection decision still exists, it's just been relocated from the model's tool choice into your dispatch code's keyword matching — 'no decision' is not what happened here.",
-        "A half-right trap: schema validation loss is real, but framing it as the *only* problem misses the bigger one — you've hidden the selection logic where you can no longer inspect, test, or improve it the way you could with 40 separate tool descriptions."
+        "The selection decision still exists, it's just been relocated from the model's tool choice into your dispatch code's keyword matching \u2014 'no decision' is not what happened here.",
+        "A half-right trap: schema validation loss is real, but framing it as the *only* problem misses the bigger one \u2014 you've hidden the selection logic where you can no longer inspect, test, or improve it the way you could with 40 separate tool descriptions.",
+        "Correct. The model still has to figure out which of 40 things you mean from a free-text instruction, and now that decision happens inside an internal keyword matcher instead of the model's tool selection \u2014 which is typically less capable at exactly this kind of disambiguation and much harder to debug when it picks wrong."
       ]
     },
     {
-      "scenario": "An agent's loop is capped at max_iterations=10. A teammate objects: 'That's not a real safety net — nothing stops a single iteration from being slow. A model can request a tool that hangs for 90 seconds, and your 10-iteration cap does nothing about that.'",
+      "scenario": "An agent's loop is capped at max_iterations=10. A teammate objects: 'That's not a real safety net \u2014 nothing stops a single iteration from being slow. A model can request a tool that hangs for 90 seconds, and your 10-iteration cap does nothing about that.'",
       "question": "Is the teammate right?",
       "options": [
-        "No — max_iterations bounds the number of LLM round-trips, which is what actually matters for cost, and per-tool latency is a separate, unrelated concern",
-        "Yes — an iteration cap bounds how many times the loop goes around, but says nothing about how long any single tool call is allowed to take. A production loop needs a per-call timeout on each tool execution too, independent of the iteration count",
-        "No — the model itself automatically times out and returns control if a tool call runs too long",
-        "Yes, but only because this example specifically used 10 iterations — a higher cap would fix the problem"
+        "No \u2014 max_iterations bounds the number of LLM round-trips, which is what actually matters for cost, and per-tool latency is a separate, unrelated concern",
+        "Yes \u2014 an iteration cap bounds how many times the loop goes around, but says nothing about how long any single tool call is allowed to take",
+        "No \u2014 the model itself automatically times out and returns control if a tool call runs too long",
+        "Yes, but only because this example specifically used 10 iterations \u2014 a higher cap would fix the problem"
       ],
       "correct": 1,
       "explanations": [
-        "Partially true (the cap does bound round-trip cost) but wrong to dismiss the teammate's specific point — round-trip count and per-call duration are genuinely separate risks, and this answer only defends against one of them.",
-        "Correct. This page's own loop caps iterations but has no per-tool timeout — a real production version needs both, because they bound different things: total round-trips versus how long any one of them can take.",
-        "There's no such mechanism at the model level. The model doesn't run the tool at all (see the mechanism section above) — it's the orchestration code's job to enforce any timeout, and nothing does that automatically.",
-        "Misdiagnoses the fix — a higher iteration cap would let the loop run *more* times, which has no bearing at all on how long any single tool call is allowed to hang."
+        "Partially true (the cap does bound round-trip cost) but wrong to dismiss the teammate's specific point \u2014 round-trip count and per-call duration are genuinely separate risks, and this answer only defends against one of them.",
+        "Correct. This page's own loop caps iterations but has no per-tool timeout \u2014 a real production version needs both, because they bound different things: total round-trips versus how long any one of them can take.",
+        "There's no such mechanism at the model level. The model doesn't run the tool at all (see the mechanism section above) \u2014 it's the orchestration code's job to enforce any timeout, and nothing does that automatically.",
+        "Misdiagnoses the fix \u2014 a higher iteration cap would let the loop run *more* times, which has no bearing at all on how long any single tool call is allowed to hang."
       ]
     },
     {
       "scenario": "After seeing this page's real run (no-tools baseline hedges with a $40.80-$41.50 range; the tool-using loop gets exactly $40.62), a colleague concludes: 'This proves LLMs are just bad at arithmetic, and tools fix that.'",
       "question": "What's the more accurate read of what actually happened?",
       "options": [
-        "The colleague is right — the baseline's arithmetic was wrong, and the calculator tool corrected it",
-        "The baseline actually got every arithmetic step right on its own. What it lacked was the exchange rate, which isn't a math problem at all — it's a live-data problem that no amount of arithmetic skill solves without a real source, which is exactly what the currency tool provided",
-        "The colleague is right, but only for multiplication and division — the baseline's addition and subtraction steps were reliable",
-        "The gap is because Haiku is too small a model for this task — a larger model would have matched the tool-using answer with no tools at all"
+        "The colleague is right \u2014 the baseline's arithmetic was wrong, and the calculator tool corrected it",
+        "The colleague is right, but only for multiplication and division specifically \u2014 the baseline's addition and subtraction steps happened to be fully reliable throughout",
+        "The baseline got every arithmetic step right on its own \u2014 the real gap was the exchange rate, a live-data problem no arithmetic skill solves without a real source",
+        "The gap is because Haiku is too small a model for this task \u2014 a larger model would have matched the tool-using answer with no tools at all"
       ],
-      "correct": 1,
+      "correct": 2,
       "explanations": [
-        "The cliché conclusion, and specifically the wrong read of this run: the recipe README's real trace shows the baseline's tip, total, and per-person arithmetic were all correct — the number it was honestly unsure about was the exchange rate, not any arithmetic step.",
-        "Correct — and this is the point worth remembering past this page: a gap that looks like a capability failure is sometimes a data-access failure instead, and the fix (a tool that supplies the missing data) is different from the fix for a genuine reasoning failure (a better model, or a different prompt).",
-        "An oddly specific and fabricated distinction — nothing in the actual run supports operation-by-operation reliability differences; the model's addition, multiplication, and division were all correct in this trace.",
-        "A tempting but wrong appeal to scale: model size doesn't create access to a live exchange rate that was never in the prompt or the model's training data at query time — this is a knowledge-access gap, not a capacity gap, and no larger model closes it without an actual data source."
+        "The clich\u00e9 conclusion, and specifically the wrong read of this run: the recipe README's real trace shows the baseline's tip, total, and per-person arithmetic were all correct \u2014 the number it was honestly unsure about was the exchange rate, not any arithmetic step.",
+        "An oddly specific and fabricated distinction \u2014 nothing in the actual run supports operation-by-operation reliability differences; the model's addition, multiplication, and division were all correct in this trace.",
+        "Correct \u2014 and this is the point worth remembering past this page: a gap that looks like a capability failure is sometimes a data-access failure instead, and the fix (a tool that supplies the missing data) is different from the fix for a genuine reasoning failure (a better model, or a different prompt).",
+        "A tempting but wrong appeal to scale: model size doesn't create access to a live exchange rate that was never in the prompt or the model's training data at query time \u2014 this is a knowledge-access gap, not a capacity gap, and no larger model closes it without an actual data source."
       ]
     }
   ]
