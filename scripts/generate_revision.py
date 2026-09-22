@@ -35,6 +35,9 @@ SECTIONS = [
         ("Tool Design", "tool-design.md"),
         ("Context Engineering", "context-engineering.md"),
     ]),
+    ("Systems", [
+        ("Multi-Agent Systems", "multi-agent-systems.md"),
+    ]),
 ]
 
 TLDR_RE = re.compile(r'\?\?\? abstract "TL;DR — quick revision"\n((?:    .*\n?)+)')

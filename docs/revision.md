@@ -59,9 +59,19 @@ Every page's TL;DR in one place, every page's Scenario Check merged into one com
     - **A real repro of context distraction produced a genuine failure, but not the hypothesized one** — six turns of a consistently wrong pattern in context didn't make the model mechanically repeat that exact pattern; it produced a *different* wrong answer (the raw, undivided sum) in the same terse style the flawed history modeled. Reported honestly rather than smoothed into matching the prediction.
     - **Real repros of confusion and clash did not reproduce as failures in this run** — both honest negative results, with real, disclosed reasons why (a 12-tool test below the literature's reported ~30-tool confusion threshold; a clash repro that gave the model an explicit "supersedes" cue, making it resolvable rather than genuinely ambiguous).
 
+    ## Systems
+
+    ### [Multi-Agent Systems](multi-agent-systems.md)
+
+    - **A multi-agent *system* is not the same thing as orchestrator-workers.** [Workflow Patterns](workflow-patterns.md)' orchestrator-workers is a fixed topology — Anthropic classifies it as a *workflow*. A multi-agent system is what Anthropic calls an *agent* — a lead agent that delegates to subagents that are themselves autonomous, operating in parallel with their own judgment, their own tool calls, and their own context windows.
+    - **A real measured run put a real number on Anthropic's token-cost claim**: single agent answering three independent questions, 1 call, 1,048 tokens; a lead agent dispatching three subagents plus a synthesis call, 4 calls, 3,369 tokens — a real **3.21x** multiplier, the same direction as (if smaller than) Anthropic's own reported 4x/15x figures.
+    - **A real test of Cognition's inter-agent consistency risk did not reproduce the failure** — twice. Two subagents, each blind to the other's output, independently inventing a shared fact (a trial length) converged on the same value both times, even after the prompt was redesigned specifically to remove an obvious reason they'd default to the same answer. Reported as an honest negative result, with the real, disclosed reason why the repro's own design likely couldn't have shown the failure Cognition describes.
+    - **MAST's real taxonomy**: 14 distinct failure modes across 3 categories — system design issues, inter-agent misalignment, task verification — built from 1,600+ annotated traces across 7 frameworks, and the paper's own stated finding is that multi-agent systems' "performance gains on popular benchmarks are often minimal."
+    - **"When to use one agent" has a real, non-hand-wavy answer**: genuinely independent, breadth-first sub-tasks are where the token cost buys something real (Anthropic's own 90.2% improvement, largely attributable to spending more tokens); tightly-coupled tasks needing shared context between steps are where a single agent avoids a coordination problem it would otherwise have to solve by hand.
+
 === "Combined Scenario Check"
 
-    24 questions from every page on this site, one combined pass instead of opening each page separately. Every question shows which page it's from — go re-read that page for anything you get wrong.
+    28 questions from every page on this site, one combined pass instead of opening each page separately. Every question shows which page it's from — go re-read that page for anything you get wrong.
 
     <div class="quiz-widget" data-title="Combined Scenario Check — All Pages">
     <script type="application/json">
@@ -522,6 +532,82 @@ Every page's TL;DR in one place, every page's Scenario Check merged into one com
           ],
           "source": "Context Engineering",
           "sourceUrl": "context-engineering.md"
+        },
+        {
+          "scenario": "A team built an orchestrator-workers pipeline (per Anthropic's workflow-pattern definition: a central LLM call decides which of several pre-built worker functions to invoke, each worker executes one fixed role). A teammate says: 'This is a multi-agent system, since it has a lead agent and workers operating under it.'",
+          "question": "What's the most accurate correction?",
+          "options": [
+            "Any lead-plus-workers topology qualifies as multi-agent, regardless of what the workers are",
+            "It's closer to Cognition's fragile-multi-agent case, since workers can't see each other's context either way",
+            "It's a workflow -- the workers execute pre-built roles, not open-ended decisions as autonomous agents",
+            "It only counts as multi-agent if the workers run concurrently rather than sequentially"
+          ],
+          "correct": 2,
+          "explanations": [
+            "Collapses a distinction Anthropic's own writing draws explicitly -- a fixed topology with workers executing pre-scripted roles is not the same thing as autonomous agents making open-ended decisions, even when the diagram looks similar.",
+            "Misapplies Cognition's critique -- their argument is specifically about autonomous subagents making independent, potentially conflicting judgment calls, not about any lead-plus-workers shape; a fixed-role worker structurally can't make the kind of conflicting decision Cognition describes.",
+            "Correct. Anthropic's own writing classifies orchestrator-workers as a workflow pattern precisely because the workers execute a fixed, developer-defined role -- the multi-agent Research system is different specifically because its subagents are autonomous, with their own tool access and judgment, not because of the lead-plus-workers shape itself.",
+            "Introduces a fabricated distinguishing criterion -- concurrency versus sequential execution isn't what separates a workflow's workers from a multi-agent system's subagents in either Anthropic's or Cognition's framing."
+          ],
+          "source": "Multi-Agent Systems",
+          "sourceUrl": "multi-agent-systems.md"
+        },
+        {
+          "scenario": "A real experiment measured a single agent answering three independent questions in 1,048 tokens, versus a lead-plus-3-subagents-plus-synthesis design using 3,369 tokens on the identical questions -- a real 3.21x multiplier. A team cites Anthropic's reported 4x/15x figures and concludes: 'Our number is basically wrong, or our multi-agent implementation is broken, since it doesn't match Anthropic's reported numbers.'",
+          "question": "What's the strongest problem with that conclusion?",
+          "options": [
+            "The conclusion is right -- any real multiplier that doesn't match a cited figure indicates a bug",
+            "Anthropic's figures use a different baseline (real chat) and workload -- not a contradiction",
+            "3.21x actually exceeds 15x once counted correctly, so the team undercounted tokens",
+            "Token multipliers are never comparable across two different measurements, under any circumstances"
+          ],
+          "correct": 1,
+          "explanations": [
+            "Treats a citation as a universal constant rather than a measurement under specific conditions -- reasonable real numbers vary by task, baseline, and scale without indicating an error.",
+            "Correct. Anthropic's 4x and 15x figures compare agents and multi-agent systems against a plain-chat baseline on real production workloads -- not a single-agent-does-everything baseline on one small three-question toy task. A smaller real multiplier, in the same direction, from a genuinely different measurement setup is expected, not a red flag.",
+            "A fabricated, arithmetically false claim -- 3.21 does not exceed 15 under any accounting; nothing in the real experiment supports this.",
+            "Overcorrects into an unreasonable, absolutist position -- comparing real measurements while being explicit about differing conditions is exactly the right way to use a cited figure as context, not a reason to avoid comparison."
+          ],
+          "source": "Multi-Agent Systems",
+          "sourceUrl": "multi-agent-systems.md"
+        },
+        {
+          "scenario": "A real consistency-risk repro (two subagents, each blind to the other, independently inventing a shared numeric fact) found no disagreement across two separate attempts -- even after the prompt was changed specifically to discourage a common default answer. Someone argues: 'This proves Cognition's inter-agent consistency concern is overstated.'",
+          "question": "What's the most accurate pushback?",
+          "options": [
+            "The repro tested a scalar number, narrower than Cognition's own creative-interpretation example",
+            "Two consistent real runs are sufficient to generalize that the concern doesn't apply broadly",
+            "The result should be dismissed outright, since a repro using a fictional app name is inherently invalid",
+            "The repro actually did find a disagreement -- the outcome described is being misread"
+          ],
+          "correct": 0,
+          "explanations": [
+            "Correct. Cognition's own example (a background matching one visual style, a bird matching a different one) is about creative/stylistic interpretation -- genuinely high-variance with no shared fallback. This repro tested a scalar fact, which two real runs suggest the same model tends to agree with itself on even when blind and instructed to be unusual -- a real, disclosed, narrower test, not a disproof of the broader risk.",
+            "Overgeneralizes two real but narrow results into a broad claim the repro's own design isn't positioned to support -- consistency on a scalar number doesn't settle the question of consistency on open-ended, high-variance creative choices.",
+            "An overly strong, unsupported rule -- fictional scenarios are the established pattern across this entire cookbook precisely because they let mechanisms be tested cheaply and safely; that doesn't invalidate a result.",
+            "Misstates the real outcome -- both real runs found the two subagents' answers matched (19/19 and 11/11), not a mismatch."
+          ],
+          "source": "Multi-Agent Systems",
+          "sourceUrl": "multi-agent-systems.md"
+        },
+        {
+          "scenario": "MAST's own reported finding is that multi-agent systems' 'performance gains on popular benchmarks are often minimal,' based on a 1,600+-trace survey across 7 frameworks. A candidate cites this in an interview as: 'This means Anthropic's reported 90.2% multi-agent improvement must be exaggerated or unrepresentative.'",
+          "question": "What's the most accurate response to that claim?",
+          "options": [
+            "Correct -- a survey finding minimal average gains directly contradicts any single large reported improvement",
+            "MAST's finding only applies to open-source frameworks, so it says nothing about a proprietary system",
+            "90.2% isn't comparable to any benchmark result, since it was self-reported rather than independently measured",
+            "MAST reports a broad average across many frameworks; Anthropic's number is scoped to one favorable task shape"
+          ],
+          "correct": 3,
+          "explanations": [
+            "Treats a broad average and a scoped, task-specific result as if they must agree exactly -- a general survey finding modest average gains is fully consistent with a real, larger gain on a specific task shape well-suited to the architecture.",
+            "Fabricates a restriction not stated in the paper -- MAST's abstract doesn't scope its finding to open-source frameworks only, and nothing about the taxonomy's failure modes is specific to open-source implementations.",
+            "An overreaching dismissal -- self-reported doesn't mean incomparable; the real point is that the two numbers describe different scopes, not that either measurement type is invalid.",
+            "Correct. MAST's finding describes gains across popular benchmarks broadly; Anthropic's 90.2% is explicitly scoped to a breadth-first research task where independent sub-tasks are exactly the shape multi-agent is well-suited to. A big win on a favorable, specific task and a modest average across many different tasks and frameworks can both be true at once."
+          ],
+          "source": "Multi-Agent Systems",
+          "sourceUrl": "multi-agent-systems.md"
         }
       ]
     }
@@ -530,7 +616,7 @@ Every page's TL;DR in one place, every page's Scenario Check merged into one com
 
 === "Flashcards"
 
-    48 flashcards from every page with a deck so far — click a card to flip it, shuffle for random order.
+    56 flashcards from every page with a deck so far — click a card to flip it, shuffle for random order.
 
     <div class="flashcard-widget" data-title="Flashcards — All Pages">
     <script type="application/json">
@@ -775,6 +861,46 @@ Every page's TL;DR in one place, every page's Scenario Check merged into one com
           "front": "Why does this page treat 'two of four repros found no failure' as a strength of the demo rather than a weakness?",
           "back": "A demo where every hypothesized failure reproduces exactly as predicted, at trivial scale, every time, would be the more suspicious result. Running real experiments -- and reporting the real, specific, disclosed reasons two of them didn't reproduce (scale below a documented threshold; an explicit resolution cue) -- is more informative than confirming a taxonomy always looks bad in a toy example.",
           "source": "Context Engineering"
+        },
+        {
+          "front": "How does a multi-agent SYSTEM differ from the orchestrator-workers WORKFLOW pattern, per Anthropic's own classification?",
+          "back": "Orchestrator-workers is a fixed workflow: a central LLM call delegates to workers executing pre-built roles. A multi-agent system's subagents are themselves autonomous agents -- own tool access, own reasoning loop, own context window, making open-ended decisions -- not executing a pre-scripted function.",
+          "source": "Multi-Agent Systems"
+        },
+        {
+          "front": "A real experiment measured single-agent (1 call, 1,048 tokens) vs lead+3-subagents+synthesis (4 calls, 3,369 tokens) on three independent questions. What was the real ratio, and how does it compare to Anthropic's own reported figures?",
+          "back": "3.21x measured. Smaller than Anthropic's reported 4x (agent vs chat) or 15x (multi-agent vs chat), but the same direction -- the difference is baseline and scale (real production workload vs chat, vs this page's small single-agent-does-everything toy baseline), not a contradiction.",
+          "source": "Multi-Agent Systems"
+        },
+        {
+          "front": "What's the real mechanism behind multi-agent's token overhead, visible in a real captured trace?",
+          "back": "Each subagent call repeats system framing overhead (e.g. 'You are a research subagent...') that one combined call only pays once, AND the synthesis call has to re-read all subagent outputs in full before producing the final answer -- tokens a single pass never spends at all.",
+          "source": "Multi-Agent Systems"
+        },
+        {
+          "front": "A real test of Cognition's inter-agent consistency risk (two blind subagents inventing a shared fact) found NO disagreement, twice -- even after redesigning the prompt to avoid an obvious common default. Does this disprove Cognition's concern?",
+          "back": "No -- honest negative result with a real, disclosed reason: the repro tested convergence on a SCALAR NUMBER, which the same model tends to agree with itself on even when blind. Cognition's own example (Flappy Bird: a Mario-style background vs a bird that doesn't match) is about open CREATIVE interpretation -- genuinely higher-variance, no shared convention to fall back on. Different, harder test than this repro ran.",
+          "source": "Multi-Agent Systems"
+        },
+        {
+          "front": "MAST's taxonomy: 14 failure modes across 3 categories. Name the three categories and one real finding.",
+          "back": "System design issues (unclear roles/specs), inter-agent misalignment (agents talking past each other -- the category Cognition's Flappy Bird example fits), task verification (nobody checks the final output is right). Built from 150 traces (kappa=0.88), validated against 1,600+ traces across 7 frameworks. Reports: 'performance gains on popular benchmarks are often minimal.'",
+          "source": "Multi-Agent Systems"
+        },
+        {
+          "front": "MAST reports multi-agent gains are 'often minimal' on popular benchmarks. Anthropic reports a 90.2% improvement. Are these in tension?",
+          "back": "No -- different scope. MAST is a broad average across many frameworks and task types. Anthropic's 90.2% is scoped to one breadth-first, parallelizable research task (identifying board members across S&P 500 IT companies) -- exactly the task shape multi-agent is well-suited to. A big win on a favorable task and a modest average across many tasks can both be true.",
+          "source": "Multi-Agent Systems"
+        },
+        {
+          "front": "What's the practical decision rule for 'when to use one agent' that both companies' real evidence, plus MAST, point toward?",
+          "back": "Use multi-agent when sub-tasks are genuinely independent -- solvable correctly using only their own slice of context, no need to see what another piece decided (worth the measured token premium). Stay single-agent when steps are coupled -- a later step's correctness depends on an earlier step's reasoning path, not just its output (avoids a coordination problem multi-agent would have to solve explicitly).",
+          "source": "Multi-Agent Systems"
+        },
+        {
+          "front": "Anthropic says token usage 'by itself explains 80% of the variance' in one benchmark's (BrowseComp) performance. What does this actually mean for evaluating a multi-agent win?",
+          "back": "Much of multi-agent's measured advantage on that benchmark is attributable to spending more tokens, not to the architecture itself being smarter -- a caution against crediting 'multi-agent design' for a gain that a single agent given an equivalent token/compute budget might also achieve.",
+          "source": "Multi-Agent Systems"
         }
       ]
     }
