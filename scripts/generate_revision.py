@@ -31,6 +31,9 @@ SECTIONS = [
         ("Workflow Patterns", "workflow-patterns.md"),
         ("Reasoning Paradigms", "reasoning-paradigms.md"),
     ]),
+    ("Tools and Context", [
+        ("Tool Design", "tool-design.md"),
+    ]),
 ]
 
 TLDR_RE = re.compile(r'\?\?\? abstract "TL;DR — quick revision"\n((?:    .*\n?)+)')

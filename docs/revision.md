@@ -41,9 +41,19 @@ Every page's TL;DR in one place, every page's Scenario Check merged into one com
     - **ReWOO's plan-then-execute split has a real failure surface ReAct doesn't**: a bad step in the plan is only caught once it's actually executed, not before. This page's real run hit exactly that — a generated plan referenced a function its tool didn't support, and one step genuinely failed.
     - **Reasoning models changed what needs to be built by hand.** DeepSeek-R1's reported finding is that self-reflection and verification can emerge from pure reinforcement learning, without anyone hand-coding a Reflexion-style retry loop or a ToT-style external search — some of what these 2023 papers built as scaffolding, later training runs learned to do internally.
 
+    ## Tools and Context
+
+    ### [Tool Design](tool-design.md)
+
+    - **A tool description is a prompt, not documentation** — it steers behavior the same way a system prompt does. Anthropic reports that precise tool-description refinements (nothing else) took Claude Sonnet 3.5 to state-of-the-art on SWE-bench Verified.
+    - **Consolidated, purpose-built tools beat many granular endpoint wrappers on both calls and tokens, measured**: on the identical question, a single `get_blocked_tasks_with_reasons` tool took 2 calls and 1,563 tokens; exposing `list_tasks` + `list_comments` separately and letting the model compose them took 3 calls and 3,079 tokens.
+    - **Code execution's real advantage didn't show up as a clean win on one fixed question** — it tied endpoint wrappers on call count (3 each) here, though it used fewer tokens (2,951 vs. 3,079). Its actual case is avoiding a combinatorial explosion of purpose-built tools across many *different* possible query shapes, not raw efficiency on one you already anticipated.
+    - **A real error-message comparison's finding wasn't about retry count — both a terse and an actionable validation error took the model exactly 2 calls to recover.** What differed was the value it recovered *to*: the terse error (no information) got a generic, disconnected guess; the actionable error (stating the valid options) got a genuinely closer match to what the user actually meant.
+    - **Interface design measurably matters independent of the underlying model** — SWE-agent's own contribution wasn't a better model, it was a custom Agent-Computer Interface, and the paper reports this got a non-interactive baseline's pass@1 up to 12.5% on SWE-bench.
+
 === "Combined Scenario Check"
 
-    16 questions from every page on this site, one combined pass instead of opening each page separately. Every question shows which page it's from — go re-read that page for anything you get wrong.
+    20 questions from every page on this site, one combined pass instead of opening each page separately. Every question shows which page it's from — go re-read that page for anything you get wrong.
 
     <div class="quiz-widget" data-title="Combined Scenario Check — All Pages">
     <script type="application/json">
@@ -352,6 +362,82 @@ Every page's TL;DR in one place, every page's Scenario Check merged into one com
           ],
           "source": "Reasoning Paradigms",
           "sourceUrl": "reasoning-paradigms.md"
+        },
+        {
+          "scenario": "A team building an agent's tool library debates two options: many small endpoint-wrapper tools (list_tasks, list_comments, list_users, ...) versus a handful of purpose-built consolidated tools. One engineer argues: 'Consolidated tools are just strictly better -- this page's own real run showed consolidated beating endpoint wrappers on both calls and tokens.'",
+          "question": "What's the strongest problem with generalizing that conclusion?",
+          "options": [
+            "It's backwards -- endpoint wrappers actually won on tokens, not consolidated tools",
+            "Consolidated tools need the query shape anticipated in advance; a new shape may go uncovered",
+            "Consolidated tools are strictly worse for security, since server-side composition exposes more data",
+            "The real run actually showed code execution winning on every single metric instead"
+          ],
+          "correct": 1,
+          "explanations": [
+            "Misstates the actual real numbers -- consolidated used FEWER tokens (1,563) than endpoint wrappers (3,079) in the real measured run, not more.",
+            "Correct. The real run measured one fixed, well-anticipated question -- consolidated wins precisely because that question's shape was known ahead of time and a tool was built for it. A different question tomorrow might not be covered by that same fixed tool set at all, which is the actual scaling limitation a single-question measurement can't reveal.",
+            "An unsupported, fabricated security claim -- nothing about server-side composition inherently exposes more data than client-side composition; it depends entirely on what each tool chooses to return.",
+            "Contradicts the real measured numbers directly -- code execution tied endpoint wrappers on calls (3 each) and only modestly beat it on tokens in this run, not a win on 'every metric.'"
+          ],
+          "source": "Tool Design",
+          "sourceUrl": "tool-design.md"
+        },
+        {
+          "scenario": "After seeing this page's error-message comparison (terse vs. actionable validation errors, both took exactly 2 calls to recover), a developer concludes: 'Since both took the same number of calls, actionable error messages don't actually matter -- it's not worth the effort to write good tool errors.'",
+          "question": "What does this conclusion get wrong?",
+          "options": [
+            "The actionable condition actually took 3 calls, not 2, in the real run",
+            "Call counts matched, so error quality truly has no measurable effect here",
+            "It conflates 'same turns' with 'no effect' -- the real difference was in recovery value",
+            "Actionable errors should be judged only on preventing the first attempt from ever failing"
+          ],
+          "correct": 2,
+          "explanations": [
+            "Misstates the real numbers -- both conditions took exactly 2 calls in the actual recorded run, not 3.",
+            "Gets the premise right (call counts matched) but the conclusion wrong -- 'no effect on call count' isn't the same claim as 'no effect at all,' and this run showed a real effect on a different dimension.",
+            "Correct. The real run's finding wasn't about speed -- it was that the terse error's lack of information led to a generic, disconnected guess ('high'), while the actionable error's explicit valid-options list led to a genuinely closer match to the user's actual words ('urgent'). Recovery quality, not recovery speed, is where the real difference showed up.",
+            "Introduces a standard not used anywhere on this page or supported by the data -- neither condition was expected to succeed on the first attempt, since the request was deliberately designed to trigger an error for comparison."
+          ],
+          "source": "Tool Design",
+          "sourceUrl": "tool-design.md"
+        },
+        {
+          "scenario": "A candidate in a system-design interview is asked to justify SWE-agent's reported 12.5% pass@1 improvement on SWE-bench and answers: 'That's just because they used a stronger underlying language model than prior non-interactive approaches.'",
+          "question": "What's the most accurate correction?",
+          "options": [
+            "The paper's own contribution is the custom Agent-Computer Interface itself, not a stronger model",
+            "Right, but the interface does contribute a small, secondary boost worth mentioning too",
+            "SWE-bench scores aren't comparable across papers, so this claim can't be verified either way",
+            "The improvement is attributable to allowing more tool calls per task, unrelated to interface design"
+          ],
+          "correct": 0,
+          "explanations": [
+            "Correct. The paper frames language-model agents as a distinct category of end user needing interfaces built for their specific needs and abilities -- the contribution under test is the interface (navigation, editing, test-execution commands), independent of which underlying model runs it.",
+            "Inverts the paper's own emphasis -- the ACI is presented as the central contribution being evaluated, not a minor addendum to a model upgrade.",
+            "Overstates the uncertainty -- the paper directly compares its interactive, ACI-equipped approach against prior non-interactive LM approaches on the same benchmark family, which is exactly the comparison the pass@1 number is drawn from.",
+            "Introduces an unsupported, fabricated mechanism -- call budget isn't the variable the paper frames its contribution around; interface design is."
+          ],
+          "source": "Tool Design",
+          "sourceUrl": "tool-design.md"
+        },
+        {
+          "scenario": "A skeptical reviewer reads this page's tool-surface comparison and says: 'Code execution tied endpoint wrappers on calls and only modestly beat it on tokens -- so code execution is basically pointless here, just use endpoint wrappers.'",
+          "question": "What's the strongest flaw in that reasoning?",
+          "options": [
+            "The reviewer misread the numbers -- code execution actually won on both calls and tokens in the real run",
+            "Code execution should always be preferred no matter what, as the more modern technique here",
+            "The comparison is invalid, since code execution and endpoint wrappers ran against different underlying data",
+            "One anticipated query can't show code execution's real edge -- covering shapes nobody pre-built for"
+          ],
+          "correct": 3,
+          "explanations": [
+            "Misstates the real numbers -- code execution tied endpoint wrappers on calls (3 each) and only modestly beat it on tokens (2,951 vs. 3,079), not a win on both.",
+            "An unsupported, fabricated preference rule -- this page explicitly measures and reports honest results rather than declaring a technique universally superior regardless of what's measured.",
+            "Factually wrong about the recipe -- all three surfaces (endpoint wrappers, consolidated, code execution) ran against the identical fictional dataset and identical question.",
+            "Correct. The reviewer's premise is accurate (code execution didn't clearly win here) but the conclusion doesn't follow -- code execution's real case is covering query shapes nobody pre-built a tool for, which a single fixed, well-anticipated question structurally cannot demonstrate either way."
+          ],
+          "source": "Tool Design",
+          "sourceUrl": "tool-design.md"
         }
       ]
     }
@@ -360,7 +446,7 @@ Every page's TL;DR in one place, every page's Scenario Check merged into one com
 
 === "Flashcards"
 
-    32 flashcards from every page with a deck so far — click a card to flip it, shuffle for random order.
+    40 flashcards from every page with a deck so far — click a card to flip it, shuffle for random order.
 
     <div class="flashcard-widget" data-title="Flashcards — All Pages">
     <script type="application/json">
@@ -525,6 +611,46 @@ Every page's TL;DR in one place, every page's Scenario Check merged into one com
           "front": "Tree of Thoughts reports GPT-4 + CoT solving 4% of Game-of-24 tasks versus 74% with ToT search. Why doesn't this page build a fresh code demo for ToT and LATS?",
           "back": "The tradeoff (breadth of search bought with a multiplicative call budget per branch explored) doesn't need a bespoke run to establish -- it's inherent to the algorithm, the same way parallelization's speedup was worth measuring but its existence wasn't in question. The real cited numbers plus the mechanism explanation carry the point without spending extra API calls to re-prove something structural.",
           "source": "Reasoning Paradigms"
+        },
+        {
+          "front": "What's the practical test Anthropic gives for whether a tool description is good enough?",
+          "back": "Describe the tool the way you'd describe it to a new hire on your team -- make implicit context explicit. Reported result of applying this rigorously: tool-description refinements alone took Claude Sonnet 3.5 to state-of-the-art on SWE-bench Verified, with no model or architecture change.",
+          "source": "Tool Design"
+        },
+        {
+          "front": "A real run measured endpoint wrappers (list_tasks + list_comments, model composes) against a consolidated tool (get_blocked_tasks_with_reasons, one call) on the identical question. What were the real numbers?",
+          "back": "Endpoint wrappers: 3 calls, 3,079 tokens. Consolidated: 2 calls, 1,563 tokens -- consolidated won on both axes, roughly half the tokens.",
+          "source": "Tool Design"
+        },
+        {
+          "front": "In the same real run, code execution (model writes Python against a small library) tied endpoint wrappers on calls (3 each) and only modestly beat it on tokens. Does this mean code execution isn't worth it?",
+          "back": "No -- this is an honest, unglamorous result specific to ONE fixed, well-anticipated question. Code execution's real advantage is generalizing to query shapes nobody pre-built a tool for, which a single fixed question can't demonstrate either way -- it's a scaling argument across many different queries, not a per-call efficiency claim.",
+          "source": "Tool Design"
+        },
+        {
+          "front": "A real comparison ran the same ambiguous request against a tool with a terse validation error ('ValidationError: priority') and an actionable one (naming the valid options). Both conditions took exactly 2 calls to recover. Does this mean the error message quality didn't matter?",
+          "back": "No -- both took the same number of TURNS, but recovered to different VALUES. The terse error (no info) got a generic, disconnected guess ('high'). The actionable error (listed valid options) got a genuinely closer match to what the user meant ('urgent'). The real effect was on recovery quality, not recovery speed.",
+          "source": "Tool Design"
+        },
+        {
+          "front": "SWE-agent reports a 12.5% pass@1 on SWE-bench, described as 'far exceeding' prior non-interactive LM approaches. What is this improvement actually attributed to?",
+          "back": "The custom Agent-Computer Interface (ACI) itself -- file navigation, editing, and test-execution commands built specifically for how a language-model agent uses them -- not a stronger underlying model. The paper's framing: LM agents are a distinct category of end user needing interfaces built for their own needs, not repurposed human interfaces.",
+          "source": "Tool Design"
+        },
+        {
+          "front": "What does Anthropic's 'errors as informative feedback' guidance actually recommend, versus a typical error code or traceback?",
+          "back": "Errors should give specific and actionable improvements -- for example, naming what a valid value actually looks like, or how to construct a more targeted retry -- rather than an opaque error code or a raw traceback the model has to guess the meaning of.",
+          "source": "Tool Design"
+        },
+        {
+          "front": "Anthropic's Tool Search mechanism (loading only relevant tool definitions instead of the full library) reports what real numbers?",
+          "back": "85% token reduction, and moved one internal MCP evaluation's accuracy from 49% to 74% on Opus 4 (79.5% to 88.1% on Opus 4.5).",
+          "source": "Tool Design"
+        },
+        {
+          "front": "Why does this page treat 'consolidate your tools' and 'give the model code execution instead' as two different answers to two different problems, rather than one technique beating the other?",
+          "back": "Consolidation wins when the query shape is known in advance -- you build exactly the right tool once. Code execution's case is when query shapes are diverse or unpredictable -- primitives the model composes in code cover shapes nobody pre-built a tool for. The real measured run showed consolidation winning on ONE fixed question precisely because that question's shape was already known; it doesn't settle which approach wins under a broader, less predictable query mix.",
+          "source": "Tool Design"
         }
       ]
     }
