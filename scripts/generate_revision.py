@@ -27,6 +27,7 @@ FLASHCARDS_DIR = BLOG_DIR / "flashcards"
 SECTIONS = [
     ("Foundations", [
         ("What Is an Agent?", "what-is-an-agent.md"),
+        ("The Agent Loop From Scratch", "agent-loop-from-scratch.md"),
     ]),
 ]
 
