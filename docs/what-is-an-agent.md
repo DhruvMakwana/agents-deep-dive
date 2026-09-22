@@ -25,27 +25,27 @@ This is genuinely useful to apply, not just recite. Take a common interview scen
 Same 5-entry FAQ knowledge base for both:
 
 ```python
---8<-- "agents-cookbook/what-is-an-agent/workflow_vs_agent_docs.py:faq_kb"
+--8<-- "https://raw.githubusercontent.com/DhruvMakwana/agents-cookbook/main/what-is-an-agent/workflow_vs_agent_docs.py:faq_kb"
 ```
 
 **The workflow** — `classify -> retrieve -> generate`, nothing can change what the next step does:
 
 ```python
---8<-- "agents-cookbook/what-is-an-agent/workflow_vs_agent_docs.py:workflow_pipeline"
+--8<-- "https://raw.githubusercontent.com/DhruvMakwana/agents-cookbook/main/what-is-an-agent/workflow_vs_agent_docs.py:workflow_pipeline"
 ```
 
 **The agent** adds exactly two things the workflow doesn't have: a judge step, and a real decision point where the *model* — not an `if/else` in this code — picks what happens next.
 
 ```python
---8<-- "agents-cookbook/what-is-an-agent/workflow_vs_agent_docs.py:agent_judge_step"
+--8<-- "https://raw.githubusercontent.com/DhruvMakwana/agents-cookbook/main/what-is-an-agent/workflow_vs_agent_docs.py:agent_judge_step"
 ```
 
 ```python
---8<-- "agents-cookbook/what-is-an-agent/workflow_vs_agent_docs.py:agent_decision_point"
+--8<-- "https://raw.githubusercontent.com/DhruvMakwana/agents-cookbook/main/what-is-an-agent/workflow_vs_agent_docs.py:agent_decision_point"
 ```
 
 ```python
---8<-- "agents-cookbook/what-is-an-agent/workflow_vs_agent_docs.py:agent_loop"
+--8<-- "https://raw.githubusercontent.com/DhruvMakwana/agents-cookbook/main/what-is-an-agent/workflow_vs_agent_docs.py:agent_loop"
 ```
 
 !!! success "A real, unforced run — both pipelines given the same misclassification"

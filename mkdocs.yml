@@ -73,13 +73,7 @@ markdown_extensions:
       pygments_lang_class: true
   - pymdownx.inlinehilite
   - pymdownx.snippets:
-      # ".." resolves to Agents/, so snippets are referenced as
-      # "agents-cookbook/<recipe>/<file>.py:<block>". This is a LOCAL path,
-      # not a URL -- the cookbook repo isn't published yet. Once it is,
-      # switch snippet refs to raw.githubusercontent.com URLs (see the RAG
-      # blog for the pattern) and drop this base_path, matching url_download
-      # below which stays on for any URL-based snippets added later.
-      base_path: ["..", "."]
+      base_path: ["."]
       check_paths: true
       url_download: true
       url_timeout: 10
