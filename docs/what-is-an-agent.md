@@ -124,54 +124,71 @@ This is a favorite trade-off question, and the strong answer leads with cost, no
 {
   "questions": [
     {
-      "scenario": "A team built a support bot: classify the customer's message into one of 8 categories, retrieve the matching help-center article, and have an LLM turn it into a reply. They call it 'our support agent.'",
-      "question": "Under Anthropic's workflow-vs-agent distinction, is this an agent?",
+      "scenario": "A support system does classify -> retrieve -> generate over 50 FAQ categories, chosen by embedding similarity. When the best match's similarity score falls below a fixed threshold, the code shows the customer 3 candidate articles instead of generating one answer.",
+      "question": "Does the threshold branch make this system an agent?",
       "options": [
-        "Yes — it uses an LLM at every step, so it's agentic",
-        "No — it's a workflow, because the sequence of steps is fixed regardless of what any step returns",
-        "It depends on how many categories there are",
-        "Yes, because retrieval makes any pipeline agentic"
+        "Yes — showing multiple candidates instead of one means the system is adapting its behavior to retrieval quality, which is the decision-point behavior that defines an agent",
+        "No — the branch (one answer vs. three candidates) is triggered by a fixed numeric threshold check in code, not by the model choosing what to do next based on its own judgment",
+        "It depends on whether the embedding model or the generation model owns the threshold",
+        "Yes, because the system now has more than one possible output path depending on the input"
       ],
       "correct": 1,
       "explanations": [
-        "Using an LLM at each step doesn't make a system agentic — the classic mistake this page opens with. The line is who decides the next step, not how many LLM calls happen.",
-        "Correct. There's no point where the outcome of one step changes which step runs next — that's exactly Anthropic's definition of a workflow, even with LLM calls throughout.",
-        "Category count is irrelevant to the workflow-vs-agent distinction — it's about whether the control flow can branch on live feedback, not scale.",
-        "Retrieval is orthogonal to this distinction; RAG pipelines are workflows unless something in the loop can decide to retrieve differently based on what came back."
+        "This is the tempting trap: the system's output genuinely does vary with live data (the similarity score), which sounds like the 'depends on the outcome of a previous action' criterion. But varying output isn't the same as the model deciding — a lookup table that branches on a number is still just a lookup table, however adaptive it looks from outside.",
+        "Correct. A fixed threshold in code is choosing the next step, not the model. Nothing here lets the model itself decide what happens next based on its own read of the situation — replace the threshold with any other number and the architecture is identical.",
+        "The threshold lives in application code either way, regardless of which model's score it reads — this doesn't change who's making the branching decision.",
+        "Multiple possible output paths is necessary but nowhere near sufficient — a large if/elif chain has many output paths and is still a workflow. The test is who picks the path at runtime, not how many paths exist."
       ]
     },
     {
-      "scenario": "An engineer adds a retry: if the generated answer's confidence score (computed by fixed code) is below a threshold, regenerate up to 3 times before returning the best-scoring attempt.",
-      "question": "Does adding this retry loop make the system an agent?",
+      "scenario": "A pipeline generates an answer, then makes a second LLM call asking 'Is this answer good enough? Reply yes or no.' If the reply is 'no,' the code regenerates once more (hard-capped at 2 total attempts) and returns whichever attempt was produced last, regardless of what the second judgment says.",
+      "question": "Where does this system sit?",
       "options": [
-        "Yes — any loop with more than one attempt is agentic",
-        "No — this is Anthropic's evaluator-optimizer workflow pattern; the retry logic is still fixed code, not a model decision",
-        "Yes, because it now has multiple steps",
-        "No — because it uses a threshold instead of an LLM judge"
+        "It's an agent — an LLM is making the 'good enough' judgment, and that judgment is a real decision",
+        "It's a workflow — the LLM's yes/no only gates a branch that fixed code already wired in (retry once, then stop and return whatever you have); the model never gets to choose a different action, only fill in a pre-built slot",
+        "It's an agent on the second attempt only, since that's the point where branching happens",
+        "It's ambiguous, and the answer depends on which provider is used for the judgment call"
       ],
       "correct": 1,
       "explanations": [
-        "A loop alone doesn't cross the line — Anthropic explicitly lists a generate-grade-retry loop as a workflow pattern (evaluator-optimizer), not an agent.",
-        "Correct. The decision to retry and when to stop is governed by fixed code (a threshold, a step count) — the model never chooses its own next action from live options.",
-        "Step count isn't the criterion; a five-step fixed pipeline is still a workflow, and a one-step agent that picks its own tool is still an agent.",
-        "The mechanism used to score the output (a threshold vs. an LLM judge) doesn't matter here — what matters is who decides whether/how to retry, and that's still the code."
+        "This is the most common wrong intuition on this whole page: an LLM call is involved in the decision, so it feels agentic. But this is exactly the pattern Anthropic names 'evaluator-optimizer' and classifies as a workflow — the LLM fills in a yes/no gate whose consequences (retry once, cap at 2, return regardless of the second verdict) were fully decided by the code author in advance.",
+        "Correct. The action space here has exactly two pre-wired outcomes (retry once, or don't), chosen by code, not model-selected from live options. Compare this to this page's own recipe: the judge step there feeds into a decision where the model picks among BROADEN/CLARIFY/ESCALATE — a genuinely open action set, not a single fixed retry slot.",
+        "Branching happening at a specific point doesn't retroactively make earlier or later steps agentic or non-agentic — the whole system is one architecture, evaluated by the same rule throughout.",
+        "The provider generating the yes/no token is irrelevant to this distinction — the question is about who controls the consequence of that token, and that's fixed code regardless of vendor."
       ]
     },
     {
-      "scenario": "You're asked in an interview: 'Given unlimited engineering time, would you make every feature in your product agentic?'",
-      "question": "What's the strongest answer?",
+      "scenario": "An interviewer describes a system: 'We handle exactly 12 known customer request types. For each, there's one verified, deterministic procedure to follow, and the correct order of steps never depends on what happens during execution.' They ask whether you'd build this agentically.",
+      "question": "What's the strongest response?",
       "options": [
-        "Yes — agents are strictly more capable, so there's no reason not to",
-        "No — reflexively reaching for agentic architecture adds latency, cost, and non-determinism that a well-scoped fixed pipeline doesn't need, and evaluation gets harder",
-        "It depends only on whether the team has experience with agent frameworks",
-        "No — agents are never appropriate for production systems"
+        "Build it as an agent anyway — future request types outside the current 12 might appear, so agent flexibility future-proofs the system now",
+        "Build it as a workflow — the correct procedure for each of the 12 cases is already known and doesn't branch on live results, so an agent's dynamic decision-making adds cost, latency, and non-determinism without buying anything this task needs; revisit the decision if and when new request types actually appear",
+        "It must be an agent, because customer-facing workflows are inherently unpredictable",
+        "Build it as an agent, because letting the model choose the procedure is more reliable than hard-coded step selection on a fully known task"
       ],
       "correct": 1,
       "explanations": [
-        "More capable at open-ended tasks, yes — but that capability comes with real costs (latency, cost, non-determinism, harder eval) that a fixed pipeline doesn't pay when the task doesn't need branching.",
-        "Correct. This is the trade-off question this page's 'When you would not build an agent' section is built around — interviewers are testing judgment, not enthusiasm.",
-        "Framework familiarity is an implementation detail, not the reason to choose an architecture; the decision should be driven by whether the task genuinely needs branching on live feedback.",
-        "Too absolute in the other direction — plenty of production systems (this whole site's Systems and Production sections) are agentic where the task genuinely calls for it."
+        "A real and common engineering trap — over-building for imagined future flexibility the task doesn't currently need. If new request types show up later, that's the moment to reconsider, not a reason to pay agentic costs today for a fully solved, fully verified problem.",
+        "Correct. This is the 'When you would not build an agent' trade-off from this page, applied to a concrete case instead of asked in the abstract — the task is fully known and doesn't need branching on live feedback, so a fixed pipeline is strictly more reliable and cheaper here.",
+        "An unfounded generalization — the scenario explicitly states the procedures are verified and deterministic. 'Customer-facing' doesn't imply unpredictable; the two are independent.",
+        "False, and worth catching directly: an LLM choosing among known, verified procedures is not more reliable than the verified procedures themselves — on a fully known task, hard-coded logic doesn't fail in the ways a model's live judgment can."
+      ]
+    },
+    {
+      "scenario": "A candidate is asked how LLM agents improve over a deployment's lifetime, given they don't get gradient updates from a reward signal the way RL agents do. The candidate answers: 'They don't really improve — each session starts fresh with the same weights, so there's no real analog to RL's learning.'",
+      "question": "What's the best critique of this answer?",
+      "options": [
+        "The candidate is basically right — without fine-tuning, there's no improvement mechanism at all",
+        "The candidate is missing the in-context mechanisms (reflection notes, accumulated memory, refined tools/prompts carried forward across sessions) plus the fact that RL-style training (GRPO, DPO on trajectories) is increasingly applied on top of the deployed loop, not as a one-time pretraining step",
+        "The candidate is wrong because model weights are automatically updated after every conversation",
+        "The candidate is right for closed-source models but wrong for open-weight models, which retrain continuously between sessions"
+      ],
+      "correct": 1,
+      "explanations": [
+        "Partial credit at best: it's true no gradient update happens mid-session, but the candidate is answering a narrower question than the one asked — the interviewer asked about improvement across a deployment's lifetime, not within one session.",
+        "Correct — and it's the exact bridge this page's RL-vs-LLM-agent table points to: session-to-session improvement happens through what persists in context (reflection, memory, tool refinement) and, increasingly, through RL applied on top of the already-deployed agent loop rather than as a separate pretraining phase.",
+        "A common but flatly false belief — no mainstream deployed LLM updates its own weights automatically mid-conversation or between sessions from ordinary usage.",
+        "Also false, and a plausible-sounding trap for the same reason as the option above — open-weight availability has no bearing on whether a specific deployment retrains itself; most don't, open or closed."
       ]
     }
   ]
