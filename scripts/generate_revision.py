@@ -33,6 +33,7 @@ SECTIONS = [
     ]),
     ("Tools and Context", [
         ("Tool Design", "tool-design.md"),
+        ("Context Engineering", "context-engineering.md"),
     ]),
 ]
 

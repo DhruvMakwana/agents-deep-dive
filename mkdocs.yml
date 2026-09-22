@@ -109,4 +109,5 @@ nav:
       - "Reasoning Paradigms": reasoning-paradigms.md
   - Tools and Context:
       - "Tool Design": tool-design.md
+      - "Context Engineering": context-engineering.md
   - About: about.md

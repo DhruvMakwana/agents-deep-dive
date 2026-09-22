@@ -51,9 +51,17 @@ Every page's TL;DR in one place, every page's Scenario Check merged into one com
     - **A real error-message comparison's finding wasn't about retry count — both a terse and an actionable validation error took the model exactly 2 calls to recover.** What differed was the value it recovered *to*: the terse error (no information) got a generic, disconnected guess; the actionable error (stating the valid options) got a genuinely closer match to what the user actually meant.
     - **Interface design measurably matters independent of the underlying model** — SWE-agent's own contribution wasn't a better model, it was a custom Agent-Computer Interface, and the paper reports this got a non-interactive baseline's pass@1 up to 12.5% on SWE-bench.
 
+    ### [Context Engineering](context-engineering.md)
+
+    - **Context engineering is curating the optimal set of tokens for each inference call**, not writing one good prompt once. Anthropic's framing: models have an "attention budget" — a real constraint from the transformer's n² pairwise token relationships — and **context rot** is what happens as that budget gets spent on tokens that don't help.
+    - **Four verbs cover most of what you actually do**: write context (save it outside the window), select context (pull the right thing back in), compress context (keep only what's needed), isolate context (split it up) — LangChain's framework, and Breunig's specific fixes (RAG, tool loadout, quarantine, pruning, summarization, offloading) are each an instance of one of these four.
+    - **A real repro of context poisoning worked exactly as the theory predicts**: a hallucinated fact (a fake founding year) in context produced a wrong downstream answer (17 years old instead of 12); quarantining the bad turn — not just adding a correction, replacing it — fixed it cleanly.
+    - **A real repro of context distraction produced a genuine failure, but not the hypothesized one** — six turns of a consistently wrong pattern in context didn't make the model mechanically repeat that exact pattern; it produced a *different* wrong answer (the raw, undivided sum) in the same terse style the flawed history modeled. Reported honestly rather than smoothed into matching the prediction.
+    - **Real repros of confusion and clash did not reproduce as failures in this run** — both honest negative results, with real, disclosed reasons why (a 12-tool test below the literature's reported ~30-tool confusion threshold; a clash repro that gave the model an explicit "supersedes" cue, making it resolvable rather than genuinely ambiguous).
+
 === "Combined Scenario Check"
 
-    20 questions from every page on this site, one combined pass instead of opening each page separately. Every question shows which page it's from — go re-read that page for anything you get wrong.
+    24 questions from every page on this site, one combined pass instead of opening each page separately. Every question shows which page it's from — go re-read that page for anything you get wrong.
 
     <div class="quiz-widget" data-title="Combined Scenario Check — All Pages">
     <script type="application/json">
@@ -438,6 +446,82 @@ Every page's TL;DR in one place, every page's Scenario Check merged into one com
           ],
           "source": "Tool Design",
           "sourceUrl": "tool-design.md"
+        },
+        {
+          "scenario": "A real repro showed a poisoned fact (a fake 2009 founding year) producing a wrong downstream age calculation (17 instead of 12). The fix that worked was replacing the bad tool-result message entirely with a corrected one, not appending a correction after it.",
+          "question": "Why does replacing the bad message work where appending a correction might not?",
+          "options": [
+            "Shorter context is always better, regardless of what the tokens actually say",
+            "Both facts staying in context turns poisoning into an unresolved clash instead",
+            "The arithmetic itself was the real problem, so neither fix approach would work",
+            "Appending corrections is fine generally -- only dates needed replacement here"
+          ],
+          "correct": 1,
+          "explanations": [
+            "Token count isn't the mechanism here -- a short context with a wrong fact in it is still wrong; the issue is correctness of content, not length.",
+            "Correct. Leaving both statements in context turns one already-understood problem (poisoning) into a second, less predictable one (clash) -- and this page's own clash repro showed resolution isn't automatic even when it happens to work; it depends on the model correctly weighting which fact is current, which isn't guaranteed.",
+            "Contradicts the real run directly -- the poisoned condition's arithmetic (2026 - 2009 = 17) was completely correct; the model reasoned correctly FROM a false premise, which is precisely what makes this poisoning and not a reasoning failure.",
+            "Introduces an arbitrary, unsupported distinction -- nothing about this mechanism is specific to dates; the same logic applies to a fake fact of any kind sitting in context."
+          ],
+          "source": "Context Engineering",
+          "sourceUrl": "context-engineering.md"
+        },
+        {
+          "scenario": "A real distraction repro hypothesized the model would repeat a wrong pattern (divide by N-1) demonstrated across six prior turns, but the real result was different: the model answered with the raw, undivided sum instead. A reader concludes: 'This means the demo failed -- distraction isn't a real phenomenon, since the model didn't reproduce the predicted pattern.'",
+          "question": "What's the strongest problem with that conclusion?",
+          "options": [
+            "It's correct -- an unmatched predicted mechanism means the phenomenon wasn't actually shown",
+            "The demo should be rerun repeatedly until the exact predicted pattern occurs",
+            "The compressed condition's correct answer proves the distracted answer was secretly correct too",
+            "A real wrong answer occurred with flawed history, and vanished once it was removed"
+          ],
+          "correct": 3,
+          "explanations": [
+            "Conflates the specific predicted mechanism with the general phenomenon -- a wrong answer that appears only when the flawed history is present, and disappears when it's removed, is real evidence of context-caused degradation regardless of whether the exact wrong number matches a prior guess.",
+            "Not how this page's own stated frugality works, and not how the actual finding was reached -- rerunning until a hypothesis is confirmed would bias toward the prediction rather than reporting what happened.",
+            "A fabricated, unsupported claim -- 100 and 25 are different numbers; nothing in the real transcripts suggests the distracted answer was secretly equivalent to the correct one.",
+            "Correct. The result (100, an unexplained wrong answer under the distracted condition; 25, correct with shown work under the compressed condition) is real evidence of context-caused failure and a real working fix -- the fact that the WRONG answer wasn't the specific one predicted doesn't erase that a real failure and a real fix both occurred."
+          ],
+          "source": "Context Engineering",
+          "sourceUrl": "context-engineering.md"
+        },
+        {
+          "scenario": "A real confusion repro (12 tools: 1 correct, 1 stale decoy, 10 irrelevant fillers) found no measurable confusion -- the model called the right tool and got the right answer in both the clean and confused conditions. A team concludes from this: 'Tool confusion isn't a real risk for our agent, since a real experiment already disproved it.'",
+          "question": "What's the strongest flaw in that conclusion?",
+          "options": [
+            "12 tools is well below the roughly 30-tool threshold the cited literature reports",
+            "The team is misreading their own page's results -- confusion was actually found",
+            "Fictional tools make any confusion repro invalid, regardless of how many tools are used",
+            "The result only applies to currency-conversion tasks specifically, not any other domain"
+          ],
+          "correct": 0,
+          "explanations": [
+            "Correct. The repro's own real number (12 tools) sits below the specific threshold the cited literature (RAG-MCP) reports degradation starting around -- so a clean result at 12 tools doesn't contradict the literature's claim about 30+, it's simply a different, smaller-scale test that wasn't positioned to detect the same effect.",
+            "Misreads the real result -- the page explicitly reports both conditions answered identically and correctly; there was no confusion detected in this specific run.",
+            "An overly strong, unsupported rule -- illustrative or fictional tools are the same pattern this entire cookbook uses precisely to test mechanisms cheaply and safely; the real limitation here is scale, not tool realism.",
+            "Overly narrow -- nothing about the tested mechanism (many similar-sounding tool descriptions increasing selection difficulty) is inherently specific to currency conversion; the domain choice here was arbitrary and illustrative."
+          ],
+          "source": "Context Engineering",
+          "sourceUrl": "context-engineering.md"
+        },
+        {
+          "scenario": "A real clash repro gave the model two contradictory policy statements, one explicitly labeled as superseding the other ('policy_doc v2... supersedes v1'). The model correctly resolved the conflict and answered with the current value. A candidate cites this in an interview as proof that 'LLMs reliably resolve contradictory context correctly.'",
+          "question": "What's the most accurate pushback on that claim?",
+          "options": [
+            "The claim is accurate -- one successful resolution is sufficient evidence of general reliability",
+            "The result should be dismissed entirely -- policy documents are too narrow a domain",
+            "The repro gave an explicit resolution cue; it didn't test a genuinely unlabeled, ambiguous clash",
+            "The model didn't resolve anything -- it just output the numerically smaller value by chance"
+          ],
+          "correct": 2,
+          "explanations": [
+            "Overgeneralizes from a single, favorable, labeled case to a much broader and unproven claim about ambiguous cases -- one success under easy conditions doesn't establish reliability under harder ones.",
+            "Too sweeping -- the domain (policy documents) isn't the limiting factor; the labeled-versus-unlabeled distinction is, and that applies across domains, not just this one.",
+            "Correct. This page's own real run disclosed exactly this limitation: the word 'supersedes' is an explicit resolution cue, which makes the test one of instruction-following under a clear signal, not of resolving a genuinely unresolvable or unlabeled clash -- a meaningfully different, harder problem the repro didn't test.",
+            "An unsupported, fabricated explanation with no basis in the transcript -- the model's answer explicitly cited the supersession reasoning ('which supersedes v1'), which is not consistent with an arbitrary numeric coincidence."
+          ],
+          "source": "Context Engineering",
+          "sourceUrl": "context-engineering.md"
         }
       ]
     }
@@ -446,7 +530,7 @@ Every page's TL;DR in one place, every page's Scenario Check merged into one com
 
 === "Flashcards"
 
-    40 flashcards from every page with a deck so far — click a card to flip it, shuffle for random order.
+    48 flashcards from every page with a deck so far — click a card to flip it, shuffle for random order.
 
     <div class="flashcard-widget" data-title="Flashcards — All Pages">
     <script type="application/json">
@@ -651,6 +735,46 @@ Every page's TL;DR in one place, every page's Scenario Check merged into one com
           "front": "Why does this page treat 'consolidate your tools' and 'give the model code execution instead' as two different answers to two different problems, rather than one technique beating the other?",
           "back": "Consolidation wins when the query shape is known in advance -- you build exactly the right tool once. Code execution's case is when query shapes are diverse or unpredictable -- primitives the model composes in code cover shapes nobody pre-built a tool for. The real measured run showed consolidation winning on ONE fixed question precisely because that question's shape was already known; it doesn't settle which approach wins under a broader, less predictable query mix.",
           "source": "Tool Design"
+        },
+        {
+          "front": "What is 'context rot,' and why is it a real, physical constraint rather than just a metaphor?",
+          "back": "As the number of tokens in context grows, the model's ability to accurately recall and use information from it decreases -- rooted in the transformer's attention mechanism computing n\u00b2 pairwise relationships between tokens, so there's a real, finite 'attention budget' being spent regardless of how large the context window technically allows.",
+          "source": "Context Engineering"
+        },
+        {
+          "front": "What are the four verbs in LangChain's context engineering framework, and one example of each?",
+          "back": "Write (save outside the context window -- scratchpads, memories), Select (pull the right thing back in -- RAG, JIT loading via lightweight identifiers), Compress (keep only what's needed -- summarization, trimming), Isolate (split it up -- sub-agents with their own context, sandboxed execution).",
+          "source": "Context Engineering"
+        },
+        {
+          "front": "Breunig's four context failure definitions: poisoning, distraction, confusion, clash. Give each in one line.",
+          "back": "Poisoning: a hallucination makes it into context. Distraction: the context overwhelms the training (pulls the model toward repeating an in-context pattern instead of reasoning fresh). Confusion: superfluous context influences the response. Clash: parts of the context disagree.",
+          "source": "Context Engineering"
+        },
+        {
+          "front": "A real poisoning repro fed a fake 2009 founding year into context; a downstream question got the wrong age (17, not 12). Why was quarantine (replacing the bad message) the right fix rather than appending a correction after it?",
+          "back": "Leaving both the false and corrected facts in context turns a poisoning problem into a CLASH problem -- and clash resolution isn't guaranteed to favor the correct or newer fact. Quarantine removes the bad premise entirely rather than trading one failure mode for another.",
+          "source": "Context Engineering"
+        },
+        {
+          "front": "A real distraction repro showed six turns confidently applying a wrong averaging method (divide by N-1). The new question's real answer wasn't the predicted pattern-matched wrong number -- it was something else entirely (the raw, undivided sum). Was this a failed demo?",
+          "back": "No. A real wrong answer occurred under the flawed-history condition and vanished once that history was compressed away -- that's real evidence of context-caused failure and a real working fix, even though the SPECIFIC mechanism (exact pattern-copying) didn't match what was hypothesized going in. Reported honestly rather than adjusted to fit the prediction.",
+          "source": "Context Engineering"
+        },
+        {
+          "front": "A real confusion repro (12 tools, including a plausible stale-data decoy) found NO measurable confusion -- same correct tool, same correct answer, as the 1-tool clean condition. Does this mean tool confusion isn't real?",
+          "back": "No -- it's an honest negative result scoped to a specific scale. The cited literature (RAG-MCP) reports confusion effects starting around 30+ tools; 12 tools is below that threshold, so a clean result here doesn't contradict the literature's claim, it just wasn't positioned to detect the same effect.",
+          "source": "Context Engineering"
+        },
+        {
+          "front": "A real clash repro gave the model two contradictory facts, one explicitly labeled as 'supersedes' the other -- and the model resolved it correctly both with and without the stale fact present. What's the real limitation of this specific result?",
+          "back": "The explicit 'supersedes' label is a resolution CUE -- this tests whether the model can follow a labeled signal correctly, not whether it can resolve a genuinely unlabeled, ambiguous contradiction with no signal about which fact is current. That harder case is real, disclosed future work, not something this repro tested.",
+          "source": "Context Engineering"
+        },
+        {
+          "front": "Why does this page treat 'two of four repros found no failure' as a strength of the demo rather than a weakness?",
+          "back": "A demo where every hypothesized failure reproduces exactly as predicted, at trivial scale, every time, would be the more suspicious result. Running real experiments -- and reporting the real, specific, disclosed reasons two of them didn't reproduce (scale below a documented threshold; an explicit resolution cue) -- is more informative than confirming a taxonomy always looks bad in a toy example.",
+          "source": "Context Engineering"
         }
       ]
     }
