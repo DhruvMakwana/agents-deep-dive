@@ -33,9 +33,17 @@ Every page's TL;DR in one place, every page's Scenario Check merged into one com
     - **A real run measured parallelization's actual value**: the same 3 review calls took 4.79 seconds run sequentially and 1.86 seconds run concurrently — a real ~2.6x speedup, not the theoretical 3x, which is the honest number once real network and queueing overhead are in it.
     - **A real run also showed orchestrator-workers doing what it's supposed to**: the same planner, given two different topics, produced two genuinely differently-*shaped* breakdowns — a comparison-structured split for one topic, a derivation-structured split for the other — with nothing in the code telling it which shape to use.
 
+    ### [Reasoning Paradigms](reasoning-paradigms.md)
+
+    - **These are a different axis from [workflow patterns](workflow-patterns.md).** Workflow patterns fix the *topology* (which steps exist, in what order). Reasoning paradigms change how a *single step or loop* reasons, searches, or recovers from its own mistakes — they're about the shape of thinking, not the shape of the pipeline.
+    - **Plan-and-Solve is a zero-shot prompting technique, not a planner/executor architecture** — it's one prompt ("first devise a plan, then carry it out") compared against plain "let's think step by step." Don't confuse it with LangChain's separately-named Plan-and-Execute agent, which actually is an architecture.
+    - **ReWOO's real, verified advantage is token and call efficiency, not latency** — the paper never claims a latency win. A real measured run on this page needed 2.5x the calls and 6.8x the tokens for ReAct versus ReWOO on the identical question and model.
+    - **ReWOO's plan-then-execute split has a real failure surface ReAct doesn't**: a bad step in the plan is only caught once it's actually executed, not before. This page's real run hit exactly that — a generated plan referenced a function its tool didn't support, and one step genuinely failed.
+    - **Reasoning models changed what needs to be built by hand.** DeepSeek-R1's reported finding is that self-reflection and verification can emerge from pure reinforcement learning, without anyone hand-coding a Reflexion-style retry loop or a ToT-style external search — some of what these 2023 papers built as scaffolding, later training runs learned to do internally.
+
 === "Combined Scenario Check"
 
-    12 questions from every page on this site, one combined pass instead of opening each page separately. Every question shows which page it's from — go re-read that page for anything you get wrong.
+    16 questions from every page on this site, one combined pass instead of opening each page separately. Every question shows which page it's from — go re-read that page for anything you get wrong.
 
     <div class="quiz-widget" data-title="Combined Scenario Check — All Pages">
     <script type="application/json">
@@ -268,6 +276,82 @@ Every page's TL;DR in one place, every page's Scenario Check merged into one com
           ],
           "source": "Workflow Patterns",
           "sourceUrl": "workflow-patterns.md"
+        },
+        {
+          "scenario": "A team is deciding between ReAct and ReWOO for a pipeline that answers questions requiring 4-6 tool calls each. A teammate argues: 'ReWOO is strictly better here -- it needs way fewer LLM calls for the same result, so there's no real reason to use ReAct for a tool-heavy pipeline like this.'",
+          "question": "What's the strongest objection to that claim?",
+          "options": [
+            "ReAct is cheaper in tokens too, since each prompt is shorter than ReWOO's solve call",
+            "ReWOO can't handle steps that depend on each other's results at all",
+            "A bad ReWOO plan step is only caught once it actually executes, not before",
+            "ReAct only makes sense when none of the tools involved have side effects"
+          ],
+          "correct": 2,
+          "explanations": [
+            "Backwards from the measured pattern -- ReWOO's real advantage IS tokens, not ReAct's; ReAct's growing, resent transcript is the more expensive side, not the cheaper one.",
+            "Wrong on the mechanism -- ReWOO explicitly supports dependent steps through #E-style variable substitution; a later step can and does reference an earlier step's not-yet-known result.",
+            "Correct. This is exactly what a real run on this page hit: a generated ReWOO plan referenced a function its tool didn't support, and that step only failed once the deterministic executor actually ran it -- nothing checked the plan against real tool behavior first. ReAct's per-step decisions mean a bad result is visible to the model before it commits to the next action.",
+            "An arbitrary, fabricated condition with no grounding in either mechanism -- side effects aren't what separates when each approach is appropriate."
+          ],
+          "source": "Reasoning Paradigms",
+          "sourceUrl": "reasoning-paradigms.md"
+        },
+        {
+          "scenario": "After reading about LLM Compiler's parallel dispatch, an engineer proposes: 'Let's just always run every tool call in a ReWOO-style plan concurrently -- more parallelism is strictly an improvement, there's no downside.'",
+          "question": "What's wrong with running every step of a ReWOO plan concurrently by default?",
+          "options": [
+            "A step referencing an earlier step's result can't run before that result exists",
+            "Concurrency is only unsafe when a tool has side effects, not because of dependencies",
+            "Nothing is wrong -- concurrency can only help wall-clock time, never hurt it",
+            "ReWOO plans must always execute strictly sequentially, by design, unlike LLM Compiler"
+          ],
+          "correct": 0,
+          "explanations": [
+            "Correct. This is precisely the dependency check LLM Compiler's dispatch unit has to do: a step referencing #E1 in its own arguments cannot execute correctly until #E1's real value exists. This page's own real plan had exactly this shape -- three independent lookups, then three dependent arithmetic steps that needed those lookups' results.",
+            "A real consideration for a different failure mode (concurrent writes), but not the reason dependent steps specifically can't run early -- a read-only step that depends on another step's result still can't run before that result exists.",
+            "Ignores real dependencies entirely -- a plan step that substitutes an earlier variable into its own arguments has a genuine data dependency, not just a stylistic one; running it early isn't just unnecessary, it's incorrect.",
+            "Overstates ReWOO's actual design -- ReWOO's contribution is the plan-then-execute split and variable substitution, not a claim that execution must be sequential; nothing in the paper argues against parallelizing independent steps within a plan."
+          ],
+          "source": "Reasoning Paradigms",
+          "sourceUrl": "reasoning-paradigms.md"
+        },
+        {
+          "scenario": "A candidate is asked to explain Plan-and-Solve prompting in a system-design interview and answers: 'It's an architecture where a dedicated planner model breaks the task into subtasks and hands each one to a separate executor model or agent.'",
+          "question": "What's the most accurate correction to this answer?",
+          "options": [
+            "Right description, just the wrong paper name -- swap in 'ReWOO' and it's accurate",
+            "Accurate for Plan-and-Solve, but only when used inside a multi-agent framework",
+            "Correct that it uses two separate calls -- just wrong about separate models",
+            "It's one zero-shot prompt to a single model, not a multi-model architecture"
+          ],
+          "correct": 3,
+          "explanations": [
+            "Doesn't fix the actual error -- ReWOO also isn't a multi-model planner/executor architecture; it's a plan-then-execute mechanism with one planning call, not separate planner and executor models.",
+            "No such conditional exists in the paper -- Plan-and-Solve was evaluated as a standalone zero-shot prompting method, not as a component requiring a multi-agent wrapper to function as described.",
+            "Fabricates a two-call structure that isn't how the technique works -- it's one prompt, one call, asking for planning and solving in the same response, not two separate calls to two separate steps.",
+            "Correct. Plan-and-Solve's entire mechanism is prompt text: one instruction asking the same model to plan before solving, in a single zero-shot call, contrasted against plain chain-of-thought. There's no second model, no handoff, no separate executor role."
+          ],
+          "source": "Reasoning Paradigms",
+          "sourceUrl": "reasoning-paradigms.md"
+        },
+        {
+          "scenario": "A researcher reads DeepSeek-R1's reported finding that self-reflection and verification emerged from pure reinforcement learning, and concludes: 'This means Reflexion-style explicit retry loops are now obsolete -- there's no reason to build one anymore.'",
+          "question": "What's the strongest flaw in that conclusion?",
+          "options": [
+            "Wrong only because Reflexion also needs tasks with no verifiable ground truth",
+            "It generalizes one training result to every model, ignoring what that internal process can't do",
+            "Backwards -- Reflexion-style loops became MORE necessary once failures got harder to detect",
+            "Correct -- if the capability exists internally, building it externally again is pure redundancy"
+          ],
+          "correct": 1,
+          "explanations": [
+            "Introduces a claim with no support from anything on this page -- ground-truth availability isn't the axis the DeepSeek-R1 finding or the Reflexion paper turns on.",
+            "Correct. The finding is real and worth knowing, but it's scoped to models actually trained that way, and an internal process baked into generation isn't the same tool as an explicit, inspectable, interruptible loop your code controls -- and it says nothing about ReWOO or LLM Compiler's problem, which is about round-trips and token cost across tool calls, not about whether the model second-guesses itself.",
+            "Asserts a specific causal claim (harder to detect, therefore more necessary) that isn't established anywhere in the cited material -- a plausible-sounding but unsupported leap.",
+            "Takes the finding at face value without noticing what it doesn't cover -- 'emerged in this training setup' isn't the same claim as 'therefore always redundant to build externally.'"
+          ],
+          "source": "Reasoning Paradigms",
+          "sourceUrl": "reasoning-paradigms.md"
         }
       ]
     }
@@ -276,7 +360,7 @@ Every page's TL;DR in one place, every page's Scenario Check merged into one com
 
 === "Flashcards"
 
-    24 flashcards from every page with a deck so far — click a card to flip it, shuffle for random order.
+    32 flashcards from every page with a deck so far — click a card to flip it, shuffle for random order.
 
     <div class="flashcard-widget" data-title="Flashcards — All Pages">
     <script type="application/json">
@@ -401,6 +485,46 @@ Every page's TL;DR in one place, every page's Scenario Check merged into one com
           "front": "An evaluator-optimizer loop passes on its first attempt over 95% of the time after shipping. Is that evidence to remove it?",
           "back": "No -- a low retry rate is what a correctly-tuned safety net looks like: negligible cost on the common case, catching the rare real failures it was built for. Rarely firing is success, not proof it's unnecessary.",
           "source": "Workflow Patterns"
+        },
+        {
+          "front": "How are 'reasoning paradigms' (ReAct, Reflexion, ReWOO, ToT...) a different axis from Anthropic's workflow patterns?",
+          "back": "Workflow patterns fix the topology -- which steps exist, in what order. Reasoning paradigms change how a single step or loop reasons, searches, or recovers from mistakes -- several of them (ReWOO, ReAct) could sit inside any workflow pattern as the mechanism one step uses internally.",
+          "source": "Reasoning Paradigms"
+        },
+        {
+          "front": "Is Plan-and-Solve a planner/executor architecture, like the interview-prep seed doc originally described it?",
+          "back": "No -- it's a zero-shot PROMPTING technique: one instruction to one model ('first devise a plan, then carry it out step by step'), compared against plain chain-of-thought. Don't confuse it with LangChain's separately-named Plan-and-Execute agent, which really is a two-role architecture.",
+          "source": "Reasoning Paradigms"
+        },
+        {
+          "front": "What does ReWOO's paper actually claim -- token efficiency or latency?",
+          "back": "Token efficiency ('5x token efficiency... on HotpotQA'), and accuracy. It never claims a latency win. A real measured run showed ReWOO needing 2.5x fewer calls and 6.8x fewer tokens than ReAct on the identical question and model.",
+          "source": "Reasoning Paradigms"
+        },
+        {
+          "front": "A real ReWOO run generated a 6-step plan, and step E6 (round(E5, 2)) failed because the calculator tool didn't support function calls. What does this reveal about ReWOO's actual failure surface, versus ReAct's?",
+          "back": "ReWOO commits its whole plan before any of it runs, so a bad step (assuming a tool capability that doesn't exist) is only caught once it executes. ReAct decides one action at a time based on the real previous result, so it would see that failure before committing further -- the trade-off is fewer round-trips (ReWOO) versus earlier error detection (ReAct).",
+          "source": "Reasoning Paradigms"
+        },
+        {
+          "front": "What does LLM Compiler add on top of what ReWOO already does?",
+          "back": "Concurrent dispatch of a plan's independent steps. ReWOO's own plan executes in written order even when steps have no dependency on each other; LLM Compiler analyzes the dependency graph and runs independent steps in parallel -- a wall-clock win, not a token-count win (the same evidence still feeds one final solve call either way).",
+          "source": "Reasoning Paradigms"
+        },
+        {
+          "front": "A real Reflexion demo (a 9-swap key-tracking puzzle) got the right answer on attempt 1 -- no reflection ever fired. Is that a failed demo?",
+          "back": "No -- an honest result, not a weaker one. The mechanism is real and the code path exists; this run's failure precondition (a wrong first attempt) just didn't occur. What's notable is WHY: the model wrote out intermediate state after every swap instead of tracking it mentally, which is exactly the kind of externalized bookkeeping that avoids the errors this task risks.",
+          "source": "Reasoning Paradigms"
+        },
+        {
+          "front": "DeepSeek-R1's reported finding is that self-reflection and verification can emerge from pure RL. Does this make Reflexion-style explicit retry loops obsolete?",
+          "back": "No, and this is a common overreach. A reasoning model's internal self-correction isn't inspectable or interruptible the way an explicit loop is, isn't available on models without that training, and says nothing about ReWOO/LLM Compiler's separate problem (token/call economics across tool calls). What changed is which problems are worth hand-building scaffolding for -- not that the paradigms became pointless.",
+          "source": "Reasoning Paradigms"
+        },
+        {
+          "front": "Tree of Thoughts reports GPT-4 + CoT solving 4% of Game-of-24 tasks versus 74% with ToT search. Why doesn't this page build a fresh code demo for ToT and LATS?",
+          "back": "The tradeoff (breadth of search bought with a multiplicative call budget per branch explored) doesn't need a bespoke run to establish -- it's inherent to the algorithm, the same way parallelization's speedup was worth measuring but its existence wasn't in question. The real cited numbers plus the mechanism explanation carry the point without spending extra API calls to re-prove something structural.",
+          "source": "Reasoning Paradigms"
         }
       ]
     }
