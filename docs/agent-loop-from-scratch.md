@@ -54,14 +54,43 @@ The loop in this recipe is capped at a fixed number of iterations, and if the mo
 
 Worth being precise about what this cap does and doesn't cover: it bounds how many round-trips the loop can make, which is what keeps a stuck agent from silently burning an unbounded number of API calls. It says nothing about how long any *single* tool call is allowed to run — a tool that hangs for 90 seconds isn't touched by an iteration cap at all. Production loops need both: a step budget on the loop, and an independent timeout on each tool execution.
 
-!!! success "A real run — one honest surprise"
-    Question: *"I'm splitting a €127.50 dinner bill among 4 friends, and we want to add an 18% tip on top before splitting. What does each person owe, in US dollars?"* Ground truth, computed independently in plain Python: **$40.62**. One real run against Claude Haiku 4.5 — see the recipe README for the full trace.
+!!! success "A real run — one honest surprise, full input and output"
+    **Input**, sent identically to both versions: *"I'm splitting a €127.50 dinner bill among 4 friends, and we want to add an 18% tip on top before splitting. What does each person owe, in US dollars?"* Ground truth, computed independently in plain Python, not by the model: **$40.62**.
 
-    **No tools**: got every arithmetic step right on its own (18% tip, total, per-person split) — then, with no live exchange rate available, didn't assert a confident wrong number. It gave a range instead: *"approximately $40.80–$41.50 USD (depending on the current EUR/USD exchange rate, which fluctuates daily) ... Check a current converter for the exact amount."*
+    **Output, no tools** — in full, not trimmed:
 
-    **With tools**: converged in 3 turns to **$40.62 — the exact ground truth**. The trace shows something not asked for: the model issued two `calculate` calls in parallel in its first turn (Anthropic allows multiple `tool_use` blocks in one response), and the second one mildly re-did work the first had already computed rather than reusing it — correct, but not the shortest path available.
+    > **Step 1: Calculate the tip** — EUR127.50 × 0.18 = EUR22.95
+    >
+    > **Step 2: Total with tip** — EUR127.50 + EUR22.95 = EUR150.45
+    >
+    > **Step 3: Split among 4 people** — EUR150.45 ÷ 4 = EUR37.61 per person
+    >
+    > **Step 4: Convert to USD** — EUR37.61 × current exchange rate
+    >
+    > **Each person owes approximately $40.80–$41.50 USD** (depending on the current EUR/USD exchange rate, which fluctuates daily)
+    >
+    > *Note: I've used a typical exchange rate around 1.08–1.10 USD per EUR. Check a current converter for the exact amount with today's rate.*
 
-    The genuinely useful finding here isn't "the baseline can't do math" — it could. It's that the gap was a live-data problem, not an arithmetic one, and no amount of arithmetic skill closes a live-data gap without a real source for that data.
+    Every arithmetic step there is correct. The only thing it got wrong was guessing at an exchange rate instead of having a real one.
+
+    **Output, with tools** — the exact JSON this recipe's loop returns:
+
+    ```json
+    {
+      "outcome": "answered",
+      "answer": "Each person owes approximately $40.62 USD.\n\nHere's the breakdown:\n- Original bill: EUR 127.50\n- With 18% tip: EUR 150.45\n- Per person (÷4): EUR 37.61\n- Converted to USD: **$40.62 per person**",
+      "trace": [
+        {"step": 1, "tool": "calculate", "arguments": {"expression": "127.50 * 1.18"}, "result": {"result": 150.45}},
+        {"step": 1, "tool": "calculate", "arguments": {"expression": "127.50 * 1.18 / 4"}, "result": {"result": 37.6125}},
+        {"step": 2, "tool": "convert_currency", "arguments": {"amount": 37.6125, "from_currency": "EUR", "to_currency": "USD"}, "result": {"result": 40.6215}}
+      ],
+      "steps": 3
+    }
+    ```
+
+    Reading the trace: both `calculate` calls landed in `step: 1` — the model issued them in parallel, in the same turn, without being asked to. The second call is mildly redundant (it recomputes `127.50 * 1.18` again as part of `127.50 * 1.18 / 4`, instead of reusing the first call's `150.45`) — correct, but not the shortest path available. `step: 2` then converts the correct EUR-per-person figure to USD, landing on the ground truth exactly.
+
+    The genuinely useful finding here isn't "the baseline can't do math" — the trace above shows it could. It's that the gap was a live-data problem, not an arithmetic one, and no amount of arithmetic skill closes a live-data gap without a real source for that data.
 
 ## Interview angle
 

@@ -24,10 +24,31 @@ Break a task into an explicit sequence of steps, where each step's output feeds 
 --8<-- "https://raw.githubusercontent.com/DhruvMakwana/agents-cookbook/main/workflow-patterns/workflow_patterns_docs.py:chaining"
 ```
 
-!!! success "A real run"
-    Task: outline a short explainer on how hash tables get O(1) average lookup, gated on covering three required concepts (hash function, collisions, average-case O(1)), then expand — but only if the gate passes.
+!!! success "A real run — input and output shown in full"
+    **Input** (the exact instruction sent to generate the outline): *"Write a 3-bullet outline for a short explainer on how hash tables achieve O(1) average-case lookup time, covering: what a hash function does, how collisions are handled, and why average lookup is O(1)."*
 
-    The outline covered all three on the first attempt, the gate returned `{"hash_function": true, "collisions": true, "big_o": true}`, and the 150-word explainer that got generated from it stayed accurate to what the outline promised. The gate didn't have anything to catch this run — which is the point: it's there for the run where the outline misses something, and this run shows the happy path working cleanly rather than a forced failure.
+    **Output — the outline** the model actually produced:
+    > • **Hash Functions and Direct Addressing**: Explain how hash functions map keys to array indices, allowing direct access to stored values in constant time, and why this is faster than searching through unsorted data.
+    >
+    > • **Collision Handling Strategies**: Describe how collisions (when multiple keys hash to the same index) are managed through techniques like chaining or open addressing, ensuring that collisions don't completely break the O(1) guarantee.
+    >
+    > • **Average-Case Analysis and Load Factor**: Discuss how O(1) average-case lookup depends on a good hash function and maintaining a low load factor, showing that when collisions are minimized and distributed evenly, the expected chain length or probe sequence remains constant.
+
+    **The gate's verdict**, on that exact outline: `{"hash_function": true, "collisions": true, "big_o": true}` — passed, so the pipeline proceeded to expand it.
+
+    ??? note "Output — the full ~150-word explainer generated from that outline (click to expand)"
+        **Hash Tables: Achieving Constant-Time Lookups**
+
+        **Hash Functions and Direct Addressing**
+        Hash functions map keys to array indices, enabling direct access to values in O(1) time. Instead of searching through unsorted data sequentially—which requires O(n) comparisons—hash tables compute an index immediately, allowing instant retrieval. This transformation of search into computation makes lookups dramatically faster.
+
+        **Collision Handling Strategies**
+        When multiple keys hash to the same index, collisions occur. Two main strategies resolve this: *chaining* stores colliding elements in linked lists at each index, while *open addressing* finds alternative empty slots within the array. Both techniques prevent complete system failure, preserving the O(1) guarantee by limiting collision impact.
+
+        **Average-Case Analysis and Load Factor**
+        O(1) average-case performance depends on distributing keys evenly and maintaining a low load factor (ratio of elements to array size). A quality hash function and proper load factor management keep expected chain lengths or probe sequences constant, regardless of dataset size. When collisions remain minimal and uniformly distributed, lookups remain efficient.
+
+    The gate didn't have anything to catch this run, and the expansion stayed faithful to what the outline promised — which is the point of showing it in full: you can check that claim yourself instead of taking it on faith. The gate is there for the run where the outline misses something, and this run shows the happy path working cleanly rather than a forced failure.
 
 ## Routing
 
@@ -41,12 +62,22 @@ Split one task into independent pieces, dispatch them concurrently, combine the 
 --8<-- "https://raw.githubusercontent.com/DhruvMakwana/agents-cookbook/main/workflow-patterns/workflow_patterns_docs.py:parallelization"
 ```
 
-!!! success "A real run — the speedup, and something more interesting than the speedup"
-    Task: review the same short (and deliberately slightly flawed) paragraph about binary search along three fixed dimensions — technical accuracy, beginner clarity, grammar — dispatched with a thread pool, timed against running the identical three calls one after another.
+!!! success "A real run — input and output shown in full, so the reviewer claims below are checkable"
+    **Input** — the exact paragraph all three reviewers were given (deliberately written with a few real, plantable issues):
 
-    **4.79 seconds sequential, 1.86 seconds concurrent** — about 2.6x faster, a real, honest number rather than a clean theoretical 3x.
+    > Binary search works by repeatedly cutting the search space in half. You start with a sorted array, check the middle element, and if its not what your looking for, you eliminate half the remaining elements based on whether the target is bigger or smaller. This continues until you find it or theres nothing left to check, which means the algorithm needs about log base 2 of n steps for n elements, way faster then checking each one by one.
 
-    More useful than the timing: the three reviewers found three different kinds of problems in the same five sentences. Technical accuracy found nothing wrong this run. Clarity caught that the text never states the array has to be sorted first, and that "bigger or smaller" doesn't say which half gets eliminated. Grammar caught all four planted issues (*its* → *it's*, *your* → *you're*, *theres* → *there's*, *then* → *than*) precisely. One generic "review this" call would have had to catch all of that in one pass, or split its attention across it — three focused calls each stayed narrow and each caught what was actually in its lane.
+    **4.79 seconds sequential, 1.86 seconds concurrent** for the same 3 calls above — about 2.6x faster, a real, honest number rather than a clean theoretical 3x.
+
+    **Output — each reviewer's full, unedited reply** to that exact paragraph:
+
+    *Technical accuracy* — "**Technical Accuracy: Correct** — **Issues found:** None found. The explanation accurately describes binary search's core mechanism (repeatedly halving the search space), the requirement for a sorted array, the comparison logic, termination conditions, and the O(log n) time complexity. All technical details are factually correct."
+
+    *Clarity for a beginner* — "**Issues found:** 1. **Missing prerequisite clarity**: The text doesn't explicitly state the array *must be sorted first* before binary search works — a beginner might assume it works on any array. 2. **Vague comparison logic**: 'whether the target is bigger or smaller' doesn't clearly explain *which half* gets eliminated based on that comparison (beginners need to know: if target is smaller, search left half; if bigger, search right half)."
+
+    *Grammar and style* — "**Issues found:** 1. 'its not' should be 'it's not' (contraction of 'it is') 2. 'your looking' should be 'you're looking' (contraction of 'you are') 3. 'theres' should be 'there's' (contraction of 'there is') 4. 'then' should be 'than' (comparison, not time reference)"
+
+    Read the input paragraph again against the grammar reviewer's four findings — all four are genuinely there (*its*, *your*, *theres*, *then*). The technical-accuracy reviewer finding nothing wrong is also checkable against the input: the explanation is, in fact, correct. One generic "review this" call would have had to catch all of that in one pass, or split its attention across it — three focused calls each stayed narrow and each caught what was actually in its lane.
 
 ## Orchestrator-workers
 
@@ -56,12 +87,41 @@ A planning call looks at the specific input and decides its **own** sub-tasks �
 --8<-- "https://raw.githubusercontent.com/DhruvMakwana/agents-cookbook/main/workflow-patterns/workflow_patterns_docs.py:orchestrator_workers"
 ```
 
-!!! success "A real run — the same planner, two topics, two different shapes"
-    Topic A, *"arrays vs. linked lists"*, got a **comparison-shaped** split: storage and access speed, insertion and deletion cost, memory overhead, real-world use cases — four dimensions to compare side by side.
+!!! success "A real run — the same planner, two topics, the exact sub-questions it chose for each"
+    **Input** to the planner for Topic A was just the string `"arrays vs. linked lists"`. **Output** — the planner's own sub-questions, verbatim, no editing:
 
-    Topic B, *"how binary search achieves O(log n) time"*, got a **derivation-shaped** split from the same planner: the core halving idea, the math that turns halving into a logarithm, why that identity holds, the real-world payoff of the result — four steps in an argument, not four dimensions of a comparison.
+    1. How do arrays and linked lists store data in memory, and how does this affect access speed (e.g., random access via index)?
+    2. How do insertion and deletion operations differ in cost and complexity between arrays and linked lists?
+    3. How does memory allocation and overhead (fixed vs. dynamic sizing, pointer storage) differ between the two structures?
+    4. In what real-world scenarios or use cases is one structure clearly preferable over the other?
 
-    Both happened to land on four sub-questions, which is coincidence, not the finding. The finding is that nothing in the code told the planner which shape to use for which kind of topic — a comparison prompt gets compared, a derivation prompt gets derived, because the planning call actually read the input and designed a decomposition to fit it, which is the property that makes this pattern genuinely different from parallelization's fixed split.
+    That's a **comparison-shaped** split — four dimensions to compare side by side.
+
+    **Input** for Topic B was just `"how binary search achieves O(log n) time"`. **Output** — the same planner, same prompt template, different sub-questions:
+
+    1. What is the core idea behind binary search that lets it eliminate half of the remaining elements at each step?
+    2. How does repeatedly halving the search space mathematically translate into a logarithmic number of steps?
+    3. Why does the number of times you can halve n before reaching 1 equal log base 2 of n?
+    4. What real-world implication does O(log n) time have for binary search's efficiency on large datasets?
+
+    That's a **derivation-shaped** split — four steps in a mathematical argument, not four dimensions of a comparison.
+
+    Both happened to land on four sub-questions, which is coincidence, not the finding — read the two lists above and the difference in *kind*, not count, is the actual evidence. Nothing in the code told the planner which shape to use for which topic; the comparison prompt got compared, the derivation prompt got derived, because the planning call actually read the input and designed a decomposition to fit it.
+
+    ??? note "Output — the full synthesized explainer for Topic B, built from those 4 worker answers (click to expand)"
+        Binary search exploits **sorted data** to systematically eliminate half the search space at each step. By comparing your target to the middle element, you determine which half contains the answer — then discard the other half entirely.
+
+        This repeated halving translates directly into logarithmic complexity. When you halve a dataset *n* repeatedly, you're answering: how many times must you divide *n* by 2 until reaching 1?
+
+        Mathematically: *n* ÷ 2^*k* = 1
+
+        Solving for *k*: *k* = log₂(*n*)
+
+        Since logarithms are the inverse of exponentiation, the number of halvings equals log base 2 of the original size.
+
+        **Real-world impact:** A 1 million-item dataset requires only ~20 comparisons with binary search versus 500,000 with linear search. This logarithmic growth means performance remains acceptable even as data scales dramatically, making binary search invaluable for massive datasets in databases, file systems, and real-time applications.
+
+        The core insight: each step eliminates exponentially more possibilities, compressing an enormous problem into a tiny number of operations.
 
 ## Evaluator-optimizer
 
@@ -71,10 +131,14 @@ Generate, evaluate the output against a concrete criterion, and if it fails, ret
 --8<-- "https://raw.githubusercontent.com/DhruvMakwana/agents-cookbook/main/workflow-patterns/workflow_patterns_docs.py:evaluator_optimizer"
 ```
 
-!!! success "A real run"
-    Task: write a one-sentence to-do-app description, under 20 words, without any of four banned marketing clichés ("simple," "easy," and their variants) — checked deterministically, no LLM judge involved.
+!!! success "A real run — full input and output"
+    **Input**: *"Write ONE sentence (under 20 words) describing a to-do list app. Do not use the words 'simple', 'easy', 'simply', or 'easily' — those are banned marketing cliches."*
 
-    Passed on the first attempt: a 15-word description with no banned words. Worth stating plainly rather than treating as a letdown: the retry-with-feedback path exists in the code and is real, but this run didn't need it, and a loop that rarely has to retry is what a correctly-scoped safety net looks like — it isn't evidence the loop was pointless to build.
+    **Output, attempt 1**: *"A digital tool that organizes tasks, tracks progress, and helps you prioritize what matters most."*
+
+    **Deterministic evaluator's verdict** on that exact sentence: `{"ok": true, "word_count": 15, "banned_found": []}` — 15 words (under the 20-word limit), no banned word present. Passed on the first attempt.
+
+    Worth stating plainly rather than treating as a letdown: the retry-with-feedback path exists in the code and is real, but this run didn't need it, and a loop that rarely has to retry is what a correctly-scoped safety net looks like — it isn't evidence the loop was pointless to build.
 
 ## Interview angle
 

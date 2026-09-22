@@ -48,19 +48,26 @@ Same 5-entry FAQ knowledge base for both:
 --8<-- "https://raw.githubusercontent.com/DhruvMakwana/agents-cookbook/main/what-is-an-agent/workflow_vs_agent_docs.py:agent_loop"
 ```
 
-!!! success "A real, unforced run — both pipelines given the same misclassification"
-    Test query: *"My storage suddenly shows as full even though I deleted a bunch of files last week, and now I can't upload anything — is there some sync delay, or did I lose data?"* One real run against Claude Haiku 4.5 — see the recipe README for the full setup.
+!!! success "A real, unforced run — full input and output, both pipelines given the same misclassification"
+    **Input** — the test query, identical for both pipelines: *"My storage suddenly shows as full even though I deleted a bunch of files last week, and now I can't upload anything — is there some sync delay, or did I lose data?"*
 
-    Both pipelines' `classify_intent` step picked `storage_limits` — a reasonable-sounding guess given the word "storage," and the wrong bucket for what's actually being asked (this isn't a tier-size question).
+    Both pipelines' `classify_intent` step picked `storage_limits` — a reasonable-sounding guess given the word "storage," and the wrong bucket for what's actually being asked (this isn't a tier-size question). That category resolves to this **exact FAQ entry** (from the `FAQ` dict shown above), which is what the generation step actually received as its only source material: *"The Free tier includes 5GB of storage. The Pro tier includes 2TB of storage."*
 
-    **Workflow**, stuck with that FAQ entry, replied:
-    > "I don't have enough information in the provided FAQ entry to answer your question. The FAQ only states storage limits for different tiers, but doesn't address sync delays, data loss, or why your storage might still show as full after deletion. [...] I'd recommend contacting support directly so they can investigate your account specifically."
+    **Output — workflow**, stuck with that FAQ entry, replied in full:
+    > "I don't have enough information in the provided FAQ entry to answer your question. The FAQ only states storage limits for different tiers, but doesn't address sync delays, data loss, or why your storage might still show as full after deletion.
+    >
+    > To help you properly, I'd need access to FAQs or documentation covering:
+    > - How file deletion and storage updates work
+    > - Troubleshooting steps for storage issues
+    > - Whether there are known sync delays
+    >
+    > I'd recommend contacting support directly so they can investigate your account specifically."
 
     A genuinely honest finding worth stating plainly: Claude *declined on its own* here rather than confidently inventing an answer, and did so more explicitly than that — it named exactly what the FAQ doesn't cover and pointed the customer elsewhere. So the standard "naive pipeline confidently makes something up" framing doesn't automatically hold, and this held for both a small local model and a frontier one on this same query. What the workflow structurally still lacks, regardless of how well the wording comes out, is a **mechanism to act** on that doubt: whatever the generation step says, that's the final message back to the customer. There's no next step for it to take.
 
-    **Agent**, with the identical misclassification, ran its judge step, got `sufficient: false`, and the model itself chose `CLARIFY` — the one real decision point in this recipe's design. (The clarifying question it triggers is a fixed reply in this minimal version, not model-generated text; what's real here is the *action choice* itself, not its wording.)
+    **Output — agent**, given the identical FAQ entry above, ran its judge step first. **Input** to that step was the query plus the same FAQ entry, and its **output** was a `sufficient: false` verdict — the model reading the same limited FAQ entry and, this time, saying so structurally instead of in prose. That verdict is what `decide_next_action` then reads, and its output was `CLARIFY` — the one real decision point in this recipe's design. (The clarifying question that gets sent back is a fixed reply in this minimal version, not model-generated text; what's real here is the *action choice* itself, not its wording — see the recipe's code above.)
 
-    Same initial mistake, same model. The difference isn't a smarter classifier — it's that the agent's architecture gave the model somewhere to go with its own uncertainty, and the workflow's didn't.
+    Same input, same misclassification, same model. The difference isn't a smarter classifier — it's that the agent's architecture gave the model somewhere to go with its own uncertainty, and the workflow's didn't.
 
 ## Definitions genuinely disagree — and that's fine to say out loud
 
