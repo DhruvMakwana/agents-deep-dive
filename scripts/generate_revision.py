@@ -28,6 +28,7 @@ SECTIONS = [
     ("Foundations", [
         ("What Is an Agent?", "what-is-an-agent.md"),
         ("The Agent Loop From Scratch", "agent-loop-from-scratch.md"),
+        ("Workflow Patterns", "workflow-patterns.md"),
     ]),
 ]
 

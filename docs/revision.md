@@ -25,9 +25,17 @@ Every page's TL;DR in one place, every page's Scenario Check merged into one com
     - **A hard iteration cap bounds round-trips, not per-call latency.** They're separate risks and need separate limits — a loop that can't run away forever can still stall for a long time on one slow tool call.
     - **A real run here produced a genuinely counter-intuitive result**: the no-tools baseline got every arithmetic step right on its own — what it actually lacked was a live exchange rate, which isn't an arithmetic problem at all.
 
+    ### [Workflow Patterns](workflow-patterns.md)
+
+    - **Anthropic names five workflow patterns** — chaining, routing, parallelization, orchestrator-workers, evaluator-optimizer — and every one of them stays a workflow under the [What Is an Agent?](what-is-an-agent.md) definition: the control flow is fixed by code, even where an LLM call is involved in a decision along the way.
+    - **Parallelization has two distinct shapes.** *Sectioning* splits one task into a fixed, developer-chosen set of independent subtasks. *Voting* runs the same task multiple times and aggregates. This page demos sectioning.
+    - **Orchestrator-workers is the pattern most often confused with parallelization**, and the difference isn't concurrency — it's whether the set of subtasks is fixed by code ahead of time (parallelization) or decided by a planning call at runtime, per input (orchestrator-workers).
+    - **A real run measured parallelization's actual value**: the same 3 review calls took 4.79 seconds run sequentially and 1.86 seconds run concurrently — a real ~2.6x speedup, not the theoretical 3x, which is the honest number once real network and queueing overhead are in it.
+    - **A real run also showed orchestrator-workers doing what it's supposed to**: the same planner, given two different topics, produced two genuinely differently-*shaped* breakdowns — a comparison-structured split for one topic, a derivation-structured split for the other — with nothing in the code telling it which shape to use.
+
 === "Combined Scenario Check"
 
-    8 questions from every page on this site, one combined pass instead of opening each page separately. Every question shows which page it's from — go re-read that page for anything you get wrong.
+    12 questions from every page on this site, one combined pass instead of opening each page separately. Every question shows which page it's from — go re-read that page for anything you get wrong.
 
     <div class="quiz-widget" data-title="Combined Scenario Check — All Pages">
     <script type="application/json">
@@ -184,6 +192,82 @@ Every page's TL;DR in one place, every page's Scenario Check merged into one com
           ],
           "source": "The Agent Loop From Scratch",
           "sourceUrl": "agent-loop-from-scratch.md"
+        },
+        {
+          "scenario": "A chaining pipeline generates a document outline, gates it against 3 required concepts, and only expands into a full document if the gate passes. A teammate suggests removing the gate: 'Just have the final expansion step handle any gaps itself while writing -- one fewer LLM call, and it can improvise around a missing concept instead of stopping.'",
+          "question": "What's the strongest reason to keep the explicit gate?",
+          "options": [
+            "Removing the gate saves a call and is strictly better, since fewer steps always means lower cost",
+            "The gate is what makes a chain failure legible and cheap to catch. Without it, a missing concept becomes the expansion step's problem to silently improvise around, and you'd only find out by reading the final output closely -- the gate turns an invisible quality gap into an explicit, checkable, early stop",
+            "The gate is unnecessary, because the same model that wrote the outline will remember what it intended when it expands, so nothing is actually at risk of being dropped",
+            "The gate should be removed, but only because a 3-item checklist is too rigid -- gates only add value when checking more than 3 concepts"
+          ],
+          "correct": 1,
+          "explanations": [
+            "A real cost consideration, but 'fewer steps' isn't automatically 'strictly better' -- it ignores the downstream cost of an unnoticed quality gap reaching the final output undetected.",
+            "Correct. The gate's value isn't the check itself, it's making a specific kind of failure visible and cheap at the point it happens, instead of buried in a longer final output where it's expensive to notice and hard to attribute to a specific missing piece.",
+            "A plausible-sounding but ungrounded claim -- there's no mechanism that guarantees the expansion step 'remembers' anything beyond what's literally present in the outline text it's given. If the outline is missing a concept, there's nothing to recall.",
+            "An arbitrary, fabricated threshold with no basis -- nothing about gate value scales specifically with item count past some cutoff."
+          ],
+          "source": "Workflow Patterns",
+          "sourceUrl": "workflow-patterns.md"
+        },
+        {
+          "scenario": "In this page's real run, the parallel 'technical accuracy' reviewer found no issues, while the 'clarity' and 'grammar' reviewers both found real, correct problems in the same paragraph.",
+          "question": "What's the correct conclusion to draw from this?",
+          "options": [
+            "The technical-accuracy dimension is unnecessary and should be dropped from future runs, since it found nothing this time",
+            "One dimension finding nothing in a specific run isn't evidence the dimension is worthless -- different runs or different input text can trigger different subsets of real issues; sectioning's value is giving each dimension focused attention, not guaranteeing every dimension always fires",
+            "The reviewers must be poorly prompted, since a genuinely useful reviewer should always find at least one issue to justify its cost",
+            "This proves parallel dispatch produces lower-quality reviews than sequential dispatch would have"
+          ],
+          "correct": 1,
+          "explanations": [
+            "Generalizing from one clean pass to 'drop this dimension permanently' is exactly the kind of overreaction a single data point doesn't support -- a different input, or the same input reviewed again, could easily trigger a real technical-accuracy finding.",
+            "Correct. A reviewer correctly reporting nothing wrong is a legitimate, honest outcome -- the same logic as this page's evaluator-optimizer passing on its first attempt. Sectioning's job is giving each dimension a focused, uncontested look, not guaranteeing every dimension produces a finding on every run.",
+            "A tempting but backwards assumption -- a reviewer's job is to report accurately, and 'accurately found nothing' is not evidence of a bad prompt, it's the correct behavior when there's genuinely nothing to flag on that dimension.",
+            "Confuses concurrency (how the calls are dispatched) with content quality (what each call finds) -- these are unrelated. Running the same three prompts sequentially instead of concurrently changes wall-clock time, not what any individual call returns."
+          ],
+          "source": "Workflow Patterns",
+          "sourceUrl": "workflow-patterns.md"
+        },
+        {
+          "scenario": "Two engineers debate whether a system is 'parallelization' or 'orchestrator-workers.' It takes a user's topic and always dispatches exactly 3 fixed, hardcoded reviewer prompts (accuracy, clarity, grammar) concurrently, then combines the results. The second engineer argues: 'That's still parallelization -- it only becomes orchestrator-workers once the SET of sub-tasks itself is decided by a model at runtime instead of being fixed by the code ahead of time.'",
+          "question": "Who's right?",
+          "options": [
+            "The first framing is right -- dispatching multiple concurrent LLM calls on subtasks makes it orchestrator-workers by definition, regardless of how those subtasks were chosen",
+            "The second engineer is right -- the defining feature of orchestrator-workers is that a planning call decides the number and nature of sub-tasks dynamically, per input; a fixed, developer-chosen set dispatched concurrently is parallelization (sectioning) no matter how many sub-tasks there are",
+            "Neither -- the real distinction is whether the sub-tasks run concurrently (parallelization) or sequentially (orchestrator-workers)",
+            "The first engineer is right, but only because there are exactly 3 fixed subtasks -- orchestrator-workers specifically requires more than 3"
+          ],
+          "correct": 1,
+          "explanations": [
+            "This is the exact confusion this page's Interview angle section names directly -- concurrency is an implementation detail available to both patterns, not what separates them.",
+            "Correct. Who decides the sub-tasks, and when, is the actual distinguishing feature -- a hardcoded set of 3 dispatched concurrently is parallelization regardless of scale; the moment a planning call reads the input and decides the breakdown itself, it's orchestrator-workers.",
+            "A genuinely tempting but wrong mechanism claim -- orchestrator-workers' worker calls can also run concurrently (this recipe's do), and parallelization's calls could in principle run sequentially too. Execution order is orthogonal to this distinction.",
+            "An arbitrary, fabricated numeric threshold -- nothing about the pattern's definition depends on a specific sub-task count."
+          ],
+          "source": "Workflow Patterns",
+          "sourceUrl": "workflow-patterns.md"
+        },
+        {
+          "scenario": "A team adds an evaluator-optimizer loop (generate, check length and banned words, retry up to 3 times) to a product-description generator after occasionally seeing outputs exceed the word limit. After shipping, the loop passes on the first attempt over 95% of the time.",
+          "question": "What's the most defensible reaction to this data?",
+          "options": [
+            "Remove the loop -- if it almost never retries, it isn't doing anything useful",
+            "Keep the loop as-is -- a low retry rate is exactly what a correctly-tuned safety net looks like: it costs almost nothing on the common case and catches the rare, real failures it was built for, without needing to fire often to be worth having",
+            "The high pass rate proves the evaluator's criteria are too lenient and should be made stricter to justify the loop's existence",
+            "The low retry rate means the model's outputs are now reliable enough that the deterministic checks can be removed entirely, with no checks left in place"
+          ],
+          "correct": 1,
+          "explanations": [
+            "This is the exact 'if it rarely fires it must be useless' trap this page's own evaluator-optimizer run was written to push back on directly -- a rare failure is still a real failure, and the loop's cost on the 95%+ common case is negligible.",
+            "Correct. The loop was built because occasional real violations were observed; a low retry rate after shipping means it's catching those rare cases cheaply, which is success, not evidence the loop is unnecessary.",
+            "Backwards reasoning -- a low failure rate doesn't imply the bar is too easy; the bar was presumably set at the actual requirement (word limit, banned words), and rarely failing it is the desired outcome, not a sign to tighten further.",
+            "Confuses 'usually passes' with 'will always pass' -- removing a cheap, deterministic check because failures are rare (not impossible) reintroduces exactly the bug the loop was built to catch, the next time a rare case shows up."
+          ],
+          "source": "Workflow Patterns",
+          "sourceUrl": "workflow-patterns.md"
         }
       ]
     }
@@ -192,7 +276,7 @@ Every page's TL;DR in one place, every page's Scenario Check merged into one com
 
 === "Flashcards"
 
-    16 flashcards from every page with a deck so far — click a card to flip it, shuffle for random order.
+    24 flashcards from every page with a deck so far — click a card to flip it, shuffle for random order.
 
     <div class="flashcard-widget" data-title="Flashcards — All Pages">
     <script type="application/json">
@@ -277,6 +361,46 @@ Every page's TL;DR in one place, every page's Scenario Check merged into one com
           "front": "In the same real run, why did two calculate tool calls both appear with the same step number in the trace?",
           "back": "The model issued them in parallel within a single turn -- Anthropic's tool use allows multiple tool_use blocks in one response by default, and the loop logs every tool call from that turn under that turn's step count.",
           "source": "The Agent Loop From Scratch"
+        },
+        {
+          "front": "Why do all five of Anthropic's named workflow patterns stay workflows, not agents, even when an LLM makes a decision inside them?",
+          "back": "The consequence of that decision is wired in by the developer ahead of time (a gate's pass/fail branches, a router's fixed handlers, a capped retry count) -- the model's judgment fills in a pre-built slot, it doesn't choose the slot itself.",
+          "source": "Workflow Patterns"
+        },
+        {
+          "front": "What does a 'gate' add to a chaining pipeline that a single generate-then-expand pipeline lacks?",
+          "back": "An explicit, checkable stop point: a bad intermediate result is caught and surfaced before the expensive final step runs, instead of silently propagating into (and being buried inside) the final output.",
+          "source": "Workflow Patterns"
+        },
+        {
+          "front": "What are the two distinct uses of parallelization Anthropic names?",
+          "back": "Sectioning (different pieces answer different sub-questions about the same input) and voting (the same question run multiple times, aggregated for a more confident answer).",
+          "source": "Workflow Patterns"
+        },
+        {
+          "front": "What actually separates orchestrator-workers from parallelization -- it is NOT concurrency.",
+          "back": "Who decides the set of sub-tasks, and when. Parallelization uses a fixed, developer-chosen set of sub-tasks. Orchestrator-workers uses a planning call that decides the sub-tasks dynamically, per input. Both can run their sub-tasks concurrently -- that's orthogonal to the distinction.",
+          "source": "Workflow Patterns"
+        },
+        {
+          "front": "In a real run, the same orchestrator-workers planner was given two different topics. What did it produce, and why is that the actual finding (not the sub-task count)?",
+          "back": "Two differently-SHAPED breakdowns -- a comparison-shaped split for 'arrays vs linked lists', a derivation-shaped split for 'how binary search achieves O(log n)'. Both happened to have 4 sub-questions (coincidence) -- the finding is that the planner read each input and designed a decomposition to fit it, unprompted.",
+          "source": "Workflow Patterns"
+        },
+        {
+          "front": "Does an evaluator in the evaluator-optimizer pattern have to be an LLM call?",
+          "back": "No. A deterministic check (e.g. word count, banned-word list) works fine when the pass/fail criterion is exact -- this page's real demo uses a non-LLM evaluator.",
+          "source": "Workflow Patterns"
+        },
+        {
+          "front": "A real timed run measured parallelization's speedup as 2.6x (4.79s sequential vs 1.86s concurrent for 3 calls), not a clean 3x. Why report the real number instead of the theoretical one?",
+          "back": "The theoretical N-times speedup ignores real network and queueing overhead; reporting the measured 2.6x is the honest number a reader can actually expect, not an idealized one.",
+          "source": "Workflow Patterns"
+        },
+        {
+          "front": "An evaluator-optimizer loop passes on its first attempt over 95% of the time after shipping. Is that evidence to remove it?",
+          "back": "No -- a low retry rate is what a correctly-tuned safety net looks like: negligible cost on the common case, catching the rare real failures it was built for. Rarely firing is success, not proof it's unnecessary.",
+          "source": "Workflow Patterns"
         }
       ]
     }
