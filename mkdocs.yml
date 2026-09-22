@@ -1,0 +1,113 @@
+site_name: Agents, Deep Dive
+site_description: A deep-dive reference on LLM agents — architectures, tools, context and memory, multi-agent systems, evaluation, security, durable execution, and training agents with RL.
+site_author: Dhruv Makwana
+# IMPORTANT: update these two before deploying to GitHub Pages.
+# If this repo is published at github.com/<user>/<repo>, site_url is
+# https://<user>.github.io/<repo>/ (or https://<user>.github.io/ for a user/org page repo).
+site_url: https://dhruvmakwana.github.io/agents-deep-dive/
+repo_url: https://github.com/dhruvmakwana/agents-deep-dive
+repo_name: dhruvmakwana/agents-deep-dive
+edit_uri: ""
+
+theme:
+  name: material
+  palette:
+    - scheme: slate
+      primary: black
+      accent: deep purple
+      toggle:
+        icon: material/weather-sunny
+        name: Switch to light mode
+    - scheme: default
+      primary: white
+      accent: deep purple
+      toggle:
+        icon: material/weather-night
+        name: Switch to dark mode
+  font:
+    text: Inter
+    code: JetBrains Mono
+  features:
+    - navigation.instant
+    - navigation.tracking
+    - navigation.tabs
+    - navigation.tabs.sticky
+    - navigation.sections
+    - navigation.top
+    - navigation.indexes
+    - toc.follow
+    - search.suggest
+    - search.highlight
+    - content.code.copy
+    - content.code.annotate
+  icon:
+    repo: fontawesome/brands/github
+  favicon: assets/favicon.svg
+
+plugins:
+  - search
+  - tags
+
+markdown_extensions:
+  - abbr
+  - admonition
+  - attr_list
+  - def_list
+  - footnotes
+  - md_in_html
+  - tables
+  - toc:
+      permalink: true
+      title: On this page
+  - pymdownx.details
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
+  - pymdownx.tabbed:
+      alternate_style: true
+  - pymdownx.highlight:
+      anchor_linenums: true
+      line_spans: __span
+      pygments_lang_class: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets:
+      # ".." resolves to Agents/, so snippets are referenced as
+      # "agents-cookbook/<recipe>/<file>.py:<block>". This is a LOCAL path,
+      # not a URL -- the cookbook repo isn't published yet. Once it is,
+      # switch snippet refs to raw.githubusercontent.com URLs (see the RAG
+      # blog for the pattern) and drop this base_path, matching url_download
+      # below which stays on for any URL-based snippets added later.
+      base_path: ["..", "."]
+      check_paths: true
+      url_download: true
+      url_timeout: 10
+  - pymdownx.emoji:
+      emoji_index: !!python/name:material.extensions.emoji.twemoji
+      emoji_generator: !!python/name:material.extensions.emoji.to_svg
+  - pymdownx.critic
+  - pymdownx.caret
+  - pymdownx.mark
+  - pymdownx.tilde
+
+extra_css:
+  - stylesheets/extra.css
+  - stylesheets/quiz.css
+  - stylesheets/flashcards.css
+
+extra_javascript:
+  - javascripts/quiz.js
+  - javascripts/flashcards.js
+
+extra:
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/dhruvmakwana
+
+nav:
+  - Home: index.md
+  - Revision: revision.md
+  - Foundations:
+      - "What Is an Agent?": what-is-an-agent.md
+  - About: about.md
