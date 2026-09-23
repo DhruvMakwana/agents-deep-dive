@@ -39,6 +39,7 @@ SECTIONS = [
         ("MCP Deep Dive", "mcp-deep-dive.md"),
         ("KV-Cache Economics", "kv-cache-economics.md"),
         ("Memory Architectures", "memory-architectures.md"),
+        ("Models for Agents", "models-for-agents.md"),
     ]),
     ("Systems", [
         ("Multi-Agent Systems", "multi-agent-systems.md"),

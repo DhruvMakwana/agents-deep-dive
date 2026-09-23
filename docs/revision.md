@@ -99,6 +99,13 @@ Every page's TL;DR in one place, every page's Scenario Check merged into one com
     - **Mem0's real, cited numbers show what a lighter-weight, extraction-based memory layer buys**: 26% relative improvement over OpenAI's own memory feature, 91% lower p95 latency, and over 90% token savings versus stuffing full conversation history into context every turn.
     - **A real memory-poisoning repro found the vulnerability isn't "any injected claim" — it's specifically the claims that don't feel consequential.** A crafted turn injecting an unverified $50,000 financial claim triggered spontaneous skepticism with zero mitigation in place. The identical mechanism against a routine-sounding claim (a support contact reassignment) was trusted with zero hedging — and a single source-tagging instruction was enough to close that gap.
 
+    ### [Models for Agents](models-for-agents.md)
+
+    - **"Small model = unreliable at reasoning" is a real, but no longer automatic, assumption — it needs checking per task.** A real repro found Claude Haiku 4.5 matched Sonnet 5 at 100% accuracy on a deliberately ambiguous tool-calling request, and separately solved three classic reasoning traps (the widgets/machines lateral-thinking problem, the bat-and-ball cognitive-reflection-test problem, and a chickens-and-cows system-of-equations problem) on the first try, no retries.
+    - **Open-weight models genuinely compete at the top of tool-calling leaderboards now, not just "catch up eventually."** As of a June 2026 snapshot of the Berkeley Function-Calling Leaderboard, GLM 4.5 (open-weight) led at 76.7% overall accuracy, ahead of Claude Opus 4.7 (76.6%) and Gemini 3.1 Flash Lite Preview (76.5%) — a real, current instance of an open-weight model at the top of a major agentic benchmark, not a footnote below it.
+    - **RouteLLM's real, cited numbers show what model routing buys when accuracy differs between tiers**: over 2x cost reduction while holding response quality, with per-benchmark reductions reported around 85% on MT Bench, 45% on MMLU, and 35% on GSM8K at 95% of GPT-4's own performance level.
+    - **A real repro found routing still pays off even when the cheap model would have gotten every answer right anyway** — a genuinely different, and arguably more useful, finding than "routing saves money by avoiding mistakes." Real numbers: always-Sonnet cost 216 tokens for 4/4 correct; routed cost 199 tokens for the same 4/4 — the router itself has real overhead, but escalating only the queries flagged as complex still beat blanket escalation on cost without giving up any accuracy.
+
     ## Systems
 
     ### [Multi-Agent Systems](multi-agent-systems.md)
@@ -157,7 +164,7 @@ Every page's TL;DR in one place, every page's Scenario Check merged into one com
 
 === "Combined Scenario Check"
 
-    68 questions from every page on this site, one combined pass instead of opening each page separately. Every question shows which page it's from — go re-read that page for anything you get wrong.
+    72 questions from every page on this site, one combined pass instead of opening each page separately. Every question shows which page it's from — go re-read that page for anything you get wrong.
 
     <div class="quiz-widget" data-title="Combined Scenario Check — All Pages">
     <script type="application/json">
@@ -1000,6 +1007,82 @@ Every page's TL;DR in one place, every page's Scenario Check merged into one com
           "sourceUrl": "memory-architectures.md"
         },
         {
+          "scenario": "A real repro ran the same ambiguous tool-calling request (a subscription pause phrased as 'stop being charged') against Haiku 4.5 and Sonnet 5, 5 trials each. Both tiers picked the correct tool on all 5 trials.",
+          "question": "What is the most accurate way to interpret this specific result?",
+          "options": [
+            "It shows this specific ambiguity does not separate these two model tiers",
+            "It means tool-calling ambiguity is never a real risk for any model pair",
+            "The test was flawed since a real experiment should always find some difference",
+            "It proves Haiku 4.5 and Sonnet 5 are identical in every tool-calling scenario"
+          ],
+          "correct": 0,
+          "explanations": [
+            "Correct. The result is scoped to exactly what was tested: this specific ambiguity, these two specific model versions, this specific tool pair. It's real, honest evidence that THIS gap doesn't exist here -- not a general claim about tool-calling reliability everywhere.",
+            "Overstates a narrow negative result into a universal claim -- this repro tested one ambiguity against one model pair; it says nothing about tool-calling ambiguity risk in general, across other models, tools, or phrasings.",
+            "Backwards reasoning -- a real experiment can validly produce a null result; treating 'no difference found' as evidence of a flawed test would bias future work toward only reporting differences that confirm a hypothesis, rather than reporting what was actually observed.",
+            "Overgeneralizes far beyond what one test showed -- a single ambiguous-request scenario tying doesn't establish identical behavior across every possible tool-calling situation these two models might face."
+          ],
+          "source": "Models for Agents",
+          "sourceUrl": "models-for-agents.md"
+        },
+        {
+          "scenario": "As of a June 2026 leaderboard snapshot, GLM 4.5 -- an open-weight model -- led the Berkeley Function-Calling Leaderboard at 76.7%, ahead of Claude Opus 4.7 (76.6%) and Gemini 3.1 Flash Lite Preview (76.5%).",
+          "question": "What does this specific ranking most accurately establish?",
+          "options": [
+            "That every open-weight model now outperforms every proprietary model at tool calling",
+            "That an open-weight model genuinely held the leaderboard top spot at that snapshot",
+            "That this leaderboard no longer measures a meaningful capability gap between models",
+            "That GLM 4.5's lead is permanent and will not change in future leaderboard updates"
+          ],
+          "correct": 1,
+          "explanations": [
+            "A large overgeneralization from one model's result -- this ranking establishes GLM 4.5's specific standing at that snapshot; it says nothing about EVERY open-weight model versus EVERY proprietary model.",
+            "Correct. The precise, defensible claim is exactly this: at that specific snapshot, an open-weight model (GLM 4.5) held the top spot on a major, widely-cited agentic tool-calling benchmark -- a real, current fact, not a general or permanent one.",
+            "Not what the numbers show -- the top three scores (76.7%, 76.6%, 76.5%) are close but real, distinct rankings on a benchmark still actively differentiating 23 evaluated models; closeness at the top doesn't mean the benchmark stopped measuring anything.",
+            "Unsupported speculation about the future -- leaderboard rankings change as new models are evaluated; nothing about a single snapshot implies permanence, and the page doesn't claim otherwise."
+          ],
+          "source": "Models for Agents",
+          "sourceUrl": "models-for-agents.md"
+        },
+        {
+          "scenario": "A real routing repro found all three dispatch strategies (always-Haiku, always-Sonnet, routed) achieved identical 4/4 accuracy on a batch of queries including two classic reasoning traps, with routed costing 199 tokens versus 216 for always-Sonnet and 174 for always-Haiku.",
+          "question": "Given that accuracy was identical across all three strategies, what is the most accurate characterization of what routing actually demonstrated here?",
+          "options": [
+            "Routing was pointless in this run since the cheap model alone matched everyone's accuracy",
+            "The identical accuracy across strategies suggests a bug in the recipe's grading logic",
+            "Routing matched the capable tier's accuracy while costing less than blanket escalation",
+            "Routing beat always-Haiku on cost, proving it's the superior strategy in every case"
+          ],
+          "correct": 2,
+          "explanations": [
+            "Misses the real, distinct value demonstrated -- routing didn't need to catch a mistake to be worth measuring; it showed the classification and dispatch mechanism works correctly and pays for its own overhead even in a batch where escalation wasn't strictly necessary.",
+            "Unsupported -- the repro's per-query correctness was checked against independently known correct answers (Paris, 5 minutes, $0.05), not against each other; identical accuracy reflects three separate real evaluations reaching the same real correct answers, not a shared or buggy grading path.",
+            "Correct. The real, useful comparison is routed vs. always-Sonnet, not routed vs. always-Haiku: routing matched always-Sonnet's accuracy (4/4) while costing less (199 vs. 216 tokens) -- a genuine, if modest, benefit that holds even though the cheap model alone would also have scored 4/4 for less.",
+            "Contradicts the real numbers directly -- routing (199 tokens) cost MORE than always-Haiku (174 tokens), not less; the router's own classification calls are real overhead that a pure cheap-only strategy doesn't pay."
+          ],
+          "source": "Models for Agents",
+          "sourceUrl": "models-for-agents.md"
+        },
+        {
+          "scenario": "RouteLLM's real published result states routing 'significantly reduces costs -- by over 2 times in certain cases -- without compromising the quality of responses,' evaluated against GPT-4 as the capable-tier baseline.",
+          "question": "What is the most precise way to relate this cited result to the recipe's own 4-query routing repro, which showed a smaller, single-digit-percentage cost reduction rather than a 2x reduction?",
+          "options": [
+            "The two results contradict each other, so at least one of them must be wrong",
+            "RouteLLM's number is outdated and no longer applies to current-generation models",
+            "The recipe's repro proves RouteLLM's reported cost reduction was never real",
+            "The small batch here is not positioned to reproduce a benchmark-scale reduction"
+          ],
+          "correct": 3,
+          "explanations": [
+            "False dichotomy -- the two results measure different things at different scales (a large, diverse benchmark distribution vs. a small, illustrative 4-query batch); neither being 'wrong' is required to explain the size difference.",
+            "Unsupported and not the actual explanation -- nothing about model generation invalidates a routing mechanism's cost math; the real difference is scale and query-mix, not model recency.",
+            "Overstates the comparison -- a small illustrative repro not reproducing a large benchmark's exact magnitude doesn't invalidate the cited study's own real, independently reported result; the two are complementary evidence at different scales, not competing claims.",
+            "Correct. RouteLLM's reported multiple-times cost reduction comes from routing across a large, varied benchmark distribution where many queries are genuinely simple enough to route cheaply; a small, illustrative 4-query batch -- half of which were deliberately hard reasoning traps -- isn't the right scale or mix to reproduce that same magnitude, even though the same underlying mechanism is genuinely at work in both."
+          ],
+          "source": "Models for Agents",
+          "sourceUrl": "models-for-agents.md"
+        },
+        {
           "scenario": "A team built an orchestrator-workers pipeline (per Anthropic's workflow-pattern definition: a central LLM call decides which of several pre-built worker functions to invoke, each worker executes one fixed role). A teammate says: 'This is a multi-agent system, since it has a lead agent and workers operating under it.'",
           "question": "What's the most accurate correction?",
           "options": [
@@ -1462,7 +1545,7 @@ Every page's TL;DR in one place, every page's Scenario Check merged into one com
 
 === "Flashcards"
 
-    136 flashcards from every page with a deck so far — click a card to flip it, shuffle for random order.
+    144 flashcards from every page with a deck so far — click a card to flip it, shuffle for random order.
 
     <div class="flashcard-widget" data-title="Flashcards — All Pages">
     <script type="application/json">
@@ -1907,6 +1990,46 @@ Every page's TL;DR in one place, every page's Scenario Check merged into one com
           "front": "Why is 'source-tagging' a stronger mitigation framing than 'validate claims before writing to memory'?",
           "back": "Many claims (like a routine contact reassignment) have no independent source to validate against at write time -- there's nothing to check truth against. Source-tagging sidesteps that impossible problem: it doesn't try to determine if a claim is TRUE, it just preserves WHERE the claim came from, so the consuming turn -- not the writing turn -- can decide how much to trust it.",
           "source": "Memory Architectures"
+        },
+        {
+          "front": "A real repro tested Haiku 4.5 vs. Sonnet 5 on a deliberately ambiguous tool-calling request (a subscription 'pause' phrased as 'stop being charged'). What happened, across 5 trials each?",
+          "back": "Both tiers picked the correct tool (pause_subscription) on 5/5 trials, and an unambiguous control case hit 5/5 on both for cancel_subscription. A clean, honest negative result -- this specific ambiguity didn't differentiate the two tiers, contrary to the assumption a cheaper model would slip.",
+          "source": "Models for Agents"
+        },
+        {
+          "front": "As of a June 2026 leaderboard snapshot, where did an open-weight model rank on the Berkeley Function-Calling Leaderboard (BFCL), and what's the real significance?",
+          "back": "GLM 4.5 (open-weight) led at 76.7% overall accuracy, ahead of Claude Opus 4.7 (76.6%) and Gemini 3.1 Flash Lite Preview (76.5%). The significance: an open-weight model held the TOP spot on a major agentic tool-calling benchmark, not just 'closing the gap' -- a real, current, dated fact.",
+          "source": "Models for Agents"
+        },
+        {
+          "front": "What are RouteLLM's real, cited cost-reduction numbers, and under what condition do they hold?",
+          "back": "'Over 2 times' cost reduction in certain cases, with reported per-benchmark reductions around 85% (MT Bench), 45% (MMLU), and 35% (GSM8K) -- all while holding to 95% of GPT-4's own performance level. The mechanism: route easy queries to a cheap model, reserve the expensive model for queries that actually need it.",
+          "source": "Models for Agents"
+        },
+        {
+          "front": "A real routing repro found all three strategies (always-Haiku, always-Sonnet, routed) tied at 4/4 correct on a batch including two classic reasoning traps. What were the real token costs, and what's the actual finding?",
+          "back": "Always Haiku: 174 tokens. Always Sonnet: 216. Routed: 199. Since accuracy tied everywhere, the real finding isn't 'routing avoided mistakes' -- it's that routing matched the capable tier's accuracy while costing LESS than blanket escalation (199 vs 216), even though the cheap model alone would also have scored 4/4 for less.",
+          "source": "Models for Agents"
+        },
+        {
+          "front": "What are the two classic reasoning-trap questions this recipe used, and what are their tempting-wrong vs. correct answers?",
+          "back": "Widgets/machines: '5 machines, 5 min, 5 widgets -> 100 machines, 100 widgets, how long?' Tempting wrong: 100 minutes. Correct: 5 minutes (parallel, same rate). Bat-and-ball: 'bat+ball=$1.10, bat costs $1.00 more than ball, ball=?' Tempting wrong: $0.10. Correct: $0.05.",
+          "source": "Models for Agents"
+        },
+        {
+          "front": "Haiku 4.5 solved the widgets/machines trap, the bat-and-ball trap, AND a third harder chickens-and-cows system-of-equations problem (correct answer 23), all on the first try. What's the honest lesson, rather than chasing a failure?",
+          "back": "'Small model = unreliable at reasoning' is real but no longer automatic -- it needs checking per task and per model generation. Current-generation small models are meaningfully more capable at classic reasoning traps than that assumption implies; the right move is measuring, not assuming.",
+          "source": "Models for Agents"
+        },
+        {
+          "front": "Why does the recipe's small-scale routing result (single-digit % cost reduction) not contradict RouteLLM's cited '2x or more' cost reduction?",
+          "back": "They measure different things at different scales: RouteLLM's number comes from routing across a large, varied benchmark distribution where many queries are genuinely simple. The recipe's illustrative 4-query batch -- half deliberately hard reasoning traps -- isn't positioned to reproduce that magnitude, even though the same underlying routing mechanism is genuinely at work in both.",
+          "source": "Models for Agents"
+        },
+        {
+          "front": "What's the real, generalizable discipline this topic argues for, given both repros' honest negative results?",
+          "back": "Don't assume where the 'needs the expensive model' line falls -- measure it empirically, per task and per specific model pair, since that line moves as models improve. This recipe's own reasoning traps would plausibly have separated tiers a generation ago and didn't here; an assumption-based router would have escalated unnecessarily.",
+          "source": "Models for Agents"
         },
         {
           "front": "How does a multi-agent SYSTEM differ from the orchestrator-workers WORKFLOW pattern, per Anthropic's own classification?",
