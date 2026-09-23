@@ -87,9 +87,17 @@ Every page's TL;DR in one place, every page's Scenario Check merged into one com
     - **Meta's Rule of Two is a repackaging of the trifecta into a session-design rule, not an independent discovery** — and it's more permissive than it's often summarized: an agent may satisfy *any two* of the three properties, not zero.
     - **CaMeL's guarantee costs measurable capability**: provable security against prompt injection in AgentDojo, at 77% task success versus 84% for an undefended system — a real, quantified trade-off between structural safety and raw usefulness, not a free upgrade.
 
+    ### [Durable Execution](durable-execution.md)
+
+    - **Durable execution means a crash resumes the conversation instead of restarting it.** Temporal's own framing: "When a Worker crashes, the Temporal Service hands the work to another Worker, which replays the Event History and resumes at the line where execution stopped, with local variables and progress intact." For an agent specifically: "The loop is a Workflow, each model call and tool call is an Activity, and a crash resumes the conversation instead of restarting it."
+    - **Replay and checkpointing are two different mechanisms that solve the same problem differently.** Temporal-style engines replay a recorded event history — re-running workflow code but skipping already-completed steps using their recorded results. LangGraph-style checkpointing persists application state directly as a snapshot. Both need a persistent backend to survive a real process crash: LangGraph's own docs note `MemorySaver` and `InMemorySaver` "store checkpoints in RAM. When the process restarts, all checkpoints are lost."
+    - **A real, from-scratch repro of the exact failure mode worked cleanly.** A crash was deliberately triggered right after a tool's side effect committed but before that fact was durably logged — the single most dangerous instant for a naive retry. Resuming in a genuinely separate process replayed the completed steps with zero new model calls, then completed the task with no duplicated side effect.
+    - **Idempotency is the second line of defense, not a redundant one.** Replaying the event log tells you what's *known* to have completed — it can't tell you about the gap between "the side effect happened" and "the log says it happened." An idempotent tool, checking its own persisted state before acting, is what actually prevents a double charge or a duplicate booking in that gap.
+    - **This is a real, documented interview topic**, not a hypothetical: "How do you make sure agents do not double-execute side-effectful operations like charging a card or booking a ticket twice?" and "Suppose your booking agent sometimes reserves the same hotel twice — walk through how you'd debug and fix this" are both real, sourced interview questions.
+
 === "Combined Scenario Check"
 
-    36 questions from every page on this site, one combined pass instead of opening each page separately. Every question shows which page it's from — go re-read that page for anything you get wrong.
+    40 questions from every page on this site, one combined pass instead of opening each page separately. Every question shows which page it's from — go re-read that page for anything you get wrong.
 
     <div class="quiz-widget" data-title="Combined Scenario Check — All Pages">
     <script type="application/json">
@@ -778,6 +786,82 @@ Every page's TL;DR in one place, every page's Scenario Check merged into one com
           ],
           "source": "Agent Security",
           "sourceUrl": "agent-security.md"
+        },
+        {
+          "scenario": "A real repro deliberately crashed a process right after a `send_confirmation` tool's side effect committed, but before that fact was written to the durable event log. On resume in a fresh process, the model decided to call `send_confirmation` again, and the tool returned 'already sent (idempotent replay)' instead of sending a second time.",
+          "question": "What does this specific sequence demonstrate about the event log's own limits?",
+          "options": [
+            "The log can only tell you what it knows completed, not what just now happened",
+            "The event log should have caught this itself -- its absence here is a design bug",
+            "The event log correctly recorded the send, so this scenario couldn't have occurred",
+            "This proves event logs are unnecessary as long as every tool is idempotent"
+          ],
+          "correct": 0,
+          "explanations": [
+            "Correct. The event log answers 'what do we already know completed' -- it has no way to represent 'a side effect just happened but the write recording it hasn't happened yet,' which is exactly the window a real crash can land in.",
+            "Misdiagnoses the mechanism -- a durable log fundamentally cannot record an event before that event's own write completes; there is always a real window between a side effect and its durable record, regardless of implementation quality.",
+            "Contradicts the setup directly -- the whole point of the crash's timing was that the log had NOT yet recorded step 3's completion when the process died.",
+            "Overreaches -- the log still provided real value in this same run, letting the first two completed steps replay with zero new model calls; idempotency and the log solve different parts of the problem, not substitutes for one another."
+          ],
+          "source": "Durable Execution",
+          "sourceUrl": "durable-execution.md"
+        },
+        {
+          "scenario": "A team built an agent with a durable event log and checkpointing, but used LangGraph's default `InMemorySaver` for their checkpoint backend. They believe their agent can survive a process crash and resume without data loss.",
+          "question": "What's the most accurate assessment of this setup?",
+          "options": [
+            "Correct -- any checkpointer, by definition, guarantees durability across restarts",
+            "In-memory checkpoints are lost the moment a restart happens, progress included",
+            "Fine, as long as the agent also logs to stdout, since terminal output persists",
+            "Checkpointing is irrelevant here; only idempotent tools matter for crash recovery"
+          ],
+          "correct": 1,
+          "explanations": [
+            "Overstates what a checkpointer guarantees -- the mechanism (persisting state as checkpoints) is separate from WHERE it's persisted; an in-memory store doesn't survive the process that holds it dying.",
+            "Correct. LangGraph's own documentation states plainly that in-memory checkpointers 'store checkpoints in RAM. When the process restarts, all checkpoints are lost' -- durability requires a persistent backend, not just a checkpointing API being present in the code.",
+            "Introduces an irrelevant and incorrect claim -- stdout output isn't a structured, replayable state store, and nothing about this scenario suggests it would substitute for a real persistence layer.",
+            "Understates checkpointing's real role -- it's what lets completed steps be replayed without new model calls, a genuine part of the solution alongside (not replaced by) idempotent tools."
+          ],
+          "source": "Durable Execution",
+          "sourceUrl": "durable-execution.md"
+        },
+        {
+          "scenario": "A candidate explains Temporal's durability model as: 'When a worker crashes, Temporal just restarts the workflow function from the very beginning, using the exact same input, and relies on the activities being fast enough that this is cheap.'",
+          "question": "What's the most accurate correction to this explanation?",
+          "options": [
+            "Correct as stated -- restarting from the beginning with the same input is exactly the model",
+            "Temporal has no concept of recovery at all -- workflows simply cannot survive a crash",
+            "Temporal replays the recorded event history, resuming progress rather than restarting",
+            "This only holds for single-activity workflows; multi-activity ones work differently"
+          ],
+          "correct": 2,
+          "explanations": [
+            "Restates the misconception rather than correcting it -- 'restart from the beginning' is precisely what Temporal's design avoids for already-completed work.",
+            "Directly contradicts Temporal's stated purpose -- durable, crash-resistant workflow execution is the core feature being described, not something absent from the system.",
+            "Correct. Temporal's own documentation describes the recovering worker replaying the Event History and resuming 'at the line where execution stopped, with local variables and progress intact' -- completed activities are not re-run, they're reconstructed from their recorded results.",
+            "Introduces an arbitrary, unsupported distinction -- the replay mechanism described applies to workflows generally, not conditioned on activity count."
+          ],
+          "source": "Durable Execution",
+          "sourceUrl": "durable-execution.md"
+        },
+        {
+          "scenario": "A team argues: 'Since our tools are all idempotent, we don't need a durable event log at all -- idempotency alone solves crash recovery.'",
+          "question": "What's the strongest flaw in that argument?",
+          "options": [
+            "The argument is correct -- idempotent tools alone are complete and sufficient",
+            "Idempotency and event logs solve the exact same problem, making one redundant",
+            "Idempotency only matters for financial transactions, not general tool calls",
+            "Without a log, every resume re-decides and re-attempts each step from scratch"
+          ],
+          "correct": 3,
+          "explanations": [
+            "Ignores the real cost this page's own repro measured directly -- the resumed run needed zero new model calls for completed steps specifically because a log existed; without one, that savings disappears entirely.",
+            "Treats the two mechanisms as interchangeable when they solve different halves of the problem -- one prevents duplicate side effects, the other prevents redundant re-decision and preserves progress.",
+            "An arbitrary, unsupported restriction -- nothing about the idempotency mechanism is specific to financial operations; any side-effecting tool call (booking, sending, provisioning) carries the same risk.",
+            "Correct. Idempotent tools would indeed prevent a step from having a duplicate real-world effect if re-attempted -- but without a log, EVERY resume would have to re-decide and re-attempt every single step from the start, burning model calls and losing all progress tracking, even though no duplicate side effect would occur."
+          ],
+          "source": "Durable Execution",
+          "sourceUrl": "durable-execution.md"
         }
       ]
     }
@@ -786,7 +870,7 @@ Every page's TL;DR in one place, every page's Scenario Check merged into one com
 
 === "Flashcards"
 
-    72 flashcards from every page with a deck so far — click a card to flip it, shuffle for random order.
+    80 flashcards from every page with a deck so far — click a card to flip it, shuffle for random order.
 
     <div class="flashcard-widget" data-title="Flashcards — All Pages">
     <script type="application/json">
@@ -1151,6 +1235,46 @@ Every page's TL;DR in one place, every page's Scenario Check merged into one com
           "front": "How does tool poisoning differ from the lethal trifecta as an attack category?",
           "back": "The trifecta is a session-level combination of properties across a conversation (private data + untrusted content + external comms all present at once). Tool poisoning is about a single artifact's metadata (a tool/MCP description) being untrustworthy -- a supply-chain risk that exists before any conversation even starts, with a different fix (auditing/sanitizing descriptions, not session design).",
           "source": "Agent Security"
+        },
+        {
+          "front": "What does 'a crash resumes the conversation instead of restarting it' actually mean, in Temporal's own framing?",
+          "back": "'When a Worker crashes, the Temporal Service hands the work to another Worker, which replays the Event History and resumes at the line where execution stopped, with local variables and progress intact.' For agents: the loop is a Workflow, each model/tool call is an Activity -- a crash doesn't mean starting the whole task over.",
+          "source": "Durable Execution"
+        },
+        {
+          "front": "What's the real mechanical difference between Temporal-style replay and LangGraph-style checkpointing?",
+          "back": "Replay: re-runs workflow code from the top, but skips already-completed steps using their RECORDED RESULTS (an event history). Checkpointing: persists application STATE directly as a snapshot at each step. Different mechanisms, same goal -- and both need a real persistent backend to survive a process crash.",
+          "source": "Durable Execution"
+        },
+        {
+          "front": "LangGraph's own docs warn that MemorySaver/InMemorySaver checkpoints don't survive a process restart. Why does this matter beyond LangGraph specifically?",
+          "back": "It's a general trap: having a checkpointing/logging API in your code doesn't guarantee durability -- durability depends on WHERE state is persisted, not just that a persistence API exists. Any framework's default in-memory store has this same gap.",
+          "source": "Durable Execution"
+        },
+        {
+          "front": "A real repro crashed a process right after a tool's side effect committed but BEFORE that fact was logged. Why can't a better-designed event log alone fix this gap?",
+          "back": "The log can only record what it already knows completed -- it structurally cannot represent 'the side effect just happened but the write recording it hasn't happened yet.' There is always a real window between an action and its durable record, regardless of log quality. This is why idempotent tools are a separate, necessary second mechanism.",
+          "source": "Durable Execution"
+        },
+        {
+          "front": "In the real durable-agent run, invocation 2 (the resumed process) needed only 1 new model call, not 3. Why?",
+          "back": "Steps 1 and 2 were already durably logged as complete, so invocation 2 replayed them from disk with ZERO new model calls -- reconstructing conversation state without re-deciding or re-executing. Only step 3, which crashed before being logged, needed a real new model call.",
+          "source": "Durable Execution"
+        },
+        {
+          "front": "In that same run, the model's step-3 decision on resume was to call send_confirmation AGAIN (since the log didn't show it as done). What actually prevented a duplicate confirmation email?",
+          "back": "Not the event log -- the tool itself. send_confirmation checked its own persisted ledger (keyed by order_id) before acting, found the confirmation_id already existed, and returned 'already sent (idempotent replay)' instead of sending again. One confirmation_id, sent exactly once, across the crash and the resume combined.",
+          "source": "Durable Execution"
+        },
+        {
+          "front": "Why is 'idempotency alone solves crash recovery, we don't need a log' a flawed argument?",
+          "back": "Idempotent tools prevent DUPLICATE SIDE EFFECTS, but without a durable log, every resume would have to re-decide and re-attempt every step from scratch -- burning model calls and losing all progress tracking, even though no duplicate real-world effect would occur. The log and idempotency solve different halves of the same problem.",
+          "source": "Durable Execution"
+        },
+        {
+          "front": "Why is this a real, documented interview topic rather than a niche concern?",
+          "back": "Real sourced interview questions: 'How do you make sure agents do not double-execute side-effectful operations like charging a card or booking a ticket twice?' and 'Suppose your booking agent sometimes reserves the same hotel twice -- walk through how you'd debug and fix this.' Long-running agents accumulate real side effects at unpredictable points, unlike a typical fast request/response service.",
+          "source": "Durable Execution"
         }
       ]
     }
