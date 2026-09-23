@@ -79,9 +79,17 @@ Every page's TL;DR in one place, every page's Scenario Check merged into one com
     - **Infrastructure is a real, measurable confound in agent benchmarks.** Running the identical model and benchmark across container configurations from strict to uncapped produced a 6-percentage-point swing (p < 0.01) on Terminal-Bench 2.0 — bigger than many reported leaderboard gaps — purely from resource allocation, with nothing about the model changing at all.
     - **Capability evals and regression evals serve different jobs and shouldn't be conflated.** A capability eval asks how good the agent could be — expensive, exploratory, run rarely. A regression eval asks whether a specific change broke something that used to work — cheap, narrow, run on every change. This page's own regression-suite experiment is exactly that second job, and it worked precisely because the suite was simple enough to run constantly.
 
+    ### [Agent Security](agent-security.md)
+
+    - **The lethal trifecta names the actual precondition for data exfiltration**, not a vague "be careful with untrusted content" warning: private-data access, exposure to untrusted content, and the ability to externally communicate, all live in the same session. Remove any one leg and the specific exfiltration risk this describes goes away, regardless of what the untrusted content says.
+    - **A real repro of the trifecta didn't produce a successful exploit — worth being precise about what that does and doesn't show.** Claude Haiku 4.5 declined an injected forwarding request in both the vulnerable and the structurally-fixed condition. That's not evidence prompt injection is solved: "The Attacker Moves Second" reports bypassing 12 published defenses at above 90% success, where those same defenses originally reported near-zero attack success rates. The structural fix's actual value is that its guarantee doesn't depend on the model resisting at all.
+    - **Tool poisoning reproduced cleanly, on a completely innocuous request.** Asked only "what's the weather in Paris," a model given a `get_weather` tool whose *description* secretly asked it to also pull an unrelated customer record did exactly that — a real supply-chain attack surface that lives in metadata nobody reads, not in a document anyone had to be tricked into opening.
+    - **Meta's Rule of Two is a repackaging of the trifecta into a session-design rule, not an independent discovery** — and it's more permissive than it's often summarized: an agent may satisfy *any two* of the three properties, not zero.
+    - **CaMeL's guarantee costs measurable capability**: provable security against prompt injection in AgentDojo, at 77% task success versus 84% for an undefended system — a real, quantified trade-off between structural safety and raw usefulness, not a free upgrade.
+
 === "Combined Scenario Check"
 
-    32 questions from every page on this site, one combined pass instead of opening each page separately. Every question shows which page it's from — go re-read that page for anything you get wrong.
+    36 questions from every page on this site, one combined pass instead of opening each page separately. Every question shows which page it's from — go re-read that page for anything you get wrong.
 
     <div class="quiz-widget" data-title="Combined Scenario Check — All Pages">
     <script type="application/json">
@@ -694,6 +702,82 @@ Every page's TL;DR in one place, every page's Scenario Check merged into one com
           ],
           "source": "Evaluating Agents",
           "sourceUrl": "evaluating-agents.md"
+        },
+        {
+          "scenario": "A real repro gave an agent all three lethal-trifecta legs (untrusted email, private-record access, unrestricted send) plus a structurally-fixed version (send restricted to the on-file address). In both conditions, the model declined the injected forwarding request -- no exfiltration occurred either way.",
+          "question": "What's the most accurate conclusion to draw from this specific result?",
+          "options": [
+            "The fixed condition's guarantee doesn't depend on the model's own behavior",
+            "Prompt injection is effectively solved for well-aligned models like this one",
+            "The trifecta framing was unnecessary here, since judgment alone sufficed",
+            "Both conditions are equally secure, since neither exfiltrated data this run"
+          ],
+          "correct": 0,
+          "explanations": [
+            "Correct. The deterministic allow-list blocks disallowed sends regardless of what the model decides -- that's precisely why it's a different, stronger kind of control than relying on the model's judgment holding up.",
+            "Overreaches from one model's response to one injection into a general claim the field's own evidence contradicts -- adaptive attacks bypass published defenses at very high rates.",
+            "Draws the wrong lesson from a single favorable outcome -- one instance of good judgment on one injection doesn't establish that judgment is a reliable control in general.",
+            "Ignores a structural difference that only shows up under a different injection or model -- the vulnerable condition's send tool would have complied with a successful injection; the fixed condition's would not have, regardless of the model's decision."
+          ],
+          "source": "Agent Security",
+          "sourceUrl": "agent-security.md"
+        },
+        {
+          "scenario": "A real repro showed a model asked an innocuous weather question also calling an unrelated, sensitive lookup tool -- triggered entirely by a hidden instruction embedded in the weather tool's own description field, not by anything in the user's actual request or any document the agent read.",
+          "question": "What does this specific finding demonstrate about the attack surface involved?",
+          "options": [
+            "The user's own request must have contained a subtle injected instruction",
+            "The attack surface is the tool's metadata -- content nobody typically reviews",
+            "This is functionally identical to the lethal trifecta, since private data was accessed",
+            "This can only happen with third-party tools, never ones an organization writes itself"
+          ],
+          "correct": 1,
+          "explanations": [
+            "Contradicts the setup directly -- the user's question was a plain, unrelated weather query; the injected instruction lived entirely in the tool's description, not the user's message.",
+            "Correct. The instruction was embedded in text that describes the tool to the model on every turn, not in any content the user submitted or any document the agent had to be tricked into opening -- exactly why this is a supply-chain risk, not a content-injection risk.",
+            "Conflates two distinct mechanisms -- the trifecta describes a session-level combination of properties across a conversation; tool poisoning is about a single artifact's metadata being untrustworthy, a different attack surface with a different fix.",
+            "An unsupported, overly narrow claim -- nothing about the mechanism is inherently limited to external sources; an internally-written tool with a careless or compromised description carries the same risk."
+          ],
+          "source": "Agent Security",
+          "sourceUrl": "agent-security.md"
+        },
+        {
+          "scenario": "A candidate summarizes Meta's Rule of Two as: 'An agent must never combine untrusted input, access to sensitive data, and the ability to take external action -- all three together are always forbidden, no exceptions.'",
+          "question": "What's the most accurate correction to this summary?",
+          "options": [
+            "The summary is correct as stated and needs no correction",
+            "The rule only applies to browser-based agents, not email or file-processing agents",
+            "The rule permits any two properties; only having all three together is restricted",
+            "The rule actually forbids any two of the three properties, making it stricter"
+          ],
+          "correct": 2,
+          "explanations": [
+            "Restates the summary rather than correcting it -- the actual quoted rule is more permissive than 'all three combined are forbidden' implies, since it explicitly allows any two.",
+            "Introduces an unsupported restriction -- the rule is framed generally around session properties, not scoped to any particular agent modality like browsing.",
+            "Correct. Meta's own wording is 'no more than two of the following three properties within a session' -- an agent may freely have any two of the three; it's specifically the full trifecta the rule restricts.",
+            "Inverts the actual rule -- Meta's own quoted wording explicitly allows 'no more than two' properties, meaning two together is fine and only the full combination of three is restricted."
+          ],
+          "source": "Agent Security",
+          "sourceUrl": "agent-security.md"
+        },
+        {
+          "scenario": "CaMeL reports solving 77% of AgentDojo tasks with provable security against prompt injection, compared to 84% for an undefended baseline system. A team considering CaMeL concludes: 'This means CaMeL is strictly worse and offers no real advantage over the undefended baseline.'",
+          "question": "What's the strongest flaw in that conclusion?",
+          "options": [
+            "77% and 84% are actually statistically indistinguishable, so there's no real difference",
+            "CaMeL's real success rate is higher than 84% once security is factored into the score",
+            "The conclusion is correct -- a lower task-success number means a system is strictly worse",
+            "It ignores that the 7-point cost buys a real security guarantee the baseline fully lacks"
+          ],
+          "correct": 3,
+          "explanations": [
+            "Fabricates a statistical claim with no support -- the reported numbers are presented as real observed results, not statistically equivalent figures, and no such analysis is given in the source.",
+            "Misstates how the metric works -- the reported 77% is the task-success rate under CaMeL's actual constraints; security guarantees are a separate, qualitative property, not an adjustment folded into the same percentage.",
+            "Treats task-success percentage as the only axis that matters, ignoring that security guarantees are a real, separate dimension of value the comparison must account for.",
+            "Correct. Comparing only the task-success numbers ignores the actual trade being made -- the undefended system has no structural protection against prompt injection at all, while CaMeL's lower score buys a provable security property. Whether that cost is worth it depends on the deployment's risk profile, but 'strictly worse' ignores the axis being traded away."
+          ],
+          "source": "Agent Security",
+          "sourceUrl": "agent-security.md"
         }
       ]
     }
@@ -702,7 +786,7 @@ Every page's TL;DR in one place, every page's Scenario Check merged into one com
 
 === "Flashcards"
 
-    64 flashcards from every page with a deck so far — click a card to flip it, shuffle for random order.
+    72 flashcards from every page with a deck so far — click a card to flip it, shuffle for random order.
 
     <div class="flashcard-widget" data-title="Flashcards — All Pages">
     <script type="application/json">
@@ -1027,6 +1111,46 @@ Every page's TL;DR in one place, every page's Scenario Check merged into one com
           "front": "The SWE-bench cross-check in Anthropic's infrastructure-noise study found a smaller effect (+1.54 percentage points at 5x RAM) than the main Terminal-Bench 2.0 finding (6 points). Does this contradict the main finding?",
           "back": "No -- it shows the SIZE of the infrastructure confound depends on the task's own resource profile, not just on infrastructure existing. SWE-bench's tasks are less resource-intensive than Terminal-Bench 2.0's, so the same underlying confound shows up smaller there. Both results are consistent with 'infrastructure is a real, controllable confound.'",
           "source": "Evaluating Agents"
+        },
+        {
+          "front": "What are the three properties of Willison's 'lethal trifecta,' in his own words?",
+          "back": "Access to private data; exposure to untrusted content ('any mechanism by which text controlled by a malicious attacker could become available to your LLM'); and the ability to externally communicate 'in a way that could be used to steal your data.' All three live in one session is the dangerous precondition.",
+          "source": "Agent Security"
+        },
+        {
+          "front": "A real repro gave an agent all three trifecta legs plus a version with a deterministic allow-list on the send tool. The model declined the injected request in BOTH conditions -- no exfiltration either way. Does this mean the structural fix wasn't needed?",
+          "back": "No. The fixed condition's guarantee doesn't depend on whether the model resists -- it blocks disallowed sends regardless of model behavior. One run where the model happened to resist tells you about that model on that injection; a code-level check doesn't need to keep 'happening to work.'",
+          "source": "Agent Security"
+        },
+        {
+          "front": "What does 'The Attacker Moves Second' report about published prompt-injection/jailbreak defenses?",
+          "back": "Bypassed 12 recent published defenses with attack success rate above 90% for most -- where those same defenses had originally reported near-zero attack success rates under their own evaluation. A sobering finding: detection-based defenses look solid until someone adapts specifically to them.",
+          "source": "Agent Security"
+        },
+        {
+          "front": "What is 'tool poisoning,' and how did a real repro demonstrate it?",
+          "back": "A supply-chain attack where a hidden instruction is embedded in a tool's DESCRIPTION field -- text a user never reads, read by the model on every turn. Real repro: an innocuous 'what's the weather in Paris?' question triggered an unrelated sensitive customer-record lookup, purely because the weather tool's description secretly asked for it.",
+          "source": "Agent Security"
+        },
+        {
+          "front": "Meta's Rule of Two is often summarized as 'never combine all three trifecta properties.' What's the precise wording, and why does it matter?",
+          "back": "'Agents must satisfy no more than two of the following three properties within a session' [A] untrustworthy inputs [B] sensitive systems/private data [C] can change state or communicate externally. It permits ANY TWO, not zero -- only the full three-way combination is restricted. It's a repackaging of the trifecta into a design rule, credited explicitly to Willison.",
+          "source": "Agent Security"
+        },
+        {
+          "front": "CaMeL's core guarantee, in its own words, and its real measured cost?",
+          "back": "'The untrusted data retrieved by the LLM can never impact the program flow' -- a structural (not detection-based) separation of control and data flow. Real cost: solves 77% of AgentDojo tasks with provable security, versus 84% for an undefended system -- a real 7-point utility cost for the guarantee, not a free upgrade.",
+          "source": "Agent Security"
+        },
+        {
+          "front": "Why is a classifier/detector-based defense against prompt injection considered 'defense in depth' rather than the load-bearing control?",
+          "back": "Willison's own framing: a '95% catch rate is a failing grade' in security terms, and adaptive attacks have bypassed 12 published defenses at >90% success. The load-bearing control is limiting what a COMPROMISED agent can do (removing a trifecta leg, CaMeL-style structural separation) -- not relying on detection catching every attempt.",
+          "source": "Agent Security"
+        },
+        {
+          "front": "How does tool poisoning differ from the lethal trifecta as an attack category?",
+          "back": "The trifecta is a session-level combination of properties across a conversation (private data + untrusted content + external comms all present at once). Tool poisoning is about a single artifact's metadata (a tool/MCP description) being untrustworthy -- a supply-chain risk that exists before any conversation even starts, with a different fix (auditing/sanitizing descriptions, not session design).",
+          "source": "Agent Security"
         }
       ]
     }

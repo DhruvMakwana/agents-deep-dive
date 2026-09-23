@@ -40,6 +40,7 @@ SECTIONS = [
     ]),
     ("Production", [
         ("Evaluating Agents", "evaluating-agents.md"),
+        ("Agent Security", "agent-security.md"),
     ]),
 ]
 

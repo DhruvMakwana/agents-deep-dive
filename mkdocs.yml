@@ -114,4 +114,5 @@ nav:
       - "Multi-Agent Systems": multi-agent-systems.md
   - Production:
       - "Evaluating Agents": evaluating-agents.md
+      - "Agent Security": agent-security.md
   - About: about.md
