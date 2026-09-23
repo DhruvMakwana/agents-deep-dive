@@ -91,6 +91,14 @@ Every page's TL;DR in one place, every page's Scenario Check merged into one com
     - **A real repro measured the contrast directly**: masking a tool (three calls in a row, including one a full turn later) kept reading the identical 2,211-token cache entry. Removing the same tool by editing the array instead produced a new, distinct 2,113-token entry with no relationship to what came before.
     - **Masking is enforced, not cosmetic**: forcing `tool_choice` to the masked tool by name produced a real API error — *"forced tool 'check_feature_flag' is absent from the final available-tool set (a tool_removal block removed it without a later add-back)"* — the model genuinely cannot call it, not just a description change that happens not to mention it.
 
+    ### [Memory Architectures](memory-architectures.md)
+
+    - **Agent memory isn't one thing — CoALA's four-type taxonomy names distinct kinds with distinct jobs**: working memory ("active and readily available information... for the current decision cycle"), episodic memory ("experience from earlier decision cycles"), semantic memory ("an agent's knowledge about the world and itself"), and procedural memory (skills, split between "implicit knowledge stored in the LLM weights" and "explicit knowledge written in the agent's code").
+    - **A real repro confirmed the semantic/episodic split as actual model behavior, not just a taxonomy exercise**: given one customer-service case, Claude's real memory tool unprompted wrote a general policy to one file and the specific case's outcome to a separate file — then correctly answered a later semantic-only question and a separate episodic-only question, each from the right file, with no instruction naming the taxonomy at all.
+    - **MemGPT's real, cited numbers show what happens without any of this**: GPT-4 with MemGPT's OS-inspired paging hit 92.5% on Deep Memory Retrieval versus a 32.1% fixed-context baseline — the gap a taxonomy-free, everything-in-context approach pays for.
+    - **Mem0's real, cited numbers show what a lighter-weight, extraction-based memory layer buys**: 26% relative improvement over OpenAI's own memory feature, 91% lower p95 latency, and over 90% token savings versus stuffing full conversation history into context every turn.
+    - **A real memory-poisoning repro found the vulnerability isn't "any injected claim" — it's specifically the claims that don't feel consequential.** A crafted turn injecting an unverified $50,000 financial claim triggered spontaneous skepticism with zero mitigation in place. The identical mechanism against a routine-sounding claim (a support contact reassignment) was trusted with zero hedging — and a single source-tagging instruction was enough to close that gap.
+
     ## Systems
 
     ### [Multi-Agent Systems](multi-agent-systems.md)
@@ -149,7 +157,7 @@ Every page's TL;DR in one place, every page's Scenario Check merged into one com
 
 === "Combined Scenario Check"
 
-    64 questions from every page on this site, one combined pass instead of opening each page separately. Every question shows which page it's from — go re-read that page for anything you get wrong.
+    68 questions from every page on this site, one combined pass instead of opening each page separately. Every question shows which page it's from — go re-read that page for anything you get wrong.
 
     <div class="quiz-widget" data-title="Combined Scenario Check — All Pages">
     <script type="application/json">
@@ -916,6 +924,82 @@ Every page's TL;DR in one place, every page's Scenario Check merged into one com
           "sourceUrl": "kv-cache-economics.md"
         },
         {
+          "scenario": "A real repro gave a model one customer-service case and asked it to record both the general policy and the specific case outcome, with no instruction naming 'semantic' or 'episodic' memory anywhere. The model wrote two separate files unprompted, and two later independent sessions each correctly answered a different kind of question from the right file.",
+          "question": "What does this result most precisely demonstrate about CoALA's four-type taxonomy?",
+          "options": [
+            "That episodic memory is strictly more useful than semantic memory for support tasks",
+            "That this result only holds for tasks involving refunds, not other domains",
+            "That the taxonomy must be named explicitly for a model to organize memory this way",
+            "That the model organized files matching the taxonomy, without being told to"
+          ],
+          "correct": 3,
+          "explanations": [
+            "Not what was shown or claimed -- both memory types were used correctly for their respective question types; the repro demonstrates complementary roles, not that one type is generally superior to the other.",
+            "An unsupported, overly narrow reading -- nothing about the underlying mechanism (separating general rules from specific instances) is inherently tied to refunds; the repro used refunds as one illustrative domain, not evidence the finding is domain-specific.",
+            "Directly contradicted by the setup -- the taxonomy's names were never mentioned in the prompt, and the correct organization still emerged from the model's own judgment about what to keep separate.",
+            "Correct. The real, notable finding isn't that CoALA's categories are useful in the abstract -- it's that a model's spontaneous behavior (splitting general policy from specific-case detail into separate files) already matches the taxonomy's structure, without being instructed to follow it."
+          ],
+          "source": "Memory Architectures",
+          "sourceUrl": "memory-architectures.md"
+        },
+        {
+          "scenario": "MemGPT's real reported numbers show GPT-4 with MemGPT's paging system reaching 92.5% on Deep Memory Retrieval, versus 32.1% for a fixed-context baseline given no memory-management mechanism.",
+          "question": "What does this comparison most precisely isolate as the source of the accuracy gap?",
+          "options": [
+            "That the baseline had no real mechanism to move data out to any outside storage",
+            "MemGPT's numbers only apply to document QA tasks, not conversational memory tasks",
+            "The gap reflects prompt-wording differences rather than any architectural difference",
+            "GPT-4 with MemGPT is simply a newer, more capable model than the baseline"
+          ],
+          "correct": 0,
+          "explanations": [
+            "Correct. The paper's own framing centers on virtual context management -- moving data between 'main context' and 'external context' via function calls -- as the mechanism under test. A fixed-context baseline has no such mechanism, so information that doesn't fit simply isn't available, which is exactly what Deep Memory Retrieval would expose.",
+            "Misreads which number applies where -- 92.5% vs. 32.1% is specifically the Deep Memory Retrieval (conversational) result; the paper's document QA finding is a separate, related result about performance not degrading with context length.",
+            "Unsupported -- nothing in the real comparison suggests prompt wording, rather than the underlying memory-management architecture, drives a gap of this magnitude.",
+            "Not the comparison being made -- both conditions use the same underlying model (GPT-4); the variable under test is the presence or absence of MemGPT's virtual context management, not a difference in model generation."
+          ],
+          "source": "Memory Architectures",
+          "sourceUrl": "memory-architectures.md"
+        },
+        {
+          "scenario": "A real memory-poisoning repro used the identical injection mechanism -- one crafted conversational turn, no direct memory-store access -- against two different claims: an unverified $50,000 financial credit, and an unverified operational fact about a support-contact reassignment. Only the operational claim was trusted with zero hedging.",
+          "question": "What is the most accurate characterization of the real vulnerability this repro isolates?",
+          "options": [
+            "That the model applies scrutiny at write time but never later when memory is actually used",
+            "That only claims involving specific dollar amounts can ever be poisoned into agent memory",
+            "That the risk concentrates in claims that look insufficiently consequential to flag at all",
+            "That memory poisoning failed entirely here, so the technique doesn't work against Claude"
+          ],
+          "correct": 2,
+          "explanations": [
+            "Contradicted directly by the repro -- scrutiny was applied AT WRITE TIME in the financial condition (the hedge was written into the memory file itself), and again later at the exploit/use moment in the source-tagged condition.",
+            "Inverts the actual finding -- the DOLLAR claim was the one that triggered spontaneous resistance; the operational, non-monetary claim was the one that succeeded with no hedging at all.",
+            "Correct. The repro's real contrast -- financial claim resisted spontaneously, operational claim trusted completely -- shows the model's scrutiny isn't tied to whether a claim is actually verified, but to whether it superficially resembles something worth being careful about.",
+            "Overstates the negative result -- the operational-claim condition succeeded cleanly (zero hedging, confident wrong answer used for a real decision); only the financial-claim condition resisted, so this wasn't a uniform failure of the attack."
+          ],
+          "source": "Memory Architectures",
+          "sourceUrl": "memory-architectures.md"
+        },
+        {
+          "scenario": "After adding a one-line system-prompt instruction requiring every memory fact to be tagged [user-asserted] or [tool-verified], the previously-unhedged operational-claim poisoning attempt produced a real caveat at exploit time instead of a confident, uncaveated answer.",
+          "question": "What is the strongest, most precise takeaway from this specific result?",
+          "options": [
+            "That the mitigation only works for operational claims, not financial ones",
+            "That source-tagging preserves provenance for later scrutiny, not upfront truth",
+            "That source-tagging guarantees no false claim can ever be written to memory",
+            "That this proves the earlier financial-claim resistance was purely coincidental"
+          ],
+          "correct": 1,
+          "explanations": [
+            "Unsupported by the repro as actually run -- the source-tagged condition was tested on BOTH the financial claim (producing explicit unverified-credit caveats) and the operational claim (producing the contact-verification caveat); nothing suggests it's claim-type-specific.",
+            "Correct. The real value demonstrated is that provenance-tagging doesn't require solving the much harder problem of verifying truth when a claim first arrives -- it just requires preserving where a fact came from, so a later consuming turn can apply appropriate caution before acting on it.",
+            "Overstates the mechanism -- the tagged condition still WROTE the unverified claim to memory (just labeled it); tagging doesn't block or falsify anything at write time, it changes what happens when the tagged fact is later relied upon.",
+            "Not addressed by this specific comparison -- whether the untagged financial-claim resistance was reliable or coincidental is a separate question this comparison (about the operational claim) doesn't resolve either way."
+          ],
+          "source": "Memory Architectures",
+          "sourceUrl": "memory-architectures.md"
+        },
+        {
           "scenario": "A team built an orchestrator-workers pipeline (per Anthropic's workflow-pattern definition: a central LLM call decides which of several pre-built worker functions to invoke, each worker executes one fixed role). A teammate says: 'This is a multi-agent system, since it has a lead agent and workers operating under it.'",
           "question": "What's the most accurate correction?",
           "options": [
@@ -1378,7 +1462,7 @@ Every page's TL;DR in one place, every page's Scenario Check merged into one com
 
 === "Flashcards"
 
-    128 flashcards from every page with a deck so far — click a card to flip it, shuffle for random order.
+    136 flashcards from every page with a deck so far — click a card to flip it, shuffle for random order.
 
     <div class="flashcard-widget" data-title="Flashcards — All Pages">
     <script type="application/json">
@@ -1783,6 +1867,46 @@ Every page's TL;DR in one place, every page's Scenario Check merged into one com
           "front": "A developer re-runs the same cache-testing script twice, a few minutes apart, with an identical prefix. The 'first' call in the second run shows a cache READ instead of the expected fresh WRITE. Bug or real behavior?",
           "back": "Real behavior, not a bug. Prompt cache entries have a TTL (5 minutes by default) and READING an entry refreshes that TTL. Repeatedly testing an identical prefix during development keeps the entry warm indefinitely, so a later 'first' call can legitimately hit a cache entry created by an earlier run.",
           "source": "KV-Cache Economics"
+        },
+        {
+          "front": "What are CoALA's four memory types, in one line each?",
+          "back": "Working memory: 'active and readily available information... for the current decision cycle' (the live conversation). Episodic memory: 'experience from earlier decision cycles' (what happened, in a specific instance). Semantic memory: 'an agent's knowledge about the world and itself' (how things work, generally). Procedural memory: implicit (LLM weights) and explicit (agent code) skills.",
+          "source": "Memory Architectures"
+        },
+        {
+          "front": "A real repro gave Claude's memory tool one customer-service case and asked it to record both the policy and the case outcome, with no mention of 'semantic' or 'episodic' anywhere. What happened?",
+          "back": "The model unprompted split its own memory writes into two separate files -- a general-policy file and a case-specific file -- then correctly answered a later semantic-only question from one file and a separate episodic-only question from the other. The taxonomy emerged from the model's own organization, not from being told the categories.",
+          "source": "Memory Architectures"
+        },
+        {
+          "front": "What are MemGPT's real, cited numbers on Deep Memory Retrieval, and what's the real mechanism behind the gap?",
+          "back": "GPT-4 + MemGPT: 92.5% accuracy. Fixed-context baseline: 32.1%. The mechanism: MemGPT's virtual context management moves data between 'main context' (in the window) and 'external context' (outside it) via model-generated function calls, triggered at a 'warning token count' threshold -- the baseline has no such mechanism.",
+          "source": "Memory Architectures"
+        },
+        {
+          "front": "What are Mem0's real, cited numbers vs. a full-context baseline?",
+          "back": "26% relative improvement in the LJudge metric over OpenAI's own memory feature, 91% lower p95 latency, and over 90% token cost savings -- from extracting and consolidating salient facts rather than keeping full conversation history in context. Mem0g (graph variant) adds ~2% on top of base Mem0.",
+          "source": "Memory Architectures"
+        },
+        {
+          "front": "What does MINJA demonstrate about memory poisoning, and why does it matter that it's 'query-only'?",
+          "back": "MINJA (arXiv:2503.03704) injects malicious records into an agent's memory bank purely by interacting through normal queries and observations -- no direct access to the memory store required. This means ANY user who can talk to the agent is a potential attacker, not just someone with backend access -- reported success rates above 95% in published results.",
+          "source": "Memory Architectures"
+        },
+        {
+          "front": "A real repro injected an identical poisoning mechanism as two different claims: an unverified $50,000 financial credit, and an unverified support-contact reassignment. What was the real, contrasting result?",
+          "back": "The financial claim triggered SPONTANEOUS hedging with zero mitigation in place -- the model wrote its own 'unverified, recommend confirming in writing' caveat into memory. The operational claim was trusted with ZERO hedging -- written as flat fact and later used confidently with no caveat. The real vulnerability is claims that don't LOOK consequential, not claims in general.",
+          "source": "Memory Architectures"
+        },
+        {
+          "front": "What one system-prompt change closed the gap the untagged operational-claim poisoning left open, and how did it work?",
+          "back": "Requiring every memory fact to be tagged [user-asserted] or [tool-verified], with an instruction to flag [user-asserted] facts before relying on them for anything consequential. It doesn't verify truth at write time -- it preserves PROVENANCE, so a later turn can apply scrutiny before acting, even though the claim itself was never independently checked.",
+          "source": "Memory Architectures"
+        },
+        {
+          "front": "Why is 'source-tagging' a stronger mitigation framing than 'validate claims before writing to memory'?",
+          "back": "Many claims (like a routine contact reassignment) have no independent source to validate against at write time -- there's nothing to check truth against. Source-tagging sidesteps that impossible problem: it doesn't try to determine if a claim is TRUE, it just preserves WHERE the claim came from, so the consuming turn -- not the writing turn -- can decide how much to trust it.",
+          "source": "Memory Architectures"
         },
         {
           "front": "How does a multi-agent SYSTEM differ from the orchestrator-workers WORKFLOW pattern, per Anthropic's own classification?",
