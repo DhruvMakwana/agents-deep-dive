@@ -116,4 +116,6 @@ nav:
       - "Evaluating Agents": evaluating-agents.md
       - "Agent Security": agent-security.md
       - "Durable Execution": durable-execution.md
+  - Training:
+      - "Training Agents: Reward and Credit": training-agents.md
   - About: about.md

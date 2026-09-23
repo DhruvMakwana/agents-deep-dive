@@ -95,9 +95,19 @@ Every page's TL;DR in one place, every page's Scenario Check merged into one com
     - **Idempotency is the second line of defense, not a redundant one.** Replaying the event log tells you what's *known* to have completed — it can't tell you about the gap between "the side effect happened" and "the log says it happened." An idempotent tool, checking its own persisted state before acting, is what actually prevents a double charge or a duplicate booking in that gap.
     - **This is a real, documented interview topic**, not a hypothetical: "How do you make sure agents do not double-execute side-effectful operations like charging a card or booking a ticket twice?" and "Suppose your booking agent sometimes reserves the same hotel twice — walk through how you'd debug and fix this" are both real, sourced interview questions.
 
+    ## Training
+
+    ### [Training Agents: Reward and Credit](training-agents.md)
+
+    - **GRPO replaces a critic with the group itself.** DeepSeekMath's own framing: "GRPO foregoes the critic model, instead estimating the baseline from group scores" — rewards for a group of sampled completions to the same prompt are "normalized by subtracting the group average and dividing by the group standard deviation," and that normalized value becomes every token's advantage.
+    - **A real, exact run of that formula reproduces GRPO's own documented failure mode.** A group where every sample got the identical reward produced an advantage of exactly zero for all eight samples — DAPO's own paper names this the "gradient-decreasing problem": "if all outputs of a particular prompt are correct and receive the same reward, the resulting advantage for this group is zero. A zero advantage results in zero policy gradients."
+    - **DAPO's fix, run for real on the same degenerate group, is exactly what the paper describes**: over-sample and filter out any group whose accuracy is exactly 0 or exactly 1, keeping only groups with genuine variance — "leaving all prompts in the batch with effective gradients."
+    - **Outcome reward and process reward answer different questions, with a measured real gap between them.** "Process supervision significantly outperforms outcome supervision for training models to solve problems from the challenging MATH dataset" — a process-supervised model reported solving 78% of a representative MATH subset. A real toy repro shows exactly why: outcome-only credit can't tell a uniformly-bad trajectory from one where only the middle step failed; step-level credit can.
+    - **DPO turns preference pairs directly into a classification loss, no separate reward model or RL loop needed** — "solve the standard RLHF problem with only a simple classification loss," reported to match or exceed PPO-based RLHF while being "stable, performant, and computationally lightweight." A real repro constructed one such pair from two real, independently sampled completions and a real judge call.
+
 === "Combined Scenario Check"
 
-    40 questions from every page on this site, one combined pass instead of opening each page separately. Every question shows which page it's from — go re-read that page for anything you get wrong.
+    44 questions from every page on this site, one combined pass instead of opening each page separately. Every question shows which page it's from — go re-read that page for anything you get wrong.
 
     <div class="quiz-widget" data-title="Combined Scenario Check — All Pages">
     <script type="application/json">
@@ -862,6 +872,82 @@ Every page's TL;DR in one place, every page's Scenario Check merged into one com
           ],
           "source": "Durable Execution",
           "sourceUrl": "durable-execution.md"
+        },
+        {
+          "scenario": "A real run computed GRPO advantages for a group where every one of 8 sampled completions received the identical reward (all correct). The result was an advantage of exactly 0.0 for all 8 samples.",
+          "question": "What is the most accurate description of what this result demonstrates?",
+          "options": [
+            "DAPO's 'gradient-decreasing problem' -- zero variance, zero gradient",
+            "A bug in the advantage formula needing a special case for perfect groups",
+            "That the model has nothing left to learn from any prompt it handles well",
+            "That group sizes of 8 are too small to produce meaningful advantages"
+          ],
+          "correct": 0,
+          "explanations": [
+            "Correct. DAPO's own paper names this exactly: 'if all outputs of a particular prompt are correct and receive the same reward, the resulting advantage for this group is zero. A zero advantage results in zero policy gradients.'",
+            "Misdiagnoses a real, documented property of the formula as an implementation error -- the zero result is mathematically correct given the formula, not a flaw needing a workaround.",
+            "Overgeneralizes from one group's result to a permanent claim about the prompt -- the issue is this specific batch having no variance, not that the prompt is unlearnable from in general.",
+            "Introduces an unsupported claim about group size -- the zero result occurs at any group size whenever every sample receives an identical reward; size isn't the variable at fault."
+          ],
+          "source": "Training Agents: Reward and Credit",
+          "sourceUrl": "training-agents.md"
+        },
+        {
+          "scenario": "DAPO's dynamic sampling filters out any group whose accuracy is exactly 0 or exactly 1, keeping only groups with accuracy strictly between those values. A team proposes simplifying this to: 'Just filter out any group with accuracy below 50%, since low-accuracy groups are clearly not useful.'",
+          "question": "What's the strongest problem with that proposed simplification?",
+          "options": [
+            "The proposal is equivalent to DAPO's actual rule, just phrased differently",
+            "It would discard groups with usable variance that DAPO's rule actually keeps",
+            "The 50% threshold should be higher, closer to 90%, to match DAPO's behavior",
+            "Filtering by accuracy is never a valid strategy for any RL training approach"
+          ],
+          "correct": 1,
+          "explanations": [
+            "Misstates the comparison -- a group with accuracy 0.3 is kept by the real rule and discarded by the proposed one, so the two are not equivalent.",
+            "Correct. DAPO's actual condition keeps any group with accuracy strictly between 0 and 1 -- including accuracy 0.3, which still has real reward variance and produces a real, non-zero gradient. A 50% floor would discard genuinely useful training signal DAPO's real rule correctly retains.",
+            "Proposes an arbitrary alternative threshold with no grounding -- DAPO's real rule isn't a threshold at all, it specifically excludes only the two boundary values (0 and 1).",
+            "Overgeneralizes into an absolute claim the material contradicts -- DAPO's own dynamic sampling IS a form of filtering by accuracy, so filtering by accuracy is demonstrably valid as published."
+          ],
+          "source": "Training Agents: Reward and Credit",
+          "sourceUrl": "training-agents.md"
+        },
+        {
+          "scenario": "A real toy repro showed outcome-only credit assignment producing identical values ([-1, -1, -1]) for a 3-step trajectory where only the middle step was actually the mistake, while process-level credit correctly produced [1, -1, 1]. A candidate concludes: 'This proves outcome-only reward should never be used, since it always fails to identify which step is bad.'",
+          "question": "What's the most accurate pushback on this conclusion?",
+          "options": [
+            "The conclusion is correct -- outcome-only reward provides no information at all",
+            "Process-level reward is strictly better in every respect, including cost",
+            "It shows one limitation (can't localize the bad step), not that it's worthless",
+            "The result only applies to exactly 3-step trajectories, not longer ones"
+          ],
+          "correct": 2,
+          "explanations": [
+            "Overstates the finding -- outcome reward does provide real information (whether the trajectory succeeded overall), just not step-level localization within it.",
+            "Contradicts the material directly -- process reward's real documented cost (800,000 human labels, or MC-estimation needing consensus filtering) is exactly why it isn't simply better in every respect.",
+            "Correct. The demo's specific limitation is that outcome-only credit can't distinguish WHICH step caused a failure -- it says nothing about whether outcome reward is useful at all. It remains cheap (often just a verifier) and gives a valid trajectory-level signal.",
+            "Fabricates a scope restriction with no basis -- the structural issue applies to any trajectory with more than one step, not specifically three."
+          ],
+          "source": "Training Agents: Reward and Credit",
+          "sourceUrl": "training-agents.md"
+        },
+        {
+          "scenario": "A real DPO-pair repro generated two completions to the same prompt with no explicit temperature setting, and the two completions were genuinely different. A candidate explains: 'This must mean the SDK silently applied a high default temperature to force diversity for this demo.'",
+          "question": "What's the most accurate explanation of what actually happened?",
+          "options": [
+            "SDKs commonly apply hidden temperature overrides for preference-pair use cases",
+            "Two identical completions would have been expected, so this suggests an error",
+            "The judge call itself introduced the variation, not the two completion calls",
+            "Default sampling alone can produce real variance, with no temperature setting"
+          ],
+          "correct": 3,
+          "explanations": [
+            "Fabricates an unsupported claim about hidden, use-case-specific SDK behavior -- there's no support for such a mechanism, and this SDK version doesn't even expose a top-level temperature parameter to set in the first place.",
+            "Assumes determinism that isn't supported -- nothing about the API guarantees identical outputs across independent calls by default, and the real repro directly demonstrates otherwise.",
+            "Misattributes the source of variation -- the judge call happens AFTER both completions already exist and differ; it evaluates the difference, it doesn't create it.",
+            "Correct. Two independent calls with no temperature specified still produced genuinely different completions -- consistent with default sampling variance being normal model behavior, not something requiring explicit configuration to observe."
+          ],
+          "source": "Training Agents: Reward and Credit",
+          "sourceUrl": "training-agents.md"
         }
       ]
     }
@@ -870,7 +956,7 @@ Every page's TL;DR in one place, every page's Scenario Check merged into one com
 
 === "Flashcards"
 
-    80 flashcards from every page with a deck so far — click a card to flip it, shuffle for random order.
+    88 flashcards from every page with a deck so far — click a card to flip it, shuffle for random order.
 
     <div class="flashcard-widget" data-title="Flashcards — All Pages">
     <script type="application/json">
@@ -1275,6 +1361,46 @@ Every page's TL;DR in one place, every page's Scenario Check merged into one com
           "front": "Why is this a real, documented interview topic rather than a niche concern?",
           "back": "Real sourced interview questions: 'How do you make sure agents do not double-execute side-effectful operations like charging a card or booking a ticket twice?' and 'Suppose your booking agent sometimes reserves the same hotel twice -- walk through how you'd debug and fix this.' Long-running agents accumulate real side effects at unpredictable points, unlike a typical fast request/response service.",
           "source": "Durable Execution"
+        },
+        {
+          "front": "What does GRPO replace PPO's critic (value network) with, and what's the exact formula?",
+          "back": "The group itself. 'GRPO foregoes the critic model, instead estimating the baseline from group scores.' Formula: sample a group of completions to the same prompt, then advantage = (reward - group_mean) / group_std for each sample -- that normalized value becomes every token's advantage.",
+          "source": "Training Agents: Reward and Credit"
+        },
+        {
+          "front": "A real run computed GRPO advantages for a group where every one of 8 samples got the identical reward (all correct). What was the result, and what does DAPO call this?",
+          "back": "Advantage = 0.0 for all 8 samples -- an exact reproduction of DAPO's named 'gradient-decreasing problem': 'if all outputs of a particular prompt are correct and receive the same reward, the resulting advantage for this group is zero. A zero advantage results in zero policy gradients.'",
+          "source": "Training Agents: Reward and Credit"
+        },
+        {
+          "front": "What is DAPO's 'dynamic sampling' fix, exactly, and how is it different from a simple accuracy threshold (e.g. 'discard anything below 50%')?",
+          "back": "Over-sample and filter out prompts whose accuracy is EXACTLY 0 or EXACTLY 1 -- keep everything with real variance in between. Unlike a threshold, a group with accuracy 0.3 is kept (it has real gradient signal), not discarded -- only the two degenerate boundary cases are excluded.",
+          "source": "Training Agents: Reward and Credit"
+        },
+        {
+          "front": "A real toy repro: a 3-step trajectory where only step 2 was the actual mistake, final outcome reward -1. What did outcome-only credit assignment produce, and what could it NOT do?",
+          "back": "Broadcast [-1, -1, -1] to all three steps -- bitwise identical to what a trajectory where ALL THREE steps were bad would produce. It structurally cannot localize which step caused the failure; process-level credit ([1, -1, 1]) correctly isolated step 2.",
+          "source": "Training Agents: Reward and Credit"
+        },
+        {
+          "front": "PRM800K's own reported comparison of process vs outcome supervision, and its real cost?",
+          "back": "'Process supervision significantly outperforms outcome supervision for training models to solve problems from the challenging MATH dataset' -- a process-supervised model solved 78% of a representative MATH test subset. Real cost: 800,000 human step-level labels went into building it.",
+          "source": "Training Agents: Reward and Credit"
+        },
+        {
+          "front": "What does DPO eliminate compared to classic RLHF, and what's the real measured trade-off reported?",
+          "back": "Eliminates the separate reward-model-training stage and the RL sampling loop -- 'solve the standard RLHF problem with only a simple classification loss' over (prompt, chosen, rejected) triples. Reported to exceed PPO-based RLHF on sentiment control and match/improve quality on summarization and dialogue, while being 'stable, performant, and computationally lightweight.'",
+          "source": "Training Agents: Reward and Credit"
+        },
+        {
+          "front": "A real DPO-pair demo generated two completions with NO temperature explicitly set, and got two genuinely different results. Why doesn't this require an explanation like 'the SDK secretly used a high temperature'?",
+          "back": "Default (non-zero) sampling variance is normal model behavior across independent calls -- no explicit temperature setting is needed to observe real differences. (Also a real, separate finding: the SDK version used has no top-level `temperature` parameter in its Messages API at all.)",
+          "source": "Training Agents: Reward and Credit"
+        },
+        {
+          "front": "Why is credit assignment described as a genuinely unsolved, active research area rather than a solved problem?",
+          "back": "A 2026 survey counts 69 papers (56 core credit-assignment methods) still working on it. Methods span from GRPO's group-relative baseline to GiGPO's 'anchor state grouping' (grouping identical states recurring across different rollouts) for finer-grained, step-level credit while keeping GRPO's critic-free, low-memory properties -- an active spectrum, not a settled question.",
+          "source": "Training Agents: Reward and Credit"
         }
       ]
     }

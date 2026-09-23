@@ -43,6 +43,9 @@ SECTIONS = [
         ("Agent Security", "agent-security.md"),
         ("Durable Execution", "durable-execution.md"),
     ]),
+    ("Training", [
+        ("Training Agents: Reward and Credit", "training-agents.md"),
+    ]),
 ]
 
 TLDR_RE = re.compile(r'\?\?\? abstract "TL;DR — quick revision"\n((?:    .*\n?)+)')
