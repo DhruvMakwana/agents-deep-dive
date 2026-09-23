@@ -123,6 +123,14 @@ Every page's TL;DR in one place, every page's Scenario Check merged into one com
     - **MAST's real taxonomy**: 14 distinct failure modes across 3 categories — system design issues, inter-agent misalignment, task verification — built from 1,600+ annotated traces across 7 frameworks, and the paper's own stated finding is that multi-agent systems' "performance gains on popular benchmarks are often minimal."
     - **"When to use one agent" has a real, non-hand-wavy answer**: genuinely independent, breadth-first sub-tasks are where the token cost buys something real (Anthropic's own 90.2% improvement, largely attributable to spending more tokens); tightly-coupled tasks needing shared context between steps are where a single agent avoids a coordination problem it would otherwise have to solve by hand.
 
+    ### [Harness Engineering](harness-engineering.md)
+
+    - **A harness is everything around the model that makes a long-running agent actually work** — Anthropic's own framing: *"the system prompt, set of tools, and overall agent harness"* together, not the model alone. Their own real finding on why this matters: *"even a frontier coding model like Opus 4.5... will fall short... if it's only given a high-level prompt"* — the failure modes were one-shotting too much at once (context exhaustion mid-task) and prematurely declaring work complete.
+    - **The documented fix is a specific artifact set, not a vague "give it more context" instruction**: an initializer session creates *"an `init.sh` script, a claude-progress.txt file that keeps a log of what agents have done, and an initial git commit"* — three concrete things a later, otherwise-blank session reads before doing anything.
+    - **A real repro of this exact pattern worked end to end, and caught a real bug along the way.** A budget-limited first session made all its real lookups but was cut off before recording anything; a genuinely fresh second session — no memory of the first — read the shared progress file, re-derived the lost work from scratch, and correctly finished the task, flagging one deliberately ambiguous result as needing follow-up, unprompted.
+    - **"Compaction isn't sufficient" on its own, per Anthropic's own real finding** — and a real bug in this page's own recipe demonstrated exactly the adjacent risk: treating "the response stopped" as "the agent finished" without checking *why* it stopped silently corrupted a state-tracking loop, mishandling a genuine token-budget truncation as if the agent had genuinely completed its turn.
+    - **A real self-verification test — instructed discipline vs. none — was a clean, honest negative.** Anthropic's cited practice: *"Self-verify all features. Only mark features as 'passing' after careful testing."* Tested directly against a deliberately unhelpful real tool result, both the plain and the explicitly-instructed condition correctly declined to mark it "passing" — Sonnet 5's baseline judgment was already sufficient here.
+
     ## Production
 
     ### [Evaluating Agents](evaluating-agents.md)
@@ -171,7 +179,7 @@ Every page's TL;DR in one place, every page's Scenario Check merged into one com
 
 === "Combined Scenario Check"
 
-    76 questions from every page on this site, one combined pass instead of opening each page separately. Every question shows which page it's from — go re-read that page for anything you get wrong.
+    80 questions from every page on this site, one combined pass instead of opening each page separately. Every question shows which page it's from — go re-read that page for anything you get wrong.
 
     <div class="quiz-widget" data-title="Combined Scenario Check — All Pages">
     <script type="application/json">
@@ -1242,6 +1250,82 @@ Every page's TL;DR in one place, every page's Scenario Check merged into one com
           "sourceUrl": "multi-agent-systems.md"
         },
         {
+          "scenario": "A real repro's session loop initially treated any non-tool_use stop reason as 'the agent is done.' A real session hit its token budget mid-generation (stop_reason == 'max_tokens') right after the model's own text said 'Now recording all six findings' -- but zero actual recording tool calls followed, because the response had been cut off, not concluded.",
+          "question": "What is the most precise description of the actual failure this bug caused?",
+          "options": [
+            "The model refused to complete the task once its budget ran low",
+            "A real truncation was silently mishandled as if it were genuine completion",
+            "The lookup_policy tool returned incorrect data for one of the six items",
+            "The progress file's underlying data structure had a bug in how it stored items"
+          ],
+          "correct": 1,
+          "explanations": [
+            "Not what happened -- the model was actively trying to proceed (it stated an intent to record findings); there's no refusal in the real transcript, only an incomplete response due to running out of budget.",
+            "Correct. The real bug was in the harness's OWN interpretation logic: it didn't check stop_reason carefully enough to distinguish a genuine, deliberate stop (stop_reason == 'tool_use' absent because the agent chose to conclude) from a forced cutoff (stop_reason == 'max_tokens'), and treated both identically as 'finished.'",
+            "Unrelated to the actual bug -- lookup_policy's fictional data was correct throughout; the bug was entirely in the session loop's control-flow logic for interpreting API responses, not in the tool's returned data.",
+            "Not where the bug lived -- ProgressFile's own update/render/remaining logic was dry-tested separately and worked correctly; the bug was specifically in _run_session's handling of the API response's stop_reason."
+          ],
+          "source": "Harness Engineering",
+          "sourceUrl": "harness-engineering.md"
+        },
+        {
+          "scenario": "A real repro ran session 1 with a tight turn limit, causing it to make all 6 real tool lookups but get cut off before recording any findings. Session 2 started as a genuinely fresh conversation -- with no access to session 1's actual conversation history -- and had to re-do all 6 lookups from scratch before it could record any findings.",
+          "question": "What does session 2 needing to re-do the lookups most directly illustrate about what a real context reset actually discards?",
+          "options": [
+            "It illustrates that only the persisted progress artifact survives a reset, not history",
+            "It illustrates a bug -- a well-designed harness should never need to repeat any work",
+            "It shows the lookup_policy tool has a bug causing inconsistent results across sessions",
+            "It proves that progress files are an ineffective mechanism for multi-session continuation"
+          ],
+          "correct": 0,
+          "explanations": [
+            "Correct. This is exactly the real mechanism the demo makes concrete: a progress file is the ONLY thing that survives between sessions in this design -- the raw tool-call history and conversation from session 1 is genuinely gone, so anything not written to the shared artifact has to be redone.",
+            "Overstates the claim -- some repeated work is a real, inherent cost of this pattern (the raw conversation genuinely doesn't survive), not necessarily evidence of a flawed design; the alternative (persisting the entire conversation) has its own real costs the progress-file pattern is specifically designed to avoid.",
+            "Contradicts the setup -- lookup_policy returns the identical fictional data every time it's called; session 2's repeated lookups returned the same real results as session 1's, just to a different, fresh conversation.",
+            "Backwards -- the progress-file mechanism worked correctly here: the checklist ended fully and correctly filled (remaining: 0) specifically because session 2 could read what session 1 had NOT yet recorded and act accordingly; ineffectiveness would look like session 2 not knowing what remained, which didn't happen."
+          ],
+          "source": "Harness Engineering",
+          "sourceUrl": "harness-engineering.md"
+        },
+        {
+          "scenario": "A real repro tested a plain instruction against an explicit self-verification instruction ('only mark features as passing after careful testing'), both applied to the identical deliberately ambiguous tool result. Both conditions independently and correctly classified the result as needing follow-up rather than passing.",
+          "question": "What is the most defensible conclusion to draw from this specific comparison?",
+          "options": [
+            "The test is invalid since a real experiment should find a difference between conditions",
+            "Self-verification instructions are proven unnecessary for any model or task",
+            "In this specific test, the explicit instruction didn't change the real outcome",
+            "Anthropic's own documented practice must be incorrect based on this result"
+          ],
+          "correct": 2,
+          "explanations": [
+            "Backwards reasoning -- a real experiment can legitimately produce a null result; assuming a valid test must always find a difference would bias reporting toward confirming expectations rather than reporting what actually happened.",
+            "Overgeneralizes a single, scoped, honest negative result into a sweeping universal claim -- this test used one model, one task, one specific ambiguity; it doesn't establish anything about harder ambiguities, less capable models, or higher-stakes tasks.",
+            "Correct. The precise, defensible, scoped claim is exactly this: for this specific model, this specific ambiguous result, and this specific pair of instructions, the explicit self-verification instruction didn't change the real outcome -- a genuine, honestly-reported finding, not evidence about self-verification in general.",
+            "A non sequitur -- one narrow test not finding a difference doesn't invalidate a documented practice drawn from a much larger, different real deployment (a 200+ feature production coding agent); the two are different scales and different specific claims."
+          ],
+          "source": "Harness Engineering",
+          "sourceUrl": "harness-engineering.md"
+        },
+        {
+          "scenario": "Anthropic's own real finding states that even a frontier model running in a loop across multiple context windows will fall short of a complex task if only given a high-level prompt, with two named failure patterns: attempting too much at once (context exhaustion) and prematurely declaring work complete.",
+          "question": "Which specific artifact from the documented three-part initializer pattern (init.sh, claude-progress.txt, initial git commit) most directly targets the SECOND failure pattern (premature declarations of completion)?",
+          "options": [
+            "init.sh, since it sets up the environment before any session begins",
+            "The initial git commit, since it establishes a restorable baseline state",
+            "None of the three artifacts relate to premature completion specifically",
+            "claude-progress.txt, since it gives a session concrete status to verify"
+          ],
+          "correct": 3,
+          "explanations": [
+            "Not the most direct connection -- init.sh addresses environment setup and reproducibility, not the specific failure of a session wrongly believing work is finished.",
+            "Addresses a different, related but distinct risk -- the git commit's documented role is enabling recovery ('use git to revert bad code changes and recover working states'), which is more directly about undoing bad changes than about preventing premature 'done' declarations.",
+            "Incorrect -- the progress file's real, documented role (a checklist with explicit passing/not-passing status per item) is specifically what gives a session concrete grounds to check before claiming completion, directly countering vague, ungrounded 'I'm done' judgments.",
+            "Correct. A concrete, itemized progress file -- especially one following the real documented feature-checklist pattern with an explicit passing/not-passing status per item -- is what lets a session check specific, verifiable status rather than relying on its own possibly-premature sense that the task is complete."
+          ],
+          "source": "Harness Engineering",
+          "sourceUrl": "harness-engineering.md"
+        },
+        {
           "scenario": "A real repro gave a model the option to call a verification tool or answer directly, on both a well-known fact and an unguessable fictional fact. In both cases the model called the tool and got the correct outcome -- no divergence between outcome and trajectory was observed.",
           "question": "What's the most accurate takeaway from this specific result?",
           "options": [
@@ -1628,7 +1712,7 @@ Every page's TL;DR in one place, every page's Scenario Check merged into one com
 
 === "Flashcards"
 
-    151 flashcards from every page with a deck so far — click a card to flip it, shuffle for random order.
+    158 flashcards from every page with a deck so far — click a card to flip it, shuffle for random order.
 
     <div class="flashcard-widget" data-title="Flashcards — All Pages">
     <script type="application/json">
@@ -2188,6 +2272,41 @@ Every page's TL;DR in one place, every page's Scenario Check merged into one com
           "front": "Anthropic says token usage 'by itself explains 80% of the variance' in one benchmark's (BrowseComp) performance. What does this actually mean for evaluating a multi-agent win?",
           "back": "Much of multi-agent's measured advantage on that benchmark is attributable to spending more tokens, not to the architecture itself being smarter -- a caution against crediting 'multi-agent design' for a gain that a single agent given an equivalent token/compute budget might also achieve.",
           "source": "Multi-Agent Systems"
+        },
+        {
+          "front": "What is a 'harness,' per Anthropic's own framing, and why does it matter distinct from the model?",
+          "back": "'The system prompt, set of tools, and overall agent harness' together -- everything surrounding the model that makes a long-running agent actually work. Real finding: 'even a frontier coding model like Opus 4.5... will fall short... if it's only given a high-level prompt' -- the model alone isn't enough; the surrounding structure is load-bearing.",
+          "source": "Harness Engineering"
+        },
+        {
+          "front": "What two real failure patterns did Anthropic observe when a frontier model worked on a long, complex task with no harness structure?",
+          "back": "(1) One-shotting too much at once, leading to context exhaustion mid-implementation. (2) Later sessions prematurely declaring the work complete. Compaction alone doesn't fix either -- 'compaction doesn't always pass perfectly clear instructions to the next agent.'",
+          "source": "Harness Engineering"
+        },
+        {
+          "front": "What three concrete artifacts does an initializer session create, per Anthropic's documented pattern?",
+          "back": "An init.sh script (environment setup), a claude-progress.txt file ('keeps a log of what agents have done'), and an initial git commit (enables using git 'to revert bad code changes and recover working states'). Every later session reads the progress file first.",
+          "source": "Harness Engineering"
+        },
+        {
+          "front": "A real repro's session loop had a bug: it treated any non-tool_use stop reason as 'the agent is done.' What real failure did this cause, and how was it caught?",
+          "back": "A response cut off by max_tokens mid-generation (right after the model said 'Now recording all six findings,' with zero actual recording calls that followed) was silently treated as a clean finish rather than a truncation. Caught by noticing the mismatch between the model's stated intent and the empty tool-call list. Fixed by explicitly checking stop_reason == 'max_tokens' as a distinct case.",
+          "source": "Harness Engineering"
+        },
+        {
+          "front": "A real repro ran session 1 (turn-limited, cut off before recording anything) then session 2 (genuinely fresh, no shared conversation). What did session 2 have to do, and why?",
+          "back": "Re-do all 6 real tool lookups from scratch before it could record any findings -- because only the progress file, not the raw conversation, survives a real reset. Session 2 then correctly finished the checklist (remaining: 0), including unprompted flagging of an ambiguous result as needs_follow_up.",
+          "source": "Harness Engineering"
+        },
+        {
+          "front": "What is Anthropic's cited self-verification discipline, and what did a real repro find when testing it against a deliberately ambiguous result?",
+          "back": "'Self-verify all features. Only mark features as passing after careful testing.' Real result: an honest negative -- both a plain instruction and the explicit self-verify instruction correctly flagged the same ambiguous result ('contact support for specifics') as needs_follow_up rather than passing. Sonnet 5's baseline judgment was already sufficient in this specific test.",
+          "source": "Harness Engineering"
+        },
+        {
+          "front": "Why is 'a session loop's own bug' worth documenting as a real harness-engineering lesson, not just an incidental coding error?",
+          "back": "The bug (conflating max_tokens truncation with genuine completion) is itself exactly the class of failure a harness is meant to guard against: a harness that can't tell 'the agent decided it's done' apart from 'the agent got cut off mid-sentence' will silently corrupt the state it's supposed to protect -- precisely on-topic for what harness engineering is about.",
+          "source": "Harness Engineering"
         },
         {
           "front": "What's the real difference between outcome grading and trajectory grading, and what documented risk does relying on outcome-only grading create?",

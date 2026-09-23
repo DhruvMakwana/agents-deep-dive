@@ -44,6 +44,7 @@ SECTIONS = [
     ("Systems", [
         ("Planning and Decomposition", "planning-and-decomposition.md"),
         ("Multi-Agent Systems", "multi-agent-systems.md"),
+        ("Harness Engineering", "harness-engineering.md"),
     ]),
     ("Production", [
         ("Evaluating Agents", "evaluating-agents.md"),
