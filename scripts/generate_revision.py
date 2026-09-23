@@ -36,6 +36,7 @@ SECTIONS = [
         ("Tool Design", "tool-design.md"),
         ("Context Engineering", "context-engineering.md"),
         ("Tools at Scale", "tools-at-scale.md"),
+        ("MCP Deep Dive", "mcp-deep-dive.md"),
     ]),
     ("Systems", [
         ("Multi-Agent Systems", "multi-agent-systems.md"),

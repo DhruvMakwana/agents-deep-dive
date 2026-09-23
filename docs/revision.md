@@ -75,6 +75,14 @@ Every page's TL;DR in one place, every page's Scenario Check merged into one com
     - **A real, minimal repro of all three reproduced the shape of these effects at small scale**: naive (25 tools in context) cost 9,011 tokens over 4 calls; a keyword-filtered tool-search condition cost 4,065 tokens over the same 4 calls (-55%, from not paying for 22 irrelevant tool definitions); programmatic tool calling cost 3,743 tokens over just 3 calls (-58%, from not echoing intermediate results back as separate turns).
     - **A real bug in the tool-search condition's retriever was caught before any paid calls**: raw keyword overlap let generic words ("check", "status") shared between the task question and filler tool descriptions outscore the real tools' more specific keyword sets, excluding 2 of the 3 tools the task actually needed. Fixed by filtering common words from both sides before scoring — verified with a zero-cost dry run before spending a single real API call.
 
+    ### [MCP Deep Dive](mcp-deep-dive.md)
+
+    - **MCP's 2026-07-28 revision makes the protocol stateless at the wire level**: the `initialize`/`notifications/initialized` handshake and the `Mcp-Session-Id` header are removed from Streamable HTTP; every request carries its own protocol version and capabilities; list endpoints no longer vary per connection. A real, dated finding: `mcp==2.2.0` (the SDK that explicitly targets this spec) still uses `Mcp-Session-Id` **by default** — spec-compliant statelessness is real and working, but is an opt-in flag (`stateless_http=True`), not the default.
+    - **Multi Round-Trip Requests (MRTR) replaced server-initiated requests** (`roots/list`, `sampling/createMessage`, `elicitation/create`) with a request/retry pattern: a server returns `InputRequiredResult`, the client retries the original request carrying the answer plus an opaque `requestState` token the server minted and must re-verify.
+    - **A real repro of the SDK's own `requestState` security held on every check**: tampering with a sealed token is rejected (AEAD authentication failure), replaying a token against a different tool argument is rejected (request-binding), and — the important one — replaying one user's token as a different user is rejected (principal-binding). That last check is the real, working mitigation for the spec's own named "State Handle Hijacking" vulnerability: *"MCP servers **MUST NOT** treat possession of a state handle as authentication."*
+    - **A real, current list of deprecations matters for anything built today**: HTTP+SSE transport (migrate to Streamable HTTP), Roots/Sampling/Logging features (migrate to tool parameters, direct provider APIs, and OpenTelemetry respectively), and OAuth Dynamic Client Registration (migrate to Client ID Metadata Documents) are all now formally Deprecated under a twelve-month removal window, not just "discouraged."
+    - **Token passthrough is explicitly forbidden, not just risky**: *"MCP servers **MUST NOT** accept any tokens that were not explicitly issued for the MCP server"* — a server that blindly forwards a client-supplied token downstream breaks a real OAuth security boundary and reintroduces the confused-deputy problem the rest of the spec's auth model is built to prevent.
+
     ## Systems
 
     ### [Multi-Agent Systems](multi-agent-systems.md)
@@ -133,7 +141,7 @@ Every page's TL;DR in one place, every page's Scenario Check merged into one com
 
 === "Combined Scenario Check"
 
-    56 questions from every page on this site, one combined pass instead of opening each page separately. Every question shows which page it's from — go re-read that page for anything you get wrong.
+    60 questions from every page on this site, one combined pass instead of opening each page separately. Every question shows which page it's from — go re-read that page for anything you get wrong.
 
     <div class="quiz-widget" data-title="Combined Scenario Check — All Pages">
     <script type="application/json">
@@ -748,6 +756,82 @@ Every page's TL;DR in one place, every page's Scenario Check merged into one com
           "sourceUrl": "tools-at-scale.md"
         },
         {
+          "scenario": "A real repro found that mcp==2.2.0 -- an SDK release whose own documentation states it targets the 2026-07-28 spec -- rejects a raw tools/list request with 'Bad Request: Missing session ID' when run with its default streamable_http_app() configuration, and only behaves statelessly once stateless_http=True is passed explicitly.",
+          "question": "What's the most accurate conclusion to draw from this result?",
+          "options": [
+            "Targeting a spec version and defaulting to that spec's behavior are two different claims",
+            "This is a bug in the recipe's own code, not a real property of the installed SDK",
+            "The spec's statelessness requirement must not actually apply to the Streamable HTTP transport",
+            "The SDK's version number was reported incorrectly and it does not actually target this spec"
+          ],
+          "correct": 0,
+          "explanations": [
+            "Correct. The SDK genuinely implements spec-compliant statelessness -- it works correctly once explicitly enabled -- but ships it as an opt-in flag rather than the default, which is exactly what this page's real test demonstrated with raw HTTP requests and real response headers, not an assumption.",
+            "Misattributes the finding -- the default-mode rejection came from the installed SDK's own real internal logic (streamable_http_manager.py's session handling), not from any code this recipe wrote; the recipe's code only sent a plain HTTP request and reported the real response.",
+            "Contradicts the real, verbatim quote from the spec's own changelog directly: 'Remove protocol-level sessions and the Mcp-Session-Id header from the Streamable HTTP transport' -- the requirement applies to exactly this transport.",
+            "Unsupported and contradicted by the SDK's own real documentation, which explicitly and directly states it targets the 2026-07-28 spec -- the discrepancy is about default configuration, not a false version claim."
+          ],
+          "source": "MCP Deep Dive",
+          "sourceUrl": "mcp-deep-dive.md"
+        },
+        {
+          "scenario": "A real requestState repro showed that a token minted for Alice's checkout (method='tools/call', target='checkout', args={'cart_id': 'cart_42'}) was correctly rejected when presented with a different cart_id, even though the token itself was untampered and validly sealed.",
+          "question": "What security property does this specific rejection demonstrate, distinct from the tamper-detection check?",
+          "options": [
+            "That Alice's account lacked sufficient permissions to access a different shopping cart",
+            "That the token cryptographically commits to the exact arguments it was minted for",
+            "That AES-256-GCM is a stronger algorithm than the one used for the tamper check",
+            "That the token's TTL had already expired by the time the second request arrived"
+          ],
+          "correct": 1,
+          "explanations": [
+            "Not tested in this repro at all -- no authorization/permissions layer was involved; the rejection came purely from the requestState envelope's own binding check inside the demo's unseal logic, prior to any application-level permission decision.",
+            "Correct. This is 'request-binding': the sealed claims envelope includes a digest of the exact arguments the token was minted for (via the 'a' claim), so presenting the same otherwise-valid token against different arguments fails that binding check -- a property distinct from (and additional to) simple tamper detection.",
+            "Both checks used the identical codec (AESGCMRequestStateCodec) -- there's no second, stronger algorithm involved; this option invents a distinction the real setup doesn't have.",
+            "Not what this specific test isolated -- the request-binding rejection is a separate check from the recipe's dedicated expiry test (which used a different, deliberately short-TTL scenario); this rejection specifically involved a mismatched argument, not elapsed time."
+          ],
+          "source": "MCP Deep Dive",
+          "sourceUrl": "mcp-deep-dive.md"
+        },
+        {
+          "scenario": "A candidate explains the new MCP spec by saying: 'They removed sessions to make the protocol stateless, which simplifies things because servers no longer need to track any state between requests.'",
+          "question": "What's the most accurate correction to this explanation?",
+          "options": [
+            "The change affects only the deprecated HTTP+SSE transport, not Streamable HTTP at all",
+            "Sessions weren't removed -- only the name of the Mcp-Session-Id header changed in this revision",
+            "Removing sessions relocated cross-call state into a protected value, not removed the need for state",
+            "This is fully accurate -- protocol-level statelessness means servers genuinely never need any state"
+          ],
+          "correct": 2,
+          "explanations": [
+            "Backwards -- HTTP+SSE is being deprecated in favor of Streamable HTTP, and it's specifically Streamable HTTP that the changelog names as having its Mcp-Session-Id header removed in this revision.",
+            "Contradicts the real, quoted spec changes directly -- the changelog explicitly states protocol-level sessions and the Mcp-Session-Id header are removed, not renamed; this recipe's own real test confirmed the header is genuinely absent under stateless_http=True.",
+            "Correct. The real design move (and this page's own framing, backed by the requestState repro) is that removing protocol-level sessions didn't eliminate cross-request state -- it moved the responsibility for protecting that state from the transport to an explicit, self-describing, cryptographically sealed value (requestState) the client carries and the server verifies on every use.",
+            "Overstates the claim -- the spec's own changelog explicitly names the replacement mechanism: 'Servers that need cross-call state use explicit, server-minted handles passed as ordinary tool arguments,' meaning the NEED for cross-call state didn't disappear, only how it's carried changed."
+          ],
+          "source": "MCP Deep Dive",
+          "sourceUrl": "mcp-deep-dive.md"
+        },
+        {
+          "scenario": "An MCP server proxies requests to a third-party API. To simplify its own code, it accepts whatever bearer token the MCP client sends and forwards that exact token unmodified to the downstream API, without checking who or what it was originally issued for.",
+          "question": "What does the spec's own security guidance say about this specific pattern?",
+          "options": [
+            "It is only a risk if the third-party API and the MCP server happen to share the same audience claim",
+            "It is a required pattern for any MCP server that acts as a proxy to a third-party API",
+            "It is acceptable as long as the downstream API independently validates the token itself",
+            "It is explicitly forbidden -- servers must not accept tokens that were not issued for themselves"
+          ],
+          "correct": 3,
+          "explanations": [
+            "Inverts the actual risk condition -- the danger is exactly when audiences are NOT properly validated (accepting tokens regardless of their intended audience); a shared audience claim wouldn't be the triggering risk factor here, mismatched or unchecked audiences are.",
+            "The opposite of what the spec recommends -- token passthrough is named as an anti-pattern specifically, not a required or even acceptable implementation choice for proxy servers.",
+            "Contradicts the spec's own stated mitigation directly, which places the obligation on the MCP server itself, not on hoping a downstream service happens to catch the problem: 'MCP servers MUST NOT accept any tokens that were not explicitly issued for the MCP server' -- stated as an absolute requirement, not a conditional one.",
+            "Correct. The spec is unambiguous and uses MUST NOT language: a server must validate that a token was properly issued to itself before using or forwarding it, precisely because passthrough reintroduces the confused-deputy problem and breaks real OAuth audience-validation boundaries."
+          ],
+          "source": "MCP Deep Dive",
+          "sourceUrl": "mcp-deep-dive.md"
+        },
+        {
           "scenario": "A team built an orchestrator-workers pipeline (per Anthropic's workflow-pattern definition: a central LLM call decides which of several pre-built worker functions to invoke, each worker executes one fixed role). A teammate says: 'This is a multi-agent system, since it has a lead agent and workers operating under it.'",
           "question": "What's the most accurate correction?",
           "options": [
@@ -1210,7 +1294,7 @@ Every page's TL;DR in one place, every page's Scenario Check merged into one com
 
 === "Flashcards"
 
-    112 flashcards from every page with a deck so far — click a card to flip it, shuffle for random order.
+    120 flashcards from every page with a deck so far — click a card to flip it, shuffle for random order.
 
     <div class="flashcard-widget" data-title="Flashcards — All Pages">
     <script type="application/json">
@@ -1535,6 +1619,46 @@ Every page's TL;DR in one place, every page's Scenario Check merged into one com
           "front": "Why does a large tool library hurt more than just token cost, per Tool Design and this page?",
           "back": "More tools in context also means more opportunities for the model to confuse similarly-named or similarly-described tools with each other -- Anthropic's own numbers show this isn't hypothetical: filtering the library down (Tool Search Tool) didn't just cut tokens, it raised MCP evaluation accuracy (Opus 4: 49% to 74%), because a shorter, more relevant tool set is also easier to select correctly from.",
           "source": "Tools at Scale"
+        },
+        {
+          "front": "What is the single largest architectural change in the MCP 2026-07-28 spec revision?",
+          "back": "Making MCP stateless at the wire level: the initialize/notifications/initialized handshake and the Mcp-Session-Id header are removed from Streamable HTTP. Every request carries its own protocol version and capabilities in _meta, and list endpoints (tools/list, resources/list, prompts/list) no longer vary per-connection. Servers needing cross-call state use explicit, server-minted handles passed as ordinary tool arguments instead.",
+          "source": "MCP Deep Dive"
+        },
+        {
+          "front": "A real repro found mcp==2.2.0 -- an SDK that explicitly targets the 2026-07-28 spec -- still returns 'Bad Request: Missing session ID' by default. What was the actual finding?",
+          "back": "Spec-compliant statelessness is real and correctly implemented in the SDK, but it's opt-in (streamable_http_app(stateless_http=True)), not the default. 'Targets a spec' and 'defaults to that spec's behavior' are different claims -- confirmed directly via raw HTTP requests and real response headers, not assumed from the version number.",
+          "source": "MCP Deep Dive"
+        },
+        {
+          "front": "What replaced server-initiated requests (roots/list, sampling/createMessage, elicitation/create) in the 2026-07-28 spec, and how does it work?",
+          "back": "Multi Round-Trip Requests (MRTR): the server returns an InputRequiredResult carrying inputRequests; the client retries the ORIGINAL request, providing inputResponses plus an opaque requestState token the server minted. The server re-verifies that token on the retry.",
+          "source": "MCP Deep Dive"
+        },
+        {
+          "front": "What does the requestState token cryptographically bind to, per the real SDK source (mcp/server/request_state.py)?",
+          "back": "Method, target, and an argument digest (request-binding), the authenticated principal when available (principal-binding), and an expiry -- all sealed with AES-256-GCM authenticated encryption (AESGCMRequestStateCodec), so any tampering fails the AEAD authentication tag.",
+          "source": "MCP Deep Dive"
+        },
+        {
+          "front": "A real repro replayed Alice's validly-sealed requestState token as a different user ('user:mallory') with the same cart ID. What happened, and why does it matter?",
+          "back": "Rejected with 'principal' -- a real, working test of the spec's own named 'State Handle Hijacking' mitigation: 'MCP servers MUST NOT treat possession of a state handle as authentication' and 'SHOULD bind handles server-side to the authenticated user.' The repro confirmed this binding actually holds against the SDK's real crypto, not just as a documented requirement.",
+          "source": "MCP Deep Dive"
+        },
+        {
+          "front": "Which three real, concrete things does the 2026-07-28 spec formally deprecate (12-month removal window), and what's the migration for each?",
+          "back": "HTTP+SSE transport -> migrate to Streamable HTTP. Roots/Sampling/Logging features -> migrate to tool parameters, direct provider API integration, and OpenTelemetry/stderr logging respectively. OAuth Dynamic Client Registration -> migrate to Client ID Metadata Documents (DCR stays available for backward compatibility only).",
+          "source": "MCP Deep Dive"
+        },
+        {
+          "front": "What is 'token passthrough' in MCP's security model, and what does the spec require instead?",
+          "back": "An anti-pattern where an MCP server accepts a client-supplied token without validating it was issued FOR the MCP server, then forwards it unmodified downstream -- reintroducing the confused-deputy problem. The spec requires, in MUST NOT language: 'MCP servers MUST NOT accept any tokens that were not explicitly issued for the MCP server.'",
+          "source": "MCP Deep Dive"
+        },
+        {
+          "front": "Why does the real requestState repro's request-binding check (test 3: same token, different cart_id) matter as a DISTINCT property from tamper detection (test 2)?",
+          "back": "Tamper detection catches a MODIFIED token (broken AEAD tag). Request-binding catches an UNMODIFIED, validly-sealed token being replayed against different arguments than it was minted for -- the token cryptographically commits to its original method/target/args, so even a legitimately-obtained token can't be reused for a different operation.",
+          "source": "MCP Deep Dive"
         },
         {
           "front": "How does a multi-agent SYSTEM differ from the orchestrator-workers WORKFLOW pattern, per Anthropic's own classification?",
