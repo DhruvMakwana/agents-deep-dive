@@ -30,6 +30,7 @@ SECTIONS = [
         ("The Agent Loop From Scratch", "agent-loop-from-scratch.md"),
         ("Workflow Patterns", "workflow-patterns.md"),
         ("Reasoning Paradigms", "reasoning-paradigms.md"),
+        ("Choosing a Framework", "choosing-a-framework.md"),
     ]),
     ("Tools and Context", [
         ("Tool Design", "tool-design.md"),

@@ -41,6 +41,14 @@ Every page's TL;DR in one place, every page's Scenario Check merged into one com
     - **ReWOO's plan-then-execute split has a real failure surface ReAct doesn't**: a bad step in the plan is only caught once it's actually executed, not before. This page's real run hit exactly that — a generated plan referenced a function its tool didn't support, and one step genuinely failed.
     - **Reasoning models changed what needs to be built by hand.** DeepSeek-R1's reported finding is that self-reflection and verification can emerge from pure reinforcement learning, without anyone hand-coding a Reflexion-style retry loop or a ToT-style external search — some of what these 2023 papers built as scaffolding, later training runs learned to do internally.
 
+    ### [Choosing a Framework](choosing-a-framework.md)
+
+    - **A real, identical task solved three ways shows the actual trade-off, not a feature checklist.** The same tool-calling question, same model, same correct answer, same real call count (2) across the raw Anthropic client, LangChain/LangGraph's `create_agent`, and Pydantic AI's `Agent` — but real, measured orchestration code of 15, 8, and 5 lines respectively. The gap is what each approach makes you write by hand versus adopt as-is.
+    - **"Own the loop" is a real, named position, not just a vibe.** 12-Factor Agents' framing: most products calling themselves agentic "aren't that agentic" — real production reliability, in this view, comes from owning your own control flow rather than delegating it to a framework's abstraction.
+    - **AutoGen is in maintenance mode, by its own README's words**: "It will not receive new features or enhancements and is community managed going forward. New users should start with Microsoft Agent Framework." Building on it today means building on something the vendor itself says to migrate away from.
+    - **A real dependency conflict surfaced and got fixed for real, not glossed over**: the full `pydantic-ai` package pulls in `fastmcp-slim`, which requires `python-dotenv>=1.1.0` — directly conflicting with this cookbook's shared `python-dotenv==1.0.1` pin. `pydantic-ai-slim[anthropic]` (skipping the unneeded `mcp` extra) resolves it cleanly, since this recipe never uses MCP.
+    - **Framework adoption in real job descriptions is smaller than the discourse suggests.** Across 1,978 genuinely AI-technical job postings, LangChain appears in 8.1% (28 companies) and LangGraph in 5.0% (19 companies) — real, current numbers, not zero, but a small fraction of postings even in a corpus specifically filtered for AI-technical roles.
+
     ## Tools and Context
 
     ### [Tool Design](tool-design.md)
@@ -117,7 +125,7 @@ Every page's TL;DR in one place, every page's Scenario Check merged into one com
 
 === "Combined Scenario Check"
 
-    48 questions from every page on this site, one combined pass instead of opening each page separately. Every question shows which page it's from — go re-read that page for anything you get wrong.
+    52 questions from every page on this site, one combined pass instead of opening each page separately. Every question shows which page it's from — go re-read that page for anything you get wrong.
 
     <div class="quiz-widget" data-title="Combined Scenario Check — All Pages">
     <script type="application/json">
@@ -426,6 +434,82 @@ Every page's TL;DR in one place, every page's Scenario Check merged into one com
           ],
           "source": "Reasoning Paradigms",
           "sourceUrl": "reasoning-paradigms.md"
+        },
+        {
+          "scenario": "A real run solved the identical tool-calling task with the raw Anthropic client (15 lines, 2 calls), LangChain/LangGraph's create_agent (8 lines, 2 calls), and Pydantic AI's Agent (5 lines, 2 calls) -- all three produced the correct answer.",
+          "question": "What is the most accurate interpretation of the line-count difference?",
+          "options": [
+            "It measures loop code written by hand vs adopted as-is, not code quality",
+            "It proves Pydantic AI is the objectively best choice for any agent task",
+            "The comparison is meaningless, since real agents never resemble a simple demo task",
+            "It shows the raw client is poorly written and should be shortened to match the frameworks"
+          ],
+          "correct": 0,
+          "explanations": [
+            "Correct. The real measured gap tracks exactly what each layer is for -- how much of the send/check/execute/append loop you write yourself versus hand to a framework's own conventions -- a real, honest, non-evaluative fact, not a verdict on which is 'better.'",
+            "Overreaches from one narrow, simple task to a universal quality claim -- fewer lines on this specific task says nothing about how well any framework's assumptions fit a different, harder problem.",
+            "Overcorrects into dismissing a real, controlled measurement -- a simple task with a checkable ground truth is exactly what makes a fair comparison possible; it doesn't claim to generalize to every production scenario.",
+            "Misreads the finding -- the raw client's length isn't a flaw, it's the actual content of the loop other approaches abstract away; shortening it would mean hiding logic, not writing it better."
+          ],
+          "source": "Choosing a Framework",
+          "sourceUrl": "choosing-a-framework.md"
+        },
+        {
+          "scenario": "AutoGen's own README states: 'AutoGen is now in maintenance mode. It will not receive new features or enhancements and is community managed going forward. New users should start with Microsoft Agent Framework.' A team is choosing a framework for a new project.",
+          "question": "What's the most accurate way to weigh this fact?",
+          "options": [
+            "It's irrelevant, since AutoGen still technically works and has a large install base",
+            "A real, current, vendor-stated reason to avoid it for new work, favoring its own successor",
+            "It only matters for enterprise customers, not for smaller or personal projects",
+            "AutoGen should be preferred specifically because it's stable and won't introduce breaking changes"
+          ],
+          "correct": 1,
+          "explanations": [
+            "Understates a direct, explicit vendor statement -- 'not receiving new features' and 'community managed' are real, material facts about a project's future trajectory, not something to set aside because old code still runs.",
+            "Correct. This is a direct, current, first-party statement from the project itself naming its own successor -- exactly the kind of real, dated evidence that should weigh heavily in a framework choice for new work.",
+            "Introduces an unsupported distinction -- the README's guidance makes no enterprise-vs-personal distinction at all.",
+            "Inverts the real trade-off -- a maintenance-mode project not changing isn't the same as a supported project being stable; bugs and compatibility gaps with newer model APIs are less likely to be fixed at all."
+          ],
+          "source": "Choosing a Framework",
+          "sourceUrl": "choosing-a-framework.md"
+        },
+        {
+          "scenario": "A real dependency conflict occurred when installing the full pydantic-ai package alongside this cookbook's shared python-dotenv==1.0.1 pin, because pydantic-ai's mcp extra pulls in fastmcp-slim, which requires python-dotenv>=1.1.0. Switching to pydantic-ai-slim[anthropic] (omitting the mcp extra) resolved it cleanly.",
+          "question": "What's the most accurate lesson to draw from this specific incident?",
+          "options": [
+            "python-dotenv should be upgraded across the entire cookbook to avoid this in the future",
+            "This proves Pydantic AI is poorly engineered compared to other frameworks",
+            "Installing only the extras a project needs can avoid conflicts from unused functionality",
+            "Dependency conflicts like this are rare and not worth checking for when adopting a framework"
+          ],
+          "correct": 2,
+          "explanations": [
+            "Proposes a real possible fix but not the one actually demonstrated -- the repro resolved the conflict by narrowing the install, not by changing the shared pin, which this cookbook explicitly wanted to keep stable across recipes.",
+            "Overgeneralizes a single dependency conflict, tied to one specific extra, into a broad engineering-quality judgment not supported by the incident itself.",
+            "Correct. The conflict came specifically from the mcp extra (unused by this recipe) pulling in fastmcp-slim's own stricter dotenv requirement -- installing only the needed extra avoided pulling in that unrelated dependency, a real, repeatable pattern.",
+            "Contradicts the very incident being described -- a real conflict did occur and did need a real fix; treating this class of issue as rare is exactly the assumption this page's own repro shows can fail."
+          ],
+          "source": "Choosing a Framework",
+          "sourceUrl": "choosing-a-framework.md"
+        },
+        {
+          "scenario": "Across 1,978 genuinely AI-technical job postings, LangChain appears in 8.1% (28 companies) and LangGraph in 5.0% (19 companies). A candidate argues: 'Since these percentages are low, frameworks like LangChain and LangGraph are barely used in the industry and not worth learning.'",
+          "question": "What's the strongest problem with that conclusion?",
+          "options": [
+            "The conclusion is correct -- low percentages mean a skill is not worth learning for interviews",
+            "The percentages must be undercounted, since these are well-known frameworks",
+            "Job description mentions are the only valid measure of a framework's real-world importance",
+            "8.1%/5.0% across dozens of real companies is genuine adoption, not 'barely used'"
+          ],
+          "correct": 3,
+          "explanations": [
+            "Draws too strong a conclusion from a relative percentage -- 'a minority of postings name it' and 'not worth learning' are very different claims, especially given the real company counts behind those percentages.",
+            "Introduces an unsupported claim of measurement error with no evidence -- the page states this is a real, current snapshot from a defined methodology.",
+            "Overstates the JD data's role -- this page explicitly notes JD frequency and real interview or production usage are related but distinct signals, not the sole measure of anything.",
+            "Correct. 28 and 19 distinct real companies naming these frameworks specifically is genuine, verifiable adoption -- modest relative to all AI-technical postings, but a different, more precise claim than 'barely used.'"
+          ],
+          "source": "Choosing a Framework",
+          "sourceUrl": "choosing-a-framework.md"
         },
         {
           "scenario": "A team building an agent's tool library debates two options: many small endpoint-wrapper tools (list_tasks, list_comments, list_users, ...) versus a handful of purpose-built consolidated tools. One engineer argues: 'Consolidated tools are just strictly better -- this page's own real run showed consolidated beating endpoint wrappers on both calls and tokens.'",
@@ -1042,7 +1126,7 @@ Every page's TL;DR in one place, every page's Scenario Check merged into one com
 
 === "Flashcards"
 
-    96 flashcards from every page with a deck so far — click a card to flip it, shuffle for random order.
+    104 flashcards from every page with a deck so far — click a card to flip it, shuffle for random order.
 
     <div class="flashcard-widget" data-title="Flashcards — All Pages">
     <script type="application/json">
@@ -1207,6 +1291,46 @@ Every page's TL;DR in one place, every page's Scenario Check merged into one com
           "front": "Tree of Thoughts reports GPT-4 + CoT solving 4% of Game-of-24 tasks versus 74% with ToT search. Why doesn't this page build a fresh code demo for ToT and LATS?",
           "back": "The tradeoff (breadth of search bought with a multiplicative call budget per branch explored) doesn't need a bespoke run to establish -- it's inherent to the algorithm, the same way parallelization's speedup was worth measuring but its existence wasn't in question. The real cited numbers plus the mechanism explanation carry the point without spending extra API calls to re-prove something structural.",
           "source": "Reasoning Paradigms"
+        },
+        {
+          "front": "A real identical tool-calling task was solved with the raw Anthropic client, LangChain/LangGraph's create_agent, and Pydantic AI's Agent. What were the real measured lines of orchestration code and call counts?",
+          "back": "15 lines / 2 calls (raw), 8 lines / 2 calls (LangGraph), 5 lines / 2 calls (Pydantic AI). All three got the correct answer on the first real run -- the line-count gap tracks how much of the loop each approach makes you write by hand vs adopt as-is, not code quality.",
+          "source": "Choosing a Framework"
+        },
+        {
+          "front": "What is 12-Factor Agents' actual named position on frameworks, and what's Anthropic's own middle-ground framing via the Claude Agent SDK?",
+          "back": "12-Factor Agents: most products calling themselves agentic 'aren't that agentic' -- production reliability comes from owning your own control flow. Anthropic's Claude Agent SDK: 'Loop = gather context -> take action -> verify work' -- a real SDK (not raw), but one exposing Claude Code's own harness rather than hiding the loop behind an unrelated abstraction.",
+          "source": "Choosing a Framework"
+        },
+        {
+          "front": "What does AutoGen's own README say about its current status, verbatim?",
+          "back": "'AutoGen is now in maintenance mode. It will not receive new features or enhancements and is community managed going forward. New users should start with Microsoft Agent Framework.' A direct, current, first-party statement -- weigh heavily against choosing it for new work.",
+          "source": "Choosing a Framework"
+        },
+        {
+          "front": "A real dependency conflict: installing the full pydantic-ai package alongside this cookbook's python-dotenv==1.0.1 pin failed. Why, and what was the real fix?",
+          "back": "pydantic-ai's mcp extra pulls in fastmcp-slim, which requires python-dotenv>=1.1.0. Fix: pydantic-ai-slim[anthropic] (skip the unneeded mcp extra) -- avoids pulling in the conflicting dependency entirely, since this recipe never uses MCP.",
+          "source": "Choosing a Framework"
+        },
+        {
+          "front": "What real, disclosed, out-of-the-box behavior did Pydantic AI show that's worth knowing before you see it in your own logs?",
+          "back": "It prints a startup banner to stdout by default (framework version, model, tool count, a nudge toward its paid Logfire observability product) unless PYDANTIC_AI_NO_BANNER=1 is set.",
+          "source": "Choosing a Framework"
+        },
+        {
+          "front": "Real framework adoption across 1,978 AI-technical job postings: what were LangChain's and LangGraph's real percentages and company counts?",
+          "back": "LangChain: 8.1% of postings, 28 distinct companies. LangGraph: 5.0%, 19 distinct companies. Real, current, non-trivial adoption -- but the majority of AI-technical roles name no specific agent framework at all.",
+          "source": "Choosing a Framework"
+        },
+        {
+          "front": "What is Microsoft Agent Framework (MAF) the stated successor to, and what's its own claimed status?",
+          "back": "Successor to BOTH AutoGen and Semantic Kernel. Its own framing: 'Microsoft Agent Framework is now available at version 1.0 as a production-ready release: stable APIs, and a commitment to long-term support.'",
+          "source": "Choosing a Framework"
+        },
+        {
+          "front": "What makes smolagents structurally different from most other agent frameworks, and what's a real, disclosed cost of adopting it?",
+          "back": "'Agents that think in code' -- the model writes and executes real Python as its action, rather than emitting structured tool-call JSON; the only actively-maintained framework built specifically around that design. Real cost: release cadence has slowed to roughly one every couple of months.",
+          "source": "Choosing a Framework"
         },
         {
           "front": "What's the practical test Anthropic gives for whether a tool description is good enough?",
