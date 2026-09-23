@@ -108,6 +108,13 @@ Every page's TL;DR in one place, every page's Scenario Check merged into one com
 
     ## Systems
 
+    ### [Planning and Decomposition](planning-and-decomposition.md)
+
+    - **Plan-and-execute separates the "what should happen" decision from the "make it happen" work**: a planner produces a multi-step plan up front, and an executor carries it out — real, cited benefits over a single ReAct-style loop include speed (*"the larger agent doesn't need to be consulted after each action"*), cost (*"sub-tasks... can be made to smaller, domain-specific models"*), and completion quality (*"forcing the planner to explicitly 'think through' all the steps required"*).
+    - **A real replanning repro was a clean, honest negative**: told either to execute its plan without second-guessing, or explicitly to revise on a broken assumption, Sonnet 5 produced the identical, correct outcome both times when a planned step's premise (a repo has a git tag) turned out false. Worth reporting plainly — the assumption that a rigid "don't second-guess" instruction would cause a real failure didn't hold up.
+    - **A real granularity repro found the opposite — a genuine, reproducible failure, confirmed twice**: the same task, decomposed too coarse or well-sized, completed correctly both times (3 real tool calls, a correct changelog). Decomposed over-granular, the model spent its entire token budget writing out sub-steps and never called a single tool — a real, measurable cost of over-decomposition, not a hypothetical one.
+    - **A minimal verifier-in-the-loop caught the failure using only the trace that already existed** — no second model call, no re-doing the work. Checking one concrete fact (was the final output-producing tool actually called?) correctly passed the two successful conditions and failed the over-granular one, with a real, specific reason attached.
+
     ### [Multi-Agent Systems](multi-agent-systems.md)
 
     - **A multi-agent *system* is not the same thing as orchestrator-workers.** [Workflow Patterns](workflow-patterns.md)' orchestrator-workers is a fixed topology — Anthropic classifies it as a *workflow*. A multi-agent system is what Anthropic calls an *agent* — a lead agent that delegates to subagents that are themselves autonomous, operating in parallel with their own judgment, their own tool calls, and their own context windows.
@@ -164,7 +171,7 @@ Every page's TL;DR in one place, every page's Scenario Check merged into one com
 
 === "Combined Scenario Check"
 
-    72 questions from every page on this site, one combined pass instead of opening each page separately. Every question shows which page it's from — go re-read that page for anything you get wrong.
+    76 questions from every page on this site, one combined pass instead of opening each page separately. Every question shows which page it's from — go re-read that page for anything you get wrong.
 
     <div class="quiz-widget" data-title="Combined Scenario Check — All Pages">
     <script type="application/json">
@@ -1083,6 +1090,82 @@ Every page's TL;DR in one place, every page's Scenario Check merged into one com
           "sourceUrl": "models-for-agents.md"
         },
         {
+          "scenario": "A real repro ran the identical broken-plan-assumption scenario under two system prompts: one instructing the model to execute its committed plan without second-guessing, one explicitly instructing it to revise the plan when a step reveals a wrong assumption. Both conditions produced the identical, correct real outcome.",
+          "question": "What is the most accurate conclusion to draw from this specific result?",
+          "options": [
+            "In this run, the model's baseline behavior already handled the broken assumption",
+            "The test must have been flawed, since the two conditions used different instructions",
+            "It means plan-and-execute architectures never need any replanning mechanism",
+            "It proves explicit replanning instructions provide no value in any agent system"
+          ],
+          "correct": 0,
+          "explanations": [
+            "Correct. The real, scoped, defensible conclusion is exactly this: for this specific broken-assumption scenario and this specific model, the explicit replanning instruction didn't change the outcome, because the model's default behavior already adapted correctly.",
+            "Backwards reasoning -- deliberately using two different instructions on the identical scenario is exactly the correct experimental design to test whether the instruction matters; a flawed test would be one that couldn't distinguish the conditions, not one that did and found no difference.",
+            "Overstates a single honest negative result into a sweeping architectural claim -- this repro doesn't establish that no plan-and-execute system, ever, needs a replanning mechanism; it reports what happened in one specific, real test.",
+            "Overgeneralizes a single scoped result into a universal claim -- this repro tested one model, one scenario, one broken assumption; it doesn't establish that replanning instructions are valueless everywhere, only that this specific instruction didn't change the outcome here."
+          ],
+          "source": "Planning and Decomposition",
+          "sourceUrl": "planning-and-decomposition.md"
+        },
+        {
+          "scenario": "A real granularity repro found that a too-coarse plan (no explicit structure) and a well-sized plan (four concrete steps) both completed the task correctly with 3 real tool calls each, while an over-granular plan (many small sub-steps) resulted in zero tool calls -- the model ran out of token budget writing the plan itself.",
+          "question": "What is the most precise explanation for why the over-granular condition failed?",
+          "options": [
+            "The over-granular plan was factually incorrect about what steps were needed",
+            "Writing out the detailed plan consumed the same token budget execution needed",
+            "The model refused to execute plans that were too detailed as a policy choice",
+            "The tools became unavailable specifically under the over-granular system prompt"
+          ],
+          "correct": 1,
+          "explanations": [
+            "Not what the real trace shows -- the plan text itself (as far as it got before being cut off) correctly identified the right branching logic (tag exists vs. null); the failure wasn't about the plan's correctness, it was about never finishing articulating it in time to act.",
+            "Correct. The real trace shows the response hit its token budget mid-plan, having spent the entire allocation on plan text -- a concrete, measurable resource-consumption failure, not a reasoning or correctness failure. More planning detail requires more tokens to state, and those tokens compete directly with the tokens needed for actual tool calls.",
+            "Unsupported and not what happened -- there's no refusal in the real trace; the model was actively producing plan content right up until it ran out of budget, not declining to proceed.",
+            "Contradicts the setup -- the same tools were available identically across all three conditions; only the system prompt's planning-detail instruction differed between them."
+          ],
+          "source": "Planning and Decomposition",
+          "sourceUrl": "planning-and-decomposition.md"
+        },
+        {
+          "scenario": "A minimal verifier function checked one condition against each granularity condition's real execution trace -- whether the output-producing tool (draft_changelog) was actually called -- with no additional model call involved.",
+          "question": "What is the most accurate description of why this verifier design choice mattered here?",
+          "options": [
+            "It required a second, more powerful model to judge the quality of each plan",
+            "It worked by re-running each task from scratch to check for consistent results",
+            "It caught a real failure using only the trace already produced by execution",
+            "It could only detect failures in the over-granular condition, not the other two"
+          ],
+          "correct": 2,
+          "explanations": [
+            "Contradicts the actual implementation -- the verifier was plain Python logic checking the trace, not a model call of any kind, let alone a more powerful one judging quality.",
+            "Not how it worked -- the verifier ran once against each condition's existing trace after execution completed; it did not re-execute or re-run anything.",
+            "Correct. The verifier's real value here came from being cheap: it checked one concrete, already-available fact (was draft_changelog called) rather than re-doing any work or spending a new model call -- and that simple check was sufficient to correctly separate the two real successes from the one real failure.",
+            "Incorrect -- the verifier was applied uniformly to all three conditions and correctly returned 'passed' for both too_coarse and well_sized, not just a failure signal exclusive to over_granular."
+          ],
+          "source": "Planning and Decomposition",
+          "sourceUrl": "planning-and-decomposition.md"
+        },
+        {
+          "scenario": "LangChain's own real framing of plan-and-execute agents lists three cited benefits over ReAct-style single-loop agents: execution speed, cost savings from using smaller models for sub-tasks, and better task-completion quality from forcing explicit upfront planning.",
+          "question": "Which of this page's own two real repros most directly demonstrates a genuine risk specifically tied to the THIRD cited benefit (forcing explicit upfront planning improves quality)?",
+          "options": [
+            "The replanning repro, since both conditions produced identical correct outcomes",
+            "Neither repro relates to the explicit-upfront-planning benefit at all",
+            "Both repros equally, since they used the same underlying task and tools",
+            "The granularity repro, since detailed planning caused zero real execution"
+          ],
+          "correct": 3,
+          "explanations": [
+            "Backwards -- the replanning repro's identical-outcome result doesn't illustrate a risk in the upfront-planning benefit; if anything, it shows the model succeeded regardless of the replanning instruction, unrelated to plan detail level.",
+            "Incorrect -- the granularity repro is directly about varying how much explicit upfront planning happens, which is exactly what the cited third benefit claims helps quality.",
+            "Overstates the symmetry -- while both repros reuse the same task and tools, only the granularity repro varies the amount of explicit upfront planning; the replanning repro varies a different variable (whether to revise a plan mid-execution) entirely.",
+            "Correct. The cited benefit assumes forcing the planner to 'think through' steps explicitly helps completion quality -- the granularity repro shows a real case where pushing that same idea further (forcing MORE explicit, detailed upfront planning) backfired completely, consuming the budget needed to execute at all."
+          ],
+          "source": "Planning and Decomposition",
+          "sourceUrl": "planning-and-decomposition.md"
+        },
+        {
           "scenario": "A team built an orchestrator-workers pipeline (per Anthropic's workflow-pattern definition: a central LLM call decides which of several pre-built worker functions to invoke, each worker executes one fixed role). A teammate says: 'This is a multi-agent system, since it has a lead agent and workers operating under it.'",
           "question": "What's the most accurate correction?",
           "options": [
@@ -1545,7 +1628,7 @@ Every page's TL;DR in one place, every page's Scenario Check merged into one com
 
 === "Flashcards"
 
-    144 flashcards from every page with a deck so far — click a card to flip it, shuffle for random order.
+    151 flashcards from every page with a deck so far — click a card to flip it, shuffle for random order.
 
     <div class="flashcard-widget" data-title="Flashcards — All Pages">
     <script type="application/json">
@@ -2030,6 +2113,41 @@ Every page's TL;DR in one place, every page's Scenario Check merged into one com
           "front": "What's the real, generalizable discipline this topic argues for, given both repros' honest negative results?",
           "back": "Don't assume where the 'needs the expensive model' line falls -- measure it empirically, per task and per specific model pair, since that line moves as models improve. This recipe's own reasoning traps would plausibly have separated tiers a generation ago and didn't here; an assumption-based router would have escalated unnecessarily.",
           "source": "Models for Agents"
+        },
+        {
+          "front": "What are the three real, cited benefits of plan-and-execute over a single ReAct-style loop, per LangChain's own framing?",
+          "back": "Speed: 'the larger agent doesn't need to be consulted after each action.' Cost: sub-tasks 'can be made to smaller, domain-specific models.' Quality: 'forcing the planner to explicitly think through all the steps required' improves task completion.",
+          "source": "Planning and Decomposition"
+        },
+        {
+          "front": "A real repro tested a broken plan assumption (a repo with no git tag) under 'execute without second-guessing' vs. 'revise on broken assumptions' instructions. What happened?",
+          "back": "Identical outcome both times -- both conditions correctly called list_all_merged_prs instead of the now-invalid tag-anchored query, and produced the same correct changelog. An honest negative: Sonnet 5's baseline behavior already adapted without needing the explicit replanning instruction.",
+          "source": "Planning and Decomposition"
+        },
+        {
+          "front": "A real granularity repro decomposed the same task three ways: no explicit plan, a well-sized 4-step plan, and an over-granular many-sub-step plan. What was the real, reproducible result?",
+          "back": "Too-coarse and well-sized both succeeded (3 real tool calls each, correct changelog). Over-granular produced ZERO tool calls -- the model spent its entire token budget writing out sub-steps and never executed anything. Confirmed on two separate full runs.",
+          "source": "Planning and Decomposition"
+        },
+        {
+          "front": "What is the concrete, non-philosophical mechanism behind the over-granular planning failure?",
+          "back": "Writing out a highly detailed plan consumes real tokens -- the same token budget the executor needs to actually make tool calls. A plan detailed enough can consume the entire response budget before a single real action happens. This is a measurable resource-competition failure, not an abstract 'too much planning is bad' argument.",
+          "source": "Planning and Decomposition"
+        },
+        {
+          "front": "What did the minimal verifier-in-the-loop check in this recipe, and why was it cheap?",
+          "back": "One concrete fact: was draft_changelog (the output-producing tool) actually called? It ran against the trace each condition already produced -- no second model call, no re-running the task. It correctly passed too_coarse and well_sized, and failed over_granular with the real reason 'draft_changelog was never called -- no real output was produced.'",
+          "source": "Planning and Decomposition"
+        },
+        {
+          "front": "Why is 'always write a very detailed plan first' NOT a safe universal rule for agent reliability, per this topic's real repro?",
+          "back": "The MOST detailed plan condition was the one that failed completely -- it never executed a single tool because all its budget went to articulating sub-steps. Plan granularity has a real cost (tokens spent on plan text) as well as a real benefit; the right size is task-dependent, not 'more detail is always safer.'",
+          "source": "Planning and Decomposition"
+        },
+        {
+          "front": "How does this topic's verifier-in-the-loop differ from Workflow Patterns' evaluator-optimizer pattern?",
+          "back": "Evaluator-optimizer (Workflow Patterns) is a content-refinement loop: an evaluator judges generated content and triggers regeneration. This page's verifier is trace-checking: it inspects whether execution actually reached a concrete, checkable milestone (a specific tool call), not judging the quality of generated content -- a cheaper, more mechanical check.",
+          "source": "Planning and Decomposition"
         },
         {
           "front": "How does a multi-agent SYSTEM differ from the orchestrator-workers WORKFLOW pattern, per Anthropic's own classification?",

@@ -42,6 +42,7 @@ SECTIONS = [
         ("Models for Agents", "models-for-agents.md"),
     ]),
     ("Systems", [
+        ("Planning and Decomposition", "planning-and-decomposition.md"),
         ("Multi-Agent Systems", "multi-agent-systems.md"),
     ]),
     ("Production", [
