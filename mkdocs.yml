@@ -112,4 +112,6 @@ nav:
       - "Context Engineering": context-engineering.md
   - Systems:
       - "Multi-Agent Systems": multi-agent-systems.md
+  - Production:
+      - "Evaluating Agents": evaluating-agents.md
   - About: about.md

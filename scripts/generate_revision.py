@@ -38,6 +38,9 @@ SECTIONS = [
     ("Systems", [
         ("Multi-Agent Systems", "multi-agent-systems.md"),
     ]),
+    ("Production", [
+        ("Evaluating Agents", "evaluating-agents.md"),
+    ]),
 ]
 
 TLDR_RE = re.compile(r'\?\?\? abstract "TL;DR — quick revision"\n((?:    .*\n?)+)')

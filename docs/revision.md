@@ -69,9 +69,19 @@ Every page's TL;DR in one place, every page's Scenario Check merged into one com
     - **MAST's real taxonomy**: 14 distinct failure modes across 3 categories — system design issues, inter-agent misalignment, task verification — built from 1,600+ annotated traces across 7 frameworks, and the paper's own stated finding is that multi-agent systems' "performance gains on popular benchmarks are often minimal."
     - **"When to use one agent" has a real, non-hand-wavy answer**: genuinely independent, breadth-first sub-tasks are where the token cost buys something real (Anthropic's own 90.2% improvement, largely attributable to spending more tokens); tightly-coupled tasks needing shared context between steps are where a single agent avoids a coordination problem it would otherwise have to solve by hand.
 
+    ## Production
+
+    ### [Evaluating Agents](evaluating-agents.md)
+
+    - **Outcome grading and trajectory grading answer different questions, and can disagree.** Outcome asks "was the final answer right?" Trajectory asks "did it get there the intended way?" The Holistic Agent Leaderboard's own log audits caught agents "searching for the benchmark on HuggingFace instead of solving a task" — a case an outcome-only grader would have scored as a pass.
+    - **pass@k and pass^k measure opposite things.** pass@k asks whether at least one of k tries succeeded (generous — useful for capability ceilings). pass^k asks whether *every one* of k tries succeeded (strict — the real reliability question, since a production agent gets one real try per request, not k with a human picking the best). τ-bench's own numbers show why the gap matters: GPT-4o's retail success rate falls from under 50% at pass@1 to under 25% at pass^8.
+    - **A real capability-motivated prompt change caught a genuine, clean regression** — not in the model's reasoning, in the *grader*. Told to spell out numbers in words for a plausible accessibility reason, the model's arithmetic stayed completely correct ("one hundred divided by four equals twenty-five") — every task in a digit-matching regression suite still failed, because the grader, not the model, broke.
+    - **Infrastructure is a real, measurable confound in agent benchmarks.** Running the identical model and benchmark across container configurations from strict to uncapped produced a 6-percentage-point swing (p < 0.01) on Terminal-Bench 2.0 — bigger than many reported leaderboard gaps — purely from resource allocation, with nothing about the model changing at all.
+    - **Capability evals and regression evals serve different jobs and shouldn't be conflated.** A capability eval asks how good the agent could be — expensive, exploratory, run rarely. A regression eval asks whether a specific change broke something that used to work — cheap, narrow, run on every change. This page's own regression-suite experiment is exactly that second job, and it worked precisely because the suite was simple enough to run constantly.
+
 === "Combined Scenario Check"
 
-    28 questions from every page on this site, one combined pass instead of opening each page separately. Every question shows which page it's from — go re-read that page for anything you get wrong.
+    32 questions from every page on this site, one combined pass instead of opening each page separately. Every question shows which page it's from — go re-read that page for anything you get wrong.
 
     <div class="quiz-widget" data-title="Combined Scenario Check — All Pages">
     <script type="application/json">
@@ -608,6 +618,82 @@ Every page's TL;DR in one place, every page's Scenario Check merged into one com
           ],
           "source": "Multi-Agent Systems",
           "sourceUrl": "multi-agent-systems.md"
+        },
+        {
+          "scenario": "A real repro gave a model the option to call a verification tool or answer directly, on both a well-known fact and an unguessable fictional fact. In both cases the model called the tool and got the correct outcome -- no divergence between outcome and trajectory was observed.",
+          "question": "What's the most accurate takeaway from this specific result?",
+          "options": [
+            "The checking mechanism worked correctly; it simply had nothing to catch here",
+            "The distinction isn't useful in practice, since a real test found no disagreement",
+            "The test should be discarded, since it produced no interesting finding",
+            "This model always calls every available tool, regardless of the question"
+          ],
+          "correct": 0,
+          "explanations": [
+            "Correct. The value of checking both outcome and trajectory isn't that it always finds a mismatch -- it's that you can't know whether they agree until you check both, and this run confirms the checking mechanism itself functioned as intended.",
+            "Overgeneralizes from one clean run to a universal claim -- the literature's own documented cases (gaming a benchmark search, misusing a payment tool) show outcome and trajectory genuinely diverging elsewhere; one honest negative result doesn't erase that evidence.",
+            "Treats a disclosed negative result as worthless -- knowing the check doesn't fire on a well-behaved run is real information, and the check still exists and would fire if behavior were different.",
+            "Overstates a general claim from two data points -- nothing here establishes the model calls EVERY tool in every circumstance; only that it didn't skip verification on these two specific questions."
+          ],
+          "source": "Evaluating Agents",
+          "sourceUrl": "evaluating-agents.md"
+        },
+        {
+          "scenario": "A real experiment measured pass@5 = true and pass^5 = true (5 out of 5 correct) on a probability question, with no observed gap between the two metrics. A team cites tau-bench's published ~60% relative drop from pass@1 to pass^8 and concludes: 'Our result must be wrong, since tau-bench proves these metrics always diverge substantially.'",
+          "question": "What's the strongest problem with that conclusion?",
+          "options": [
+            "Any result without a large gap contradicts tau-bench and signals a measurement error",
+            "The gap's SIZE depends on task variance, not a fixed property of the two metrics",
+            "pass@k and pass^k are mathematically identical, so tau-bench must mean something else",
+            "5 trials is too few to compute either metric, so the result should be discarded"
+          ],
+          "correct": 1,
+          "explanations": [
+            "Treats a single cited benchmark's finding as a universal law rather than a result specific to that benchmark's own tasks -- a different, easier task genuinely can and does show a smaller gap.",
+            "Correct. tau-bench's domain involves multi-turn tool use under policy constraints, which has far more room for a single trial to go wrong than one well-structured probability question -- the real lesson is that the gap's size reflects the task's actual variance, not a fixed property of the definitions themselves.",
+            "Factually wrong -- pass@k (at least one success) and pass^k (all successes) are different quantities by definition, which is exactly why they can diverge when there's real variance across trials.",
+            "An arbitrary, unsupported claim about sample size -- k=5 is a small but valid number of trials for computing both metrics on this specific run; the result is honestly reported as what happened at k=5."
+          ],
+          "source": "Evaluating Agents",
+          "sourceUrl": "evaluating-agents.md"
+        },
+        {
+          "scenario": "A team changes an agent's system prompt to spell out numbers in words (a plausible accessibility-driven requirement). Afterward, a regression suite that checks for exact digit substrings in responses reports 0/4 passing, even though a human reviewer confirms every answer is mathematically correct.",
+          "question": "What's the most accurate diagnosis of what happened?",
+          "options": [
+            "The model's arithmetic capability regressed because of the accessibility instruction",
+            "The suite was poorly designed from the start and should never have existed",
+            "The grader is broken for the new format -- the model's correctness didn't regress",
+            "This isn't a real regression, since the new prompt was intentional and well-motivated"
+          ],
+          "correct": 2,
+          "explanations": [
+            "Contradicts the evidence directly -- a human reviewer confirmed every answer was mathematically correct; nothing about the model's actual reasoning failed.",
+            "Overreaches -- a suite that correctly caught a real, silent breakage did its job; the fix needed is updating the grader, not concluding the suite was a mistake.",
+            "Correct. The suite's automated check assumed a digit format the new prompt no longer produces -- the model's capability is intact, but the check that verifies it silently stopped working, exactly what an automated suite exists to surface.",
+            "Confuses 'intentional prompt change' with 'no regression occurred' -- the change being deliberate doesn't mean nothing broke; it means the break was an unintended side effect, which regression testing exists to catch regardless of intent."
+          ],
+          "source": "Evaluating Agents",
+          "sourceUrl": "evaluating-agents.md"
+        },
+        {
+          "scenario": "Anthropic's infrastructure noise study ran the identical model and benchmark across six container resource configurations and found a 6-percentage-point gap between the most- and least-resourced setups. A candidate summarizes this as: 'This proves benchmark leaderboards are meaningless and can never be trusted.'",
+          "question": "What's the most accurate correction to that summary?",
+          "options": [
+            "Correct -- a 6-point infrastructure effect means no leaderboard comparison can ever be truly meaningful",
+            "The finding only applies to Terminal-Bench 2.0 and has no implications for any other benchmark",
+            "The SWE-bench cross-check contradicts the finding, since it found no resource effect at all",
+            "It shows infrastructure is a controllable confound, not proof comparison is impossible in principle"
+          ],
+          "correct": 3,
+          "explanations": [
+            "Overstates the finding into fatalism -- the study's own conclusion is a call for controls (publishing specs, standardizing enforcement), which presumes meaningful comparison IS possible once the confound is controlled for.",
+            "Understates the generalizable lesson -- the SWE-bench cross-check found a smaller but real effect on a different benchmark, showing the confound isn't unique to one benchmark, even though its size varies by task.",
+            "Misstates the cross-check's actual result -- it found a smaller but still real, meaningful effect (+1.54 percentage points at 5x RAM versus 1x), not zero effect.",
+            "Correct. The study's own recommendation is to treat resource configuration as a controlled experimental variable -- the problem is uncontrolled infrastructure variance, not that benchmarking is inherently meaningless; once controlled, comparisons regain their validity."
+          ],
+          "source": "Evaluating Agents",
+          "sourceUrl": "evaluating-agents.md"
         }
       ]
     }
@@ -616,7 +702,7 @@ Every page's TL;DR in one place, every page's Scenario Check merged into one com
 
 === "Flashcards"
 
-    56 flashcards from every page with a deck so far — click a card to flip it, shuffle for random order.
+    64 flashcards from every page with a deck so far — click a card to flip it, shuffle for random order.
 
     <div class="flashcard-widget" data-title="Flashcards — All Pages">
     <script type="application/json">
@@ -901,6 +987,46 @@ Every page's TL;DR in one place, every page's Scenario Check merged into one com
           "front": "Anthropic says token usage 'by itself explains 80% of the variance' in one benchmark's (BrowseComp) performance. What does this actually mean for evaluating a multi-agent win?",
           "back": "Much of multi-agent's measured advantage on that benchmark is attributable to spending more tokens, not to the architecture itself being smarter -- a caution against crediting 'multi-agent design' for a gain that a single agent given an equivalent token/compute budget might also achieve.",
           "source": "Multi-Agent Systems"
+        },
+        {
+          "front": "What's the real difference between outcome grading and trajectory grading, and what documented risk does relying on outcome-only grading create?",
+          "back": "Outcome grading checks the final result; trajectory grading checks the process (which tools, in what order). Outcome-only grading can be gamed: the Holistic Agent Leaderboard's own log audits caught agents 'searching for the benchmark on HuggingFace instead of solving a task' -- an outcome an outcome-only grader would score as passing.",
+          "source": "Evaluating Agents"
+        },
+        {
+          "front": "A real repro tested whether a model would skip a verification tool on an easy, guessable fact vs an unguessable fictional one. It called the tool both times and got both outcomes right -- no divergence. Was this a wasted test?",
+          "back": "No -- an honest negative result. The value isn't that the check always finds a mismatch; it's that you can't know whether outcome and trajectory agree until you check both. The real documented risk (agents gaming outcome-only graders) is confirmed elsewhere in the literature, not disproven by one well-behaved run.",
+          "source": "Evaluating Agents"
+        },
+        {
+          "front": "What's the precise difference between pass@k and pass^k?",
+          "back": "pass@k: did AT LEAST ONE of k independent trials succeed (generous, capability-ceiling framing). pass^k: did EVERY ONE of k trials succeed (strict, the real reliability question -- a production agent gets one real try per request, not k with a human picking the best).",
+          "source": "Evaluating Agents"
+        },
+        {
+          "front": "tau-bench reports GPT-4o's retail success rate falling from under 50% at pass@1 to under 25% at pass^8. A real recipe run measured pass@5 = pass^5 = 100% on a different task (a combinatorics question). Does this contradict tau-bench's finding?",
+          "back": "No. The SIZE of the pass@k/pass^k gap depends on how much genuine variance a specific task has for a specific model -- tau-bench's multi-turn, tool-using, policy-constrained domain has far more room to go wrong than one well-structured probability question. Different tasks, different gaps; the metrics' definitions don't change.",
+          "source": "Evaluating Agents"
+        },
+        {
+          "front": "A real experiment changed a system prompt to spell out numbers in words (accessibility-motivated). A digit-matching regression suite went from 4/4 passing to 0/4 -- but a human confirmed every answer was mathematically correct. What actually regressed?",
+          "back": "The grader, not the model. The automated check assumed a digit format the new (reasonable) prompt no longer produced. This is exactly the failure mode a regression suite exists to catch: a well-intentioned, unrelated change silently breaking how correctness gets checked, not how correctly the task gets done.",
+          "source": "Evaluating Agents"
+        },
+        {
+          "front": "What's the practical difference between a capability eval and a regression eval, and why shouldn't they be conflated?",
+          "back": "Capability eval: how good could the agent be -- expensive, exploratory, run occasionally. Regression eval: did a specific change break something that used to work -- cheap, narrow, run on every change. A regression suite that 'never catches anything' isn't badly designed; 'still passing' is the correct default outcome most of the time it runs.",
+          "source": "Evaluating Agents"
+        },
+        {
+          "front": "Anthropic ran the identical model and benchmark (Terminal-Bench 2.0) across six container resource configurations. What was the real measured effect, and what does it imply about trusting a close leaderboard gap?",
+          "back": "A 6-percentage-point gap (p<0.01) between most- and least-resourced configs -- bigger than many reported gaps between competing systems. Infra error rate alone fell from 5.8% (1x) to 2.1% (3x) to 0.5% (uncapped). Implication: a small leaderboard lead could be hardware, not intelligence, unless resource specs are pinned and published.",
+          "source": "Evaluating Agents"
+        },
+        {
+          "front": "The SWE-bench cross-check in Anthropic's infrastructure-noise study found a smaller effect (+1.54 percentage points at 5x RAM) than the main Terminal-Bench 2.0 finding (6 points). Does this contradict the main finding?",
+          "back": "No -- it shows the SIZE of the infrastructure confound depends on the task's own resource profile, not just on infrastructure existing. SWE-bench's tasks are less resource-intensive than Terminal-Bench 2.0's, so the same underlying confound shows up smaller there. Both results are consistent with 'infrastructure is a real, controllable confound.'",
+          "source": "Evaluating Agents"
         }
       ]
     }
