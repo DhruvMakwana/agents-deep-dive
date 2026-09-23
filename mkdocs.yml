@@ -118,4 +118,6 @@ nav:
       - "Durable Execution": durable-execution.md
   - Training:
       - "Training Agents: Reward and Credit": training-agents.md
+  - Interview:
+      - "Interview Playbook": interview-playbook.md
   - About: about.md

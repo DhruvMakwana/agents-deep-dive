@@ -46,6 +46,9 @@ SECTIONS = [
     ("Training", [
         ("Training Agents: Reward and Credit", "training-agents.md"),
     ]),
+    ("Interview", [
+        ("Interview Playbook", "interview-playbook.md"),
+    ]),
 ]
 
 TLDR_RE = re.compile(r'\?\?\? abstract "TL;DR — quick revision"\n((?:    .*\n?)+)')

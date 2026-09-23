@@ -105,9 +105,19 @@ Every page's TL;DR in one place, every page's Scenario Check merged into one com
     - **Outcome reward and process reward answer different questions, with a measured real gap between them.** "Process supervision significantly outperforms outcome supervision for training models to solve problems from the challenging MATH dataset" — a process-supervised model reported solving 78% of a representative MATH subset. A real toy repro shows exactly why: outcome-only credit can't tell a uniformly-bad trajectory from one where only the middle step failed; step-level credit can.
     - **DPO turns preference pairs directly into a classification loss, no separate reward model or RL loop needed** — "solve the standard RLHF problem with only a simple classification loss," reported to match or exceed PPO-based RLHF while being "stable, performant, and computationally lightweight." A real repro constructed one such pair from two real, independently sampled completions and a real judge call.
 
+    ## Interview
+
+    ### [Interview Playbook](interview-playbook.md)
+
+    - **The single strongest dated trend in the evidence: AI-assisted coding is becoming the interview format itself, not just the topic.** OpenAI runs a beta onsite round done "using an AI coding agent." Meta "added an AI-assisted coding round" where a small toy codebase is debugged and completed with LLM help. Sierra rebuilt its entire onsite around a 2-hour build session using any AI tooling, and removed its classic coding/algorithms interview outright. Anthropic, by contrast, explicitly disallows AI tools in its live rounds — the field hasn't converged on one answer.
+    - **Most of what's published as "agent interview questions" is prep-market content, not candidate-confirmed.** Of 106 collected questions, only 14 trace to a first-person candidate report or a company's own published process; 81 come from prep sites, listicles, and openly "synthesized" repositories. Treat frequency in prep material as evidence of what the prep industry teaches, not what interviewers actually ask.
+    - **A real loop can change within a year.** Sierra's own May-2025 candidate reports describe a take-home support agent plus a TypeScript/React debugging round; Sierra's own April-2026 blog post describes a completely different AI-native onsite. Prepping from a year-old write-up can mean prepping for a loop that no longer exists.
+    - **Job descriptions and interview reports disagree on what to emphasize.** Kubernetes appears in 19.4% of AI-tech postings and in zero candidate interview reports reached. Idempotency and durable execution show up across multiple prep sources and real interview questions but in only 1.1% of postings. Evals is the rare topic strongly present in both.
+    - **The one topic with genuine candidate confirmation across multiple independent sources: production reliability under real failure, not textbook agent architecture** — Swiggy's real four-question loop was entirely about uncertainty at scale, agent evals, LLM-as-judge, and not hallucinating success after a failed tool call; Sierra's real rounds are build-and-debug tasks, not "design an agent" whiteboard questions.
+
 === "Combined Scenario Check"
 
-    44 questions from every page on this site, one combined pass instead of opening each page separately. Every question shows which page it's from — go re-read that page for anything you get wrong.
+    48 questions from every page on this site, one combined pass instead of opening each page separately. Every question shows which page it's from — go re-read that page for anything you get wrong.
 
     <div class="quiz-widget" data-title="Combined Scenario Check — All Pages">
     <script type="application/json">
@@ -948,6 +958,82 @@ Every page's TL;DR in one place, every page's Scenario Check merged into one com
           ],
           "source": "Training Agents: Reward and Credit",
           "sourceUrl": "training-agents.md"
+        },
+        {
+          "scenario": "A prep repository's README states that its per-company interview question lists are 'synthesised from this company's publicly known focus areas and role descriptions \u2014 not leaked questions,' the same disclosure appearing on every company's page in the repo.",
+          "question": "What's the most accurate way to use this repository's content in interview prep?",
+          "options": [
+            "As a topic map of likely focus areas, not evidence any specific question was asked",
+            "As a real record of confirmed questions, since dozens of named companies are covered",
+            "As equally credible as a first-person candidate report of the same company",
+            "As entirely worthless and not worth reading, given the synthetic disclosure"
+          ],
+          "correct": 0,
+          "explanations": [
+            "Correct. The repo's own stated purpose fits this use -- a synthesized list built from public focus areas is genuinely useful for understanding what a company likely emphasizes, without the false confidence of treating it as a report of real questions.",
+            "Contradicts the source's own explicit disclosure -- the repository states plainly that its content is synthesized, not leaked or reported, which is the opposite of a confirmed record.",
+            "Directly contradicts the graded distinction this page draws between quality tiers -- 'synthetic' and 'candidate-reported' are meaningfully different levels of evidence precisely because one describes a real event and the other doesn't.",
+            "Overreacts to the disclosure -- content being synthesized rather than leaked doesn't make it valueless as a topic guide; it just shouldn't be mistaken for a report of an actual interview."
+          ],
+          "source": "Interview Playbook",
+          "sourceUrl": "interview-playbook.md"
+        },
+        {
+          "scenario": "Sierra candidate reports from May 2025 describe a take-home support agent build plus a TypeScript/React debugging round. Sierra's own company blog post from April 2026 describes a restructured onsite: a 2-hour AI-native build session, with the coding phone screen replaced by system design.",
+          "question": "What's the most accurate conclusion a candidate preparing today should draw from having both sources?",
+          "options": [
+            "Neither source is trustworthy, since the discrepancy means Sierra's process can't be prepared for",
+            "The 2026 company post describes the current process; the 2025 reports describe a loop that changed",
+            "Both sources are equally current, since candidate reports are generally more reliable than company blogs",
+            "The 2025 reports should be trusted over the 2026 post, since candidate reports outrank company statements"
+          ],
+          "correct": 1,
+          "explanations": [
+            "Overcorrects into unwarranted skepticism -- a documented change over time isn't a sign either source is unreliable; it's exactly the kind of dated evidence this page uses to show loops can change.",
+            "Correct. The company's own dated, published description of a restructured process is the more current evidence -- the older candidate reports describe a real loop, just one the company's later post indicates has since changed.",
+            "Ignores the actual dates -- treating an 11-months-earlier candidate report as equally current as the company's own later description of a changed process risks preparing for a round (coding phone screen) that no longer exists.",
+            "States an absolute rule not supported by the material -- source type alone doesn't determine reliability; recency and specificity matter here."
+          ],
+          "source": "Interview Playbook",
+          "sourceUrl": "interview-playbook.md"
+        },
+        {
+          "scenario": "A candidate notes that MCP appears in 9.4% of AI-tech job postings across 61 distinct companies, but has zero candidate-confirmed interview questions in the reachable evidence. They conclude: 'Since MCP isn't confirmed in any real interview report, it's safe to skip preparing for it.'",
+          "question": "What's the strongest problem with that conclusion?",
+          "options": [
+            "The conclusion is reasonable -- no candidate confirmation means the topic is genuinely unlikely to come up",
+            "MCP should be deprioritized in favor of any topic with even one narrow candidate confirmation",
+            "61 companies naming MCP is relevance evidence; the gap reflects unreachable sources, not that it's unasked",
+            "JD frequency and candidate confirmation should always align, so the mismatch means the JD data is unreliable"
+          ],
+          "correct": 2,
+          "explanations": [
+            "Draws too strong a conclusion from an acknowledged evidence gap -- this page is explicit that the candidate-confirmed sample is thin due to unreachable platforms, not a complete record of what's asked.",
+            "Overcorrects into a rule that ignores confirmation strength -- a topic confirmed once, narrowly, isn't automatically more prep-worthy than one present across dozens of current job descriptions.",
+            "Correct. The JD data is real, current evidence of relevance even without a matching interview report, and this page states the candidate-confirmed gap likely understates real coverage since major platforms were unreachable -- absence of confirmation isn't evidence of absence.",
+            "Misapplies the data -- job descriptions and live interview content answer different questions (what a role needs long-term vs. what's tested live), which is why this page tracks them separately, not a sign either dataset is broken."
+          ],
+          "source": "Interview Playbook",
+          "sourceUrl": "interview-playbook.md"
+        },
+        {
+          "scenario": "A candidate reads that Meta's AI-assisted coding round grader reportedly said 'I don't think my interviewer cared how much code was written by AI vs. me. They cared more about how well I partnered with AI.' They also read that Anthropic's live rounds explicitly disallow AI tools. They conclude: 'AI tool policy must be consistent across all technical companies, so one of these two reports must be wrong.'",
+          "question": "What's the most accurate response to this reasoning?",
+          "options": [
+            "Correct -- since the two policies contradict, at least one source must be inaccurate or outdated",
+            "Meta's policy must be the outdated one, since AI-assisted rounds are the newer, rising trend",
+            "The two reports are compatible if Anthropic only disallows AI tools in non-technical rounds",
+            "Each policy is independently documented and genuinely company-specific, not a contradiction"
+          ],
+          "correct": 3,
+          "explanations": [
+            "Assumes an industry-wide standard not supported anywhere in the material -- a real, documented split (OpenAI's scoped exception, Meta's dedicated round, Sierra's restructure, Anthropic's prohibition) is the actual finding, not a contradiction to resolve.",
+            "Fabricates a directional claim -- nothing establishes Anthropic's policy is 'outdated' rather than a deliberate, current choice; the rising-trend framing describes AI-assisted coding's spread, not that holdouts are behind.",
+            "Invents an unsupported qualification -- the Anthropic quote describes live rounds generally, with no technical/non-technical distinction stated.",
+            "Correct. Each company's AI-tool policy is independently documented from its own source -- genuine variation across companies is exactly what the evidence shows, not an error needing resolution."
+          ],
+          "source": "Interview Playbook",
+          "sourceUrl": "interview-playbook.md"
         }
       ]
     }
@@ -956,7 +1042,7 @@ Every page's TL;DR in one place, every page's Scenario Check merged into one com
 
 === "Flashcards"
 
-    88 flashcards from every page with a deck so far — click a card to flip it, shuffle for random order.
+    96 flashcards from every page with a deck so far — click a card to flip it, shuffle for random order.
 
     <div class="flashcard-widget" data-title="Flashcards — All Pages">
     <script type="application/json">
@@ -1401,6 +1487,46 @@ Every page's TL;DR in one place, every page's Scenario Check merged into one com
           "front": "Why is credit assignment described as a genuinely unsolved, active research area rather than a solved problem?",
           "back": "A 2026 survey counts 69 papers (56 core credit-assignment methods) still working on it. Methods span from GRPO's group-relative baseline to GiGPO's 'anchor state grouping' (grouping identical states recurring across different rollouts) for finer-grained, step-level credit while keeping GRPO's critic-free, low-memory properties -- an active spectrum, not a settled question.",
           "source": "Training Agents: Reward and Credit"
+        },
+        {
+          "front": "Of 106 collected 'agent interview questions,' how many actually trace to a real candidate report or company-published process (vs prep material)?",
+          "back": "Only 14, from 11 distinct real sources. The other 81 come from prep sites, listicles, and repositories -- some of which explicitly state their questions are 'synthesised... not leaked questions.' Treat prep-site frequency as evidence of what's taught, not what's asked.",
+          "source": "Interview Playbook"
+        },
+        {
+          "front": "What is the single strongest dated trend across the interview evidence collected?",
+          "back": "AI-assisted coding becoming the interview format itself. OpenAI runs a beta onsite round done 'using an AI coding agent.' Meta added a round where a toy codebase is debugged/completed with LLM help. Sierra removed its classic coding/algorithms round entirely and rebuilt its onsite around a 2-hour AI-tooling build session.",
+          "source": "Interview Playbook"
+        },
+        {
+          "front": "Why does it matter that Sierra's own candidate reports (May 2025) and Sierra's own company blog (April 2026) describe different interview processes?",
+          "back": "A real loop can change within a year. The 2025 reports (take-home support agent + TS/React debugging) describe a loop the company's own later post says it has since restructured (AI-native onsite, coding phone screen replaced by system design). Prepping from the older report means prepping for a round that may no longer exist.",
+          "source": "Interview Playbook"
+        },
+        {
+          "front": "Kubernetes appears in 19.4% of AI-tech job postings but zero candidate-confirmed interview reports reached. What's the correct interpretation?",
+          "back": "Job descriptions and live interview reports answer different questions -- what a role needs long-term vs what gets tested live. The JD presence is still real evidence of relevance; the lack of interview confirmation likely reflects unreachable sources (Reddit, Glassdoor, paywalled reports), not proof it's never asked.",
+          "source": "Interview Playbook"
+        },
+        {
+          "front": "What's the one topic area with genuine MULTI-SOURCE candidate confirmation, and what does it actually look like (vs typical prep material)?",
+          "back": "Production reliability and build-or-debug-an-agent-codebase as the task format. Swiggy's real 4-question loop: LLM uncertainty at scale, agent evals, LLM-as-judge, and not hallucinating success after a failed tool call -- narrower and more production-focused than most 'design an agent' prep material suggests.",
+          "source": "Interview Playbook"
+        },
+        {
+          "front": "Why should 5 similar-looking prep articles NOT be counted as 5 independent confirmations of a question?",
+          "back": "They may not be independent. One widely-shared article was found to reproduce another hiring blog's three example prompts nearly verbatim. Always check whether apparently-separate sources are actually copying from each other before treating repetition as confirmation.",
+          "source": "Interview Playbook"
+        },
+        {
+          "front": "What does 'no more than two of three trifecta properties' teach about how to read a security or evidence rule precisely -- and why does the same discipline apply to interview evidence grading?",
+          "back": "Read the exact wording, not the paraphrase everyone repeats (Meta's Rule of Two permits any two properties, not zero -- a common misreading). Same discipline for interview evidence: check whether a claim is exactly what the primary source said, not the shape a paraphrase gave it after passing through several prep articles.",
+          "source": "Interview Playbook"
+        },
+        {
+          "front": "A company's stated AI-tool policy for interviews (allowed, one round, whole onsite, or banned) varies by company (OpenAI's scoped exception, Meta's dedicated round, Sierra's full restructure, Anthropic's prohibition). What's the practical prep implication?",
+          "back": "Don't assume one company's policy generalizes to another. Ask directly in a recruiter screen whether AI tools are allowed in technical rounds -- this page's own evidence shows real, current, company-specific disagreement on exactly that question, and assuming the wrong answer wastes real prep time.",
+          "source": "Interview Playbook"
         }
       ]
     }
