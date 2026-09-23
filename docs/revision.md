@@ -67,6 +67,14 @@ Every page's TL;DR in one place, every page's Scenario Check merged into one com
     - **A real repro of context distraction produced a genuine failure, but not the hypothesized one** — six turns of a consistently wrong pattern in context didn't make the model mechanically repeat that exact pattern; it produced a *different* wrong answer (the raw, undivided sum) in the same terse style the flawed history modeled. Reported honestly rather than smoothed into matching the prediction.
     - **Real repros of confusion and clash did not reproduce as failures in this run** — both honest negative results, with real, disclosed reasons why (a 12-tool test below the literature's reported ~30-tool confusion threshold; a clash repro that gave the model an explicit "supersedes" cue, making it resolvable rather than genuinely ambiguous).
 
+    ### [Tools at Scale](tools-at-scale.md)
+
+    - **A large tool library isn't free just because a model can technically pick the right tool from it.** Every tool definition sits in context on every turn, whether or not it's used — Anthropic's Tool Search Tool defers loading full definitions until they're actually needed, cutting token usage by 85% while keeping the full library reachable, and lifting Opus 4's MCP evaluation accuracy from 49% to 74% (Opus 4.5: 79.5% to 88.1%).
+    - **Programmatic tool calling changes what enters context, not just how much**: the model writes one program that calls multiple tools and controls what actually gets returned, instead of one tool call per turn with every intermediate result echoed back. Anthropic's own measurement: 43,588 → 27,297 tokens, a 37% reduction on complex research tasks.
+    - **Code execution with MCP takes the same idea further**: presenting MCP servers as code APIs instead of direct tool calls, so intermediate results "stay in the execution environment by default" and "the agent only sees what you explicitly log or return" — Anthropic's cited case: 150,000 → 2,000 tokens, a 98.7% reduction.
+    - **A real, minimal repro of all three reproduced the shape of these effects at small scale**: naive (25 tools in context) cost 9,011 tokens over 4 calls; a keyword-filtered tool-search condition cost 4,065 tokens over the same 4 calls (-55%, from not paying for 22 irrelevant tool definitions); programmatic tool calling cost 3,743 tokens over just 3 calls (-58%, from not echoing intermediate results back as separate turns).
+    - **A real bug in the tool-search condition's retriever was caught before any paid calls**: raw keyword overlap let generic words ("check", "status") shared between the task question and filler tool descriptions outscore the real tools' more specific keyword sets, excluding 2 of the 3 tools the task actually needed. Fixed by filtering common words from both sides before scoring — verified with a zero-cost dry run before spending a single real API call.
+
     ## Systems
 
     ### [Multi-Agent Systems](multi-agent-systems.md)
@@ -125,7 +133,7 @@ Every page's TL;DR in one place, every page's Scenario Check merged into one com
 
 === "Combined Scenario Check"
 
-    52 questions from every page on this site, one combined pass instead of opening each page separately. Every question shows which page it's from — go re-read that page for anything you get wrong.
+    56 questions from every page on this site, one combined pass instead of opening each page separately. Every question shows which page it's from — go re-read that page for anything you get wrong.
 
     <div class="quiz-widget" data-title="Combined Scenario Check — All Pages">
     <script type="application/json">
@@ -664,6 +672,82 @@ Every page's TL;DR in one place, every page's Scenario Check merged into one com
           "sourceUrl": "context-engineering.md"
         },
         {
+          "scenario": "A real recipe measured naive (all 25 tool definitions in context) at 4 calls / 9,011 tokens, and a tool-search condition (pre-filtered to 3 relevant tools) at 4 calls / 4,065 tokens for the identical task and identical correct outcome.",
+          "question": "Both conditions took the same number of calls. What does that say about where the token savings actually came from?",
+          "options": [
+            "The savings figure is likely a measurement error, since call count didn't change too",
+            "The savings came from the tool-search condition skipping the license-availability check",
+            "The savings came from the model reasoning less carefully once fewer tools were shown",
+            "The savings came from not paying for the 22 irrelevant tool definitions on every turn"
+          ],
+          "correct": 3,
+          "explanations": [
+            "Unsupported -- a real token-usage field from the API (input_tokens + output_tokens) isn't a noisy estimate; a large, consistent gap across a fixed call count is exactly the kind of real signal that measurement would reliably show.",
+            "Contradicts the recipe's own reported real answer directly -- both conditions' final answers explicitly confirm '12 seats available' and successful provisioning; neither skipped a step.",
+            "Nothing in the real transcripts supports reduced reasoning -- both conditions reached the identical correct outcome (provisioned, same confirmation ID), which is inconsistent with a model reasoning less carefully in one of them.",
+            "Correct. With an identical call count, the only remaining source of the token difference is what's paid for on each of those calls -- the naive condition pays for all 25 tool definitions every turn; the filtered condition pays for only 3. The savings is definitional bloat, not fewer round-trips."
+          ],
+          "source": "Tools at Scale",
+          "sourceUrl": "tools-at-scale.md"
+        },
+        {
+          "scenario": "This recipe's programmatic tool-calling condition finished in 3 calls / 3,743 tokens, one fewer call than both the naive and tool-search conditions (4 calls each) for the same task.",
+          "question": "What's the most accurate explanation for why programmatic tool calling saved a full call, not just tokens?",
+          "options": [
+            "Intermediate tool results were chained inside one program instead of separate turns",
+            "The execute_workflow tool has a larger max_tokens budget than the other two conditions",
+            "Sonnet inherently requires fewer calls than Haiku regardless of tool structure used",
+            "The model skipped verifying license availability before provisioning access"
+          ],
+          "correct": 0,
+          "explanations": [
+            "Correct. In the naive and tool-search loops, each of the three real tool calls becomes its own conversational turn (a separate model call to process each result and decide the next step). Programmatic tool calling lets the model write one program that calls all three functions internally and prints only the final result, collapsing what would be several turns of results-processing into a single call.",
+            "A red herring -- max_tokens caps the LENGTH of a single response, it doesn't reduce how many calls a multi-step tool-use loop needs; it isn't the mechanism behind fewer calls here.",
+            "This recipe used the same model (Sonnet) across all three conditions -- the call-count difference is explained by tool-calling structure, not a model comparison that wasn't actually run.",
+            "Contradicts the real transcript directly -- the programmatic condition's final answer explicitly states 'License Check: 12 seats available,' confirming the check ran; nothing was skipped."
+          ],
+          "source": "Tools at Scale",
+          "sourceUrl": "tools-at-scale.md"
+        },
+        {
+          "scenario": "A team hand-builds a keyword-overlap retriever for tool search. It's dry-tested once against a sample question, returns a plausible-looking set of 3 tools, and ships. Months later, a task fails because the retriever silently excluded a genuinely required tool for a differently-worded question.",
+          "question": "What does this page's own real bug (the retriever initially returning 2 wrong tools for its own task question) suggest was the actual risk here?",
+          "options": [
+            "The failure only happens with fictional or illustrative tool names, not real ones",
+            "A hand-picked keyword retriever can fail silently on generic words shared with filler",
+            "The team's mistake was not adding more filler tools to test against before shipping",
+            "Keyword retrievers always fail eventually, so only embedding search should ever be used"
+          ],
+          "correct": 1,
+          "explanations": [
+            "Unsupported and arbitrary -- nothing about the failure mechanism (word-overlap scoring against generic shared vocabulary) is specific to fictional versus real tool names; the same scoring logic would behave identically either way.",
+            "Correct. The recipe's own real bug was caused by generic words ('check', 'status') appearing in both the task question and several filler tool descriptions, scoring those filler tools higher than the real tools' more specific keyword sets -- with no exception or error signal that anything was wrong, exactly the kind of silent failure the scenario describes happening later, in production.",
+            "Misdiagnoses the fix -- the recipe already had 22 filler tools present when the bug occurred; adding more wouldn't have surfaced the mechanism (generic-word overlap with the real tools' curated keyword sets), which was the actual cause, not insufficient test volume.",
+            "Overstates the claim -- this page doesn't argue keyword retrieval always fails, only that it's fragile in a specific, demonstrated way (generic word overlap); a well-designed keyword system with stopword handling, like the one this recipe ended up shipping, worked correctly for its test case."
+          ],
+          "source": "Tools at Scale",
+          "sourceUrl": "tools-at-scale.md"
+        },
+        {
+          "scenario": "Anthropic's code-execution-with-MCP article states that intermediate results 'stay in the execution environment by default' and 'the agent only sees what you explicitly log or return.'",
+          "question": "Beyond the token savings, what real second benefit does this description point to?",
+          "options": [
+            "It removes the need for any max_tokens limit on the model's own responses",
+            "It guarantees the generated code itself is always free of bugs or errors",
+            "Data the workflow doesn't want shared with the model can stay out of context",
+            "It lets the model skip calling tools whose results aren't immediately needed"
+          ],
+          "correct": 2,
+          "explanations": [
+            "Unrelated -- max_tokens governs the length of a model's own generated response; it isn't affected by where intermediate tool results are stored.",
+            "Not what the quoted mechanism does or claims -- code execution changes what data reaches the model's context, it has no bearing on whether the generated code itself is correct or error-free.",
+            "Correct. As the article states directly, this means 'data you don't wish to share with the model can flow through your workflow without ever entering the model's context' -- a genuine privacy/minimization benefit distinct from the token-count savings, e.g. a full customer record can be processed in code while only one needed field is ever returned to the model.",
+            "Misreads the mechanism -- code execution doesn't let a model skip calls it needs; it changes what happens to a call's result afterward (stays in the execution environment unless explicitly returned), not whether the call happens."
+          ],
+          "source": "Tools at Scale",
+          "sourceUrl": "tools-at-scale.md"
+        },
+        {
           "scenario": "A team built an orchestrator-workers pipeline (per Anthropic's workflow-pattern definition: a central LLM call decides which of several pre-built worker functions to invoke, each worker executes one fixed role). A teammate says: 'This is a multi-agent system, since it has a lead agent and workers operating under it.'",
           "question": "What's the most accurate correction?",
           "options": [
@@ -1126,7 +1210,7 @@ Every page's TL;DR in one place, every page's Scenario Check merged into one com
 
 === "Flashcards"
 
-    104 flashcards from every page with a deck so far — click a card to flip it, shuffle for random order.
+    112 flashcards from every page with a deck so far — click a card to flip it, shuffle for random order.
 
     <div class="flashcard-widget" data-title="Flashcards — All Pages">
     <script type="application/json">
@@ -1411,6 +1495,46 @@ Every page's TL;DR in one place, every page's Scenario Check merged into one com
           "front": "Why does this page treat 'two of four repros found no failure' as a strength of the demo rather than a weakness?",
           "back": "A demo where every hypothesized failure reproduces exactly as predicted, at trivial scale, every time, would be the more suspicious result. Running real experiments -- and reporting the real, specific, disclosed reasons two of them didn't reproduce (scale below a documented threshold; an explicit resolution cue) -- is more informative than confirming a taxonomy always looks bad in a toy example.",
           "source": "Context Engineering"
+        },
+        {
+          "front": "What is the Tool Search Tool's `defer_loading: true` mechanism, and what real token/accuracy numbers does Anthropic report for it?",
+          "back": "Marked tools' full definitions aren't loaded into context upfront -- the model gets a search capability and pulls in a definition only once it's decided that tool is relevant. Real numbers: an 85% token reduction while keeping the full library reachable, and MCP evaluation accuracy improving from 49% to 74% (Opus 4) and 79.5% to 88.1% (Opus 4.5).",
+          "source": "Tools at Scale"
+        },
+        {
+          "front": "What does programmatic tool calling change that tool search alone doesn't?",
+          "back": "Tool search controls WHICH tool definitions enter context; programmatic tool calling controls what happens AFTER a tool is called -- the model writes one program that chains multiple tool calls and prints only the result it wants back, instead of each result becoming its own conversational turn. Real measurement: 43,588 to 27,297 tokens, a 37% reduction on complex research tasks.",
+          "source": "Tools at Scale"
+        },
+        {
+          "front": "What's the real, cited token reduction for presenting MCP servers as code APIs instead of direct tool calls, and what's the second benefit beyond tokens?",
+          "back": "150,000 to 2,000 tokens, a 98.7% reduction. The second benefit: intermediate results stay in the execution environment by default, so 'the agent only sees what you explicitly log or return' -- data the workflow doesn't want to share with the model can flow through without ever entering its context.",
+          "source": "Tools at Scale"
+        },
+        {
+          "front": "A real recipe measured naive (25 tools in context) at 4 calls / 9,011 tokens vs. tool-search (pre-filtered to 3) at 4 calls / 4,065 tokens, for the identical task and outcome. Since call count didn't change, where did the savings come from?",
+          "back": "Entirely from not paying for the 22 irrelevant tool definitions present in context on every one of the 4 turns -- with an identical call count, the only remaining source of the token gap is what's billed on each call.",
+          "source": "Tools at Scale"
+        },
+        {
+          "front": "The same recipe's programmatic tool-calling condition finished in 3 calls / 3,743 tokens -- one FEWER call than the naive or tool-search conditions (4 each). Why did it save a call, not just tokens?",
+          "back": "The model chained all three real tool calls (lookup_employee, check_license_availability, provision_access) inside one generated program instead of one call per tool -- collapsing what would be several turns of results-processing into a single call. Intermediate results never became separate conversation turns.",
+          "source": "Tools at Scale"
+        },
+        {
+          "front": "A hand-built keyword-overlap retriever for tool search initially returned only 1 of 3 required tools for its own task question, silently, with no error. What caused it, and what's the general lesson?",
+          "back": "Generic words ('check', 'status') appeared in both the task question and several filler tools' descriptions, scoring those filler tools higher than the real tools' more specific curated keywords. General lesson: a hand-built retriever can fail on exactly the words that look most on-topic, and the failure is invisible -- a broken tool set with nothing in the API response to flag it.",
+          "source": "Tools at Scale"
+        },
+        {
+          "front": "How was the broken tool-search retriever bug caught and fixed, per this project's standing verification workflow?",
+          "back": "Dry-tested with zero API calls first (printing what search_relevant_tools actually returned for the real task question), before any paid call was made. Fixed by filtering common words -- including 'check' and 'status' specifically -- from both the question and the fallback description-word scoring, then re-verified with another zero-cost dry run before spending a real call.",
+          "source": "Tools at Scale"
+        },
+        {
+          "front": "Why does a large tool library hurt more than just token cost, per Tool Design and this page?",
+          "back": "More tools in context also means more opportunities for the model to confuse similarly-named or similarly-described tools with each other -- Anthropic's own numbers show this isn't hypothetical: filtering the library down (Tool Search Tool) didn't just cut tokens, it raised MCP evaluation accuracy (Opus 4: 49% to 74%), because a shorter, more relevant tool set is also easier to select correctly from.",
+          "source": "Tools at Scale"
         },
         {
           "front": "How does a multi-agent SYSTEM differ from the orchestrator-workers WORKFLOW pattern, per Anthropic's own classification?",
