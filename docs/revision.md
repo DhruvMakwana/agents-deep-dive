@@ -83,6 +83,14 @@ Every page's TL;DR in one place, every page's Scenario Check merged into one com
     - **A real, current list of deprecations matters for anything built today**: HTTP+SSE transport (migrate to Streamable HTTP), Roots/Sampling/Logging features (migrate to tool parameters, direct provider APIs, and OpenTelemetry respectively), and OAuth Dynamic Client Registration (migrate to Client ID Metadata Documents) are all now formally Deprecated under a twelve-month removal window, not just "discouraged."
     - **Token passthrough is explicitly forbidden, not just risky**: *"MCP servers **MUST NOT** accept any tokens that were not explicitly issued for the MCP server"* — a server that blindly forwards a client-supplied token downstream breaks a real OAuth security boundary and reintroduces the confused-deputy problem the rest of the spec's auth model is built to prevent.
 
+    ### [KV-Cache Economics](kv-cache-economics.md)
+
+    - **Prompt caching isn't a flat discount — it's a hierarchy with a precise cost structure.** A 5-minute cache write costs 1.25x base input price; a cache read costs 0.1x (cheaper still — 0.025x–0.05x — on some model families). The cache follows a strict prefix order, `tools` → `system` → `messages`, and a change at any level invalidates that level *and everything after it*.
+    - **A real run confirmed the hierarchy precisely**: changing `tool_choice` between calls — same tools, same system prompt — left the cached tools+system prefix fully intact (`cache_read_input_tokens` unchanged). Editing one word in one tool's description invalidated the entire cache and forced a full, fresh write.
+    - **"Tool masking vs. removal" is a real, current, shipped feature, not just a conceptual pattern**: the `mid-conversation-tool-changes` beta's `tool_removal` content block withdraws a tool from a running conversation while the top-level `tools` array stays byte-identical — so the cache survives. Physically editing the `tools` array to drop a tool produces a different array and a fresh cache entry, every time.
+    - **A real repro measured the contrast directly**: masking a tool (three calls in a row, including one a full turn later) kept reading the identical 2,211-token cache entry. Removing the same tool by editing the array instead produced a new, distinct 2,113-token entry with no relationship to what came before.
+    - **Masking is enforced, not cosmetic**: forcing `tool_choice` to the masked tool by name produced a real API error — *"forced tool 'check_feature_flag' is absent from the final available-tool set (a tool_removal block removed it without a later add-back)"* — the model genuinely cannot call it, not just a description change that happens not to mention it.
+
     ## Systems
 
     ### [Multi-Agent Systems](multi-agent-systems.md)
@@ -141,7 +149,7 @@ Every page's TL;DR in one place, every page's Scenario Check merged into one com
 
 === "Combined Scenario Check"
 
-    60 questions from every page on this site, one combined pass instead of opening each page separately. Every question shows which page it's from — go re-read that page for anything you get wrong.
+    64 questions from every page on this site, one combined pass instead of opening each page separately. Every question shows which page it's from — go re-read that page for anything you get wrong.
 
     <div class="quiz-widget" data-title="Combined Scenario Check — All Pages">
     <script type="application/json">
@@ -832,6 +840,82 @@ Every page's TL;DR in one place, every page's Scenario Check merged into one com
           "sourceUrl": "mcp-deep-dive.md"
         },
         {
+          "scenario": "A real repro sent four calls with an identical, cached tools+system prefix. Call 3 changed only tool_choice (same tools, same system prompt) and still showed cache_read_input_tokens unchanged from call 2. Call 4 edited one word in one tool's description and showed a full cache_creation_input_tokens write instead.",
+          "question": "What's the most accurate explanation for why these two small changes had such different real costs?",
+          "options": [
+            "The tools array sits earlier in the real cache prefix hierarchy than tool_choice touches",
+            "Call 4 happened later in the session, and caches naturally degrade over elapsed time",
+            "Editing a tool description is a larger change in total byte count than changing tool_choice",
+            "Call 4 happened later in the session, and caches naturally degrade with time passing"
+          ],
+          "correct": 0,
+          "explanations": [
+            "Correct. The cache follows a fixed hierarchy (tools -> system -> messages), and a change only invalidates the level it occurs at plus everything after it. tool_choice affects the messages level, downstream of tools/system, so it leaves the tools+system prefix's hash untouched. A tool description lives inside the tools array itself, upstream of everything, so changing it invalidates the whole chain.",
+            "Contradicts the real, documented mechanism directly -- prompt caches don't 'naturally degrade'; they persist for their TTL (unless invalidated by a structural change) and are refreshed on each read. Elapsed time within a session isn't what caused call 4's invalidation.",
+            "Not the real mechanism -- a single appended word (' (updated)') is a tiny byte-count change, smaller than many tool_choice payloads could be, yet it caused full invalidation; the deciding factor is WHERE in the hierarchy the byte changed, not how many bytes changed.",
+            "Overgeneralizes -- tool_choice itself doesn't invalidate the tools/system cache, but this doesn't mean EVERY possible combination of changes alongside it would also be free; the real claim is narrower and specifically about which cache LEVEL it touches."
+          ],
+          "source": "KV-Cache Economics",
+          "sourceUrl": "kv-cache-economics.md"
+        },
+        {
+          "scenario": "A real repro compared two ways of making a tool functionally unavailable to the model mid-conversation: (1) a tool_removal content block on a mid-conversation role:'system' message, with the top-level tools array left byte-identical, and (2) physically deleting the tool from the top-level tools array. Both produced the same real outcome -- the model could no longer use that tool.",
+          "question": "Given the identical functional outcome, what was the real, measured difference between the two approaches?",
+          "options": [
+            "Array-editing is faster because it requires fewer tokens to express than a tool_removal block",
+            "There was no real difference at all -- both approaches are equivalent in every measurable way",
+            "Only the tool_removal approach actually works; array-editing silently fails to remove access",
+            "tool_removal kept reading one identical cache entry; array-editing produced a distinct entry"
+          ],
+          "correct": 3,
+          "explanations": [
+            "Not what was measured or claimed -- the comparison in this repro was about cache token accounting (creation vs. read), not about raw request size or response latency; token-count-for-expressing-the-change was not the dimension being compared.",
+            "Directly contradicted by the real measured numbers -- the two approaches produced very different cache_read/cache_creation values across the actual repro, not identical ones.",
+            "Contradicts the real repro directly -- the array-editing call (call C) genuinely worked; it produced a valid response with a distinct, freshly-created cache entry (2,113 tokens), not a silent failure. Both approaches genuinely worked functionally; they differed in cache cost, not in whether they worked.",
+            "Correct. Three calls using tool_removal (with the tools array unchanged) all read the identical 2,211-token cache entry. The call that instead physically edited the tools array produced a completely new, distinct 2,113-token entry with no relationship to the earlier ones -- same functional outcome, very different cache economics."
+          ],
+          "source": "KV-Cache Economics",
+          "sourceUrl": "kv-cache-economics.md"
+        },
+        {
+          "scenario": "After masking a tool with a tool_removal block, a real repro attempted to force tool_choice to that exact tool by name. The real API response was a 400 error: \"forced tool 'check_feature_flag' is absent from the final available-tool set (a tool_removal block removed it without a later add-back).\"",
+          "question": "What does this specific result establish about tool masking that the cache-preservation numbers alone don't?",
+          "options": [
+            "That masking is purely a description-level change with no effect on actual tool availability",
+            "That the masked tool remained fully callable, and the error was an unrelated bug",
+            "That masking is enforced by the API itself, not just a cosmetic hint to the model",
+            "That forcing tool_choice is generally unsupported whenever a beta header is active"
+          ],
+          "correct": 2,
+          "explanations": [
+            "The opposite of what the real error demonstrates -- if masking were purely cosmetic, forcing tool_choice to the masked tool would have succeeded (the model would just be told to call something it could still technically invoke); instead the API itself rejected the request outright.",
+            "Directly contradicts the quoted real error message, which explicitly states the tool is 'absent from the final available-tool set' -- not callable, and the error is specifically about that absence, not an unrelated fault.",
+            "Correct. A real, specific 400 error tied directly to the tool_removal block's effect shows the API is actively tracking and enforcing which tools are genuinely available -- this is a hard access-control result, not just Claude choosing not to mention the tool in its own responses.",
+            "Unsupported and too broad -- nothing in the real error message suggests forced tool_choice is broken generally under beta headers; the rejection was specific to the named tool having been removed, not a general incompatibility."
+          ],
+          "source": "KV-Cache Economics",
+          "sourceUrl": "kv-cache-economics.md"
+        },
+        {
+          "scenario": "A developer re-runs kv_cache_economics.py twice in a row during development, a few minutes apart, against the identical tools+system prefix. The second run's first call shows cache_read_input_tokens instead of the cache_creation_input_tokens they expected for a 'fresh' first call.",
+          "question": "What's the most accurate explanation for this observation?",
+          "options": [
+            "This indicates a bug in the recipe -- a fresh script run should always start with a cache miss",
+            "Cache reads refresh the entry's TTL, so an identical prefix tested repeatedly stays warm",
+            "The Anthropic API caches responses indefinitely once written, regardless of any TTL",
+            "The second run used a different model than the first, which explains the cache hit"
+          ],
+          "correct": 1,
+          "explanations": [
+            "Misdiagnoses the cause -- 'fresh script run' and 'fresh cache state' are different things; the cache is scoped to the exact request content and lives server-side independent of when or how many times a local script has been invoked.",
+            "Correct. This is real caching behavior, not a bug -- prompt cache entries have a TTL (5 minutes by default), and reading an entry resets that window. Testing the identical prefix repeatedly during development, within that window, keeps extending its life, so a 'first' call in a later run can legitimately read an entry created by an earlier run or test.",
+            "Contradicts the documented mechanism directly -- prompt caches are explicitly time-limited (5-minute or 1-hour TTL options), not indefinite; an entry does expire if enough real time passes without being read.",
+            "Not the described scenario -- the setup specifies an identical tools+system prefix on both runs; a genuine model change would itself normally produce a DIFFERENT cache entry (as this page's own repro observed between Sonnet 5 and Opus 5 runs), not the same one being read."
+          ],
+          "source": "KV-Cache Economics",
+          "sourceUrl": "kv-cache-economics.md"
+        },
+        {
           "scenario": "A team built an orchestrator-workers pipeline (per Anthropic's workflow-pattern definition: a central LLM call decides which of several pre-built worker functions to invoke, each worker executes one fixed role). A teammate says: 'This is a multi-agent system, since it has a lead agent and workers operating under it.'",
           "question": "What's the most accurate correction?",
           "options": [
@@ -1294,7 +1378,7 @@ Every page's TL;DR in one place, every page's Scenario Check merged into one com
 
 === "Flashcards"
 
-    120 flashcards from every page with a deck so far — click a card to flip it, shuffle for random order.
+    128 flashcards from every page with a deck so far — click a card to flip it, shuffle for random order.
 
     <div class="flashcard-widget" data-title="Flashcards — All Pages">
     <script type="application/json">
@@ -1659,6 +1743,46 @@ Every page's TL;DR in one place, every page's Scenario Check merged into one com
           "front": "Why does the real requestState repro's request-binding check (test 3: same token, different cart_id) matter as a DISTINCT property from tamper detection (test 2)?",
           "back": "Tamper detection catches a MODIFIED token (broken AEAD tag). Request-binding catches an UNMODIFIED, validly-sealed token being replayed against different arguments than it was minted for -- the token cryptographically commits to its original method/target/args, so even a legitimately-obtained token can't be reused for a different operation.",
           "source": "MCP Deep Dive"
+        },
+        {
+          "front": "What is the exact cache prefix hierarchy Anthropic's prompt cache follows, and why does the order matter?",
+          "back": "tools -> system -> messages. A change at any level invalidates that level AND everything after it. Since tools/system are usually stable across every turn while messages changes constantly, putting the volatile part last means the stable, expensive part can be cached once and reused across an entire session.",
+          "source": "KV-Cache Economics"
+        },
+        {
+          "front": "What are the real cost multipliers for a 5-minute cache write vs. a cache read (vs. base input token price)?",
+          "back": "Cache write: 1.25x base input price. Cache read: 0.1x base input price on most models (as low as 0.025x-0.05x on some newer model families). The economics only pay off if a prefix is read far more times than it's written.",
+          "source": "KV-Cache Economics"
+        },
+        {
+          "front": "A real repro changed ONLY tool_choice between two calls with an identical tools+system prefix. What happened to the cache, and why?",
+          "back": "cache_read_input_tokens stayed exactly unchanged (2279, matching the prior call). tool_choice affects only the messages level, downstream of tools/system in the hierarchy, so it doesn't touch the hashed tools+system prefix at all.",
+          "source": "KV-Cache Economics"
+        },
+        {
+          "front": "A real repro edited ONE WORD in one tool's description, with everything else (17 other tools, system prompt) unchanged. What happened to the cache?",
+          "back": "Full invalidation -- cache_creation_input_tokens: 2283 (a fresh write covering the ENTIRE prefix), cache_read_input_tokens: 0. Modifying any tool definition invalidates the whole cache (tools, system, AND messages), per Anthropic's own documented rule, confirmed with real numbers.",
+          "source": "KV-Cache Economics"
+        },
+        {
+          "front": "What is the mid-conversation-tool-changes beta, and what problem does it solve for caching?",
+          "back": "A real, shipped beta (2026-07-24, expanded 2026-09-22) that lets you withdraw or add a tool via tool_removal/tool_addition blocks on a mid-conversation role:'system' message, instead of editing the top-level tools array. Since editing the tools array invalidates the entire cache, this lets tool availability change mid-conversation while the cached prefix stays byte-identical and intact.",
+          "source": "KV-Cache Economics"
+        },
+        {
+          "front": "A real repro compared masking a tool (tool_removal block, array unchanged) vs. removing it (array physically edited). Same functional outcome -- what was the real cache difference?",
+          "back": "Masking: three calls in a row (including one a full turn later) all read the IDENTICAL 2,211-token cache entry -- zero extra cost. Removal: produced a completely NEW, distinct 2,113-token cache entry with no relationship to what came before -- a full fresh write, every time the array changes.",
+          "source": "KV-Cache Economics"
+        },
+        {
+          "front": "After masking a tool with tool_removal, a real repro forced tool_choice to that exact tool by name. What happened, and what does it prove?",
+          "back": "A real 400 error: \"forced tool 'check_feature_flag' is absent from the final available-tool set (a tool_removal block removed it without a later add-back).\" This proves masking is enforced by the API itself -- a genuine access-control change, not just a description Claude happens not to mention.",
+          "source": "KV-Cache Economics"
+        },
+        {
+          "front": "A developer re-runs the same cache-testing script twice, a few minutes apart, with an identical prefix. The 'first' call in the second run shows a cache READ instead of the expected fresh WRITE. Bug or real behavior?",
+          "back": "Real behavior, not a bug. Prompt cache entries have a TTL (5 minutes by default) and READING an entry refreshes that TTL. Repeatedly testing an identical prefix during development keeps the entry warm indefinitely, so a later 'first' call can legitimately hit a cache entry created by an earlier run.",
+          "source": "KV-Cache Economics"
         },
         {
           "front": "How does a multi-agent SYSTEM differ from the orchestrator-workers WORKFLOW pattern, per Anthropic's own classification?",

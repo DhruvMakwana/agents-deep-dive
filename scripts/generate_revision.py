@@ -37,6 +37,7 @@ SECTIONS = [
         ("Context Engineering", "context-engineering.md"),
         ("Tools at Scale", "tools-at-scale.md"),
         ("MCP Deep Dive", "mcp-deep-dive.md"),
+        ("KV-Cache Economics", "kv-cache-economics.md"),
     ]),
     ("Systems", [
         ("Multi-Agent Systems", "multi-agent-systems.md"),
