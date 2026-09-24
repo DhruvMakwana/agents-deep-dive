@@ -56,6 +56,7 @@ SECTIONS = [
         ("Guardrails and Human-in-the-Loop", "guardrails-human-in-the-loop.md"),
         ("Sandboxes and Permissions", "sandboxes-permissions.md"),
         ("Durable Execution", "durable-execution.md"),
+        ("Cost and Latency", "cost-latency.md"),
     ]),
     ("Training", [
         ("Training Agents: Reward and Credit", "training-agents.md"),

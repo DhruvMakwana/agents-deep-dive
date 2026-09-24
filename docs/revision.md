@@ -201,6 +201,13 @@ Every page's TL;DR in one place, every page's Scenario Check merged into one com
     - **Idempotency is the second line of defense, not a redundant one.** Replaying the event log tells you what's *known* to have completed — it can't tell you about the gap between "the side effect happened" and "the log says it happened." An idempotent tool, checking its own persisted state before acting, is what actually prevents a double charge or a duplicate booking in that gap.
     - **This is a real, documented interview topic**, not a hypothetical: "How do you make sure agents do not double-execute side-effectful operations like charging a card or booking a ticket twice?" and "Suppose your booking agent sometimes reserves the same hotel twice — walk through how you'd debug and fix this" are both real, sourced interview questions.
 
+    ### [Cost and Latency](cost-latency.md)
+
+    - **Naive agent loops don't cost N times as much as a single call — they cost roughly N² times as much.** Every turn resends the full accumulating transcript, so a real, documented formula applies: `Total = N×S + u×N(N+1)/2 + r×N(N-1)/2` — the `N(N+1)/2` triangular-number term is the trap. A real, worked example: a 20-step loop generating 1,000 tokens/step produces **210,000 cumulative input tokens**, not the 20,000 a naive per-step estimate would suggest.
+    - **A real repro confirmed the shape directly, and measured what windowing buys**: a naive 6-file tool loop's per-turn input tokens grew by a near-constant **~631 tokens each turn** (665→1290→1921→2552→3183→3814→4445) — that constant per-turn *increase* is exactly what makes the cumulative total quadratic. A windowed version (only the last 2 tool results sent in full) flattened that increase to **~121 tokens/turn** by the end, for a real **28.3% cumulative reduction** — a gap that only widens with more turns.
+    - **Model routing has a real, large lever: current published pricing puts small and large tiers roughly 5-10x apart per token** (Haiku 4.5 at $1/$5 per million vs. Sonnet 5 at $2/$10 per million, input/output), and a real repro confirmed the upside directly — Haiku matched Sonnet's accuracy on a 10-question batch at **~44% of the real dollar cost**.
+    - **But the routing mechanism itself has a real, sharp limitation**: asking a model to self-report its own confidence is not a reliable way to catch its own mistakes. A real repro found the smaller model reported `high` confidence on every question, including the one it got wrong — confidently, not hesitantly. This is a concrete, measured reason production routing methods lean on a different signal (like model-internal token-probability confidence) instead of self-report alone.
+
     ## Training
 
     ### [Training Agents: Reward and Credit](training-agents.md)
@@ -223,7 +230,7 @@ Every page's TL;DR in one place, every page's Scenario Check merged into one com
 
 === "Combined Scenario Check"
 
-    104 questions from every page on this site, one combined pass instead of opening each page separately. Every question shows which page it's from — go re-read that page for anything you get wrong.
+    108 questions from every page on this site, one combined pass instead of opening each page separately. Every question shows which page it's from — go re-read that page for anything you get wrong.
 
     <div class="quiz-widget" data-title="Combined Scenario Check — All Pages">
     <script type="application/json">
@@ -2054,6 +2061,82 @@ Every page's TL;DR in one place, every page's Scenario Check merged into one com
           "sourceUrl": "durable-execution.md"
         },
         {
+          "scenario": "A real repro measured a naive agent loop's per-turn input token counts across 7 turns: 665, 1290, 1921, 2552, 3183, 3814, 4445 -- each turn costing roughly 631 tokens more than the one before it.",
+          "question": "What does this specific pattern -- a roughly CONSTANT per-turn increase -- indicate about the shape of the CUMULATIVE total across turns?",
+          "options": [
+            "The cumulative total grows quadratically, since a steady per-turn increase yields a triangular-number sum overall",
+            "The cumulative total grows linearly, since each individual turn's token count only increases by a fixed amount",
+            "The cumulative total grows exponentially, since token counts are roughly doubling by the final turns of the run",
+            "The cumulative total stays constant, since only the per-turn increase changes and not the baseline cost itself"
+          ],
+          "correct": 0,
+          "explanations": [
+            "Correct. A sequence with a roughly constant increase per step (665, +625, +631, +631, +631, +631, +631) is an arithmetic sequence, and the SUM of an arithmetic sequence is a triangular number -- quadratic in the number of terms. This is exactly the real, documented N(N+1)/2 term the page describes, confirmed directly by this run's own measured numbers.",
+            "Confuses per-turn behavior with cumulative behavior -- a constant per-turn INCREASE (not a constant per-turn value) is precisely the signature of quadratic cumulative growth, not linear; linear cumulative growth would require each turn to cost roughly the SAME amount, not a steadily increasing amount.",
+            "Overstates the growth rate -- exponential growth would mean each turn's increase itself keeps growing multiplicatively (631, then ~1200, then ~2400...); here the increase itself stays roughly flat (~631 each time), which is the quadratic/triangular-number signature, not exponential.",
+            "Directly contradicted by the data -- token counts clearly increase every single turn (665 up to 4445); nothing about this run is constant except the SIZE of the increase, not the total itself."
+          ],
+          "source": "Cost and Latency",
+          "sourceUrl": "cost-latency.md"
+        },
+        {
+          "scenario": "The same repro ran a windowed version of the identical task (only the last 2 tool results sent in full) and found nearly identical per-turn token counts to the naive version for the first 3 turns, before the windowed version's growth rate flattened sharply from turn 4 onward.",
+          "question": "What is the most precise explanation for why the first 3 turns looked nearly identical between conditions?",
+          "options": [
+            "The windowing logic contained a bug that only started working partway through the run",
+            "The model ignored the windowed context and used its own cached memory of earlier turns",
+            "Anthropic's API caches identical early turns automatically regardless of which condition is used",
+            "Fewer than 3 tool results existed yet at that point, so the window had nothing to omit"
+          ],
+          "correct": 3,
+          "explanations": [
+            "Not indicated anywhere -- the windowing logic is described as correctly keeping only the most recent window and omitting anything older; the near-identical early turns are an expected structural consequence of the window's own definition, not a malfunction.",
+            "Not a real mechanism -- models don't retain memory of prior API calls outside what's explicitly included in the current request's messages; the windowed condition's context is exactly what's sent in that specific call, nothing more.",
+            "Not how prompt caching works, and not what's being measured here -- this page's real numbers are INPUT TOKEN COUNTS sent per call, not cache hit/miss behavior; caching (covered in a separate topic) doesn't explain why two DIFFERENT conditions would show similar early-turn token counts by itself.",
+            "Correct. A 'keep only the last 2 tool results' window has literally nothing to omit until MORE than 2 tool results exist in the transcript -- so for the first few turns, the windowed and naive conditions send essentially the same content, and the two conditions only diverge once the transcript grows past the window size."
+          ],
+          "source": "Cost and Latency",
+          "sourceUrl": "cost-latency.md"
+        },
+        {
+          "scenario": "A real repro compared always-Sonnet vs. Haiku-first-with-escalation on 10 real questions. The routed condition matched Sonnet's accuracy (9/10) at about 44% of the real dollar cost -- but the escalation count was exactly zero, including on the one question Haiku got wrong, which it answered with reported 'high' confidence.",
+          "question": "What is the most precise way to characterize what this combined result does and doesn't demonstrate about confidence-based routing?",
+          "options": [
+            "It demonstrates routing failed completely, since the escalation mechanism never triggered even once during the run",
+            "The cost benefit of a cheaper model was real, but self-reported confidence didn't reliably catch the model's own mistake",
+            "It demonstrates Haiku is strictly more accurate than Sonnet, since it achieved the same correct count at lower cost",
+            "It demonstrates self-reported confidence works correctly, since the model would have escalated if it had truly been uncertain"
+          ],
+          "correct": 1,
+          "explanations": [
+            "Too sweeping -- the cost/accuracy result (44% of cost, identical accuracy) is a genuine positive outcome; 'failed completely' ignores that real, measured benefit and conflates it with the separate, real limitation in the escalation trigger specifically.",
+            "Correct. The page draws exactly this two-part distinction: the cost lever (routing to a cheaper model) delivered real savings with no accuracy loss on this batch, which is one real finding -- but the SAFETY lever (using confidence to catch mistakes before they ship) failed on the one case that mattered, because self-reported confidence didn't correlate with actual correctness here. Both are real and both matter, but they are not the same claim.",
+            "Overreaches from a tie -- both models got 9/10 correct (an equal, not superior, result for Haiku); 'strictly more accurate' isn't supported since the counts were identical, only the cost differed.",
+            "Backwards -- the real result is the opposite: the model reported HIGH confidence specifically on the question it got wrong, which is direct evidence the self-report mechanism did NOT reliably track true uncertainty, not confirmation that it works as intended."
+          ],
+          "source": "Cost and Latency",
+          "sourceUrl": "cost-latency.md"
+        },
+        {
+          "scenario": "The page states that STEER (a real, cited routing method) uses model-internal confidence derived from token-level output probabilities, rather than a self-reported natural-language confidence field -- and notes this page's own repro could not test that specific mechanism directly.",
+          "question": "What real, current constraint does the page give for why the repro used self-reported confidence instead of STEER's actual mechanism?",
+          "options": [
+            "Self-reported confidence was chosen deliberately for being more accurate than token-probability-based methods in practice",
+            "STEER's method has been deprecated and is no longer considered a valid routing approach as of this writing",
+            "The Anthropic Messages API used throughout this project doesn't expose token-level log probabilities at all",
+            "Token-probability-based confidence only works for open-source models, never for any hosted commercial API"
+          ],
+          "correct": 2,
+          "explanations": [
+            "Backwards -- the page's own real result argues the opposite: self-reported confidence failed to catch the model's one actual mistake, which is presented as a limitation to be honest about, not a deliberate preference for a more accurate method.",
+            "Not a claim the page makes -- STEER is cited as a real, current method being contrasted with this repro's fallback approach, not as something superseded or invalid.",
+            "Correct. The page states this directly and precisely: the Messages API used throughout this project doesn't expose token-level logprobs the way some routing methods assume access to, which is exactly why the repro falls back to a self-reported field -- and the real result shows why that fallback has a real cost (missing the model's actual mistake).",
+            "Overgeneralizes beyond what the page claims -- the page's point is specifically about which API this project uses (Anthropic's Messages API) not exposing this data, not a blanket claim about all commercial APIs universally lacking any form of token-probability access."
+          ],
+          "source": "Cost and Latency",
+          "sourceUrl": "cost-latency.md"
+        },
+        {
           "scenario": "A real run computed GRPO advantages for a group where every one of 8 sampled completions received the identical reward (all correct). The result was an advantage of exactly 0.0 for all 8 samples.",
           "question": "What is the most accurate description of what this result demonstrates?",
           "options": [
@@ -2212,7 +2295,7 @@ Every page's TL;DR in one place, every page's Scenario Check merged into one com
 
 === "Flashcards"
 
-    206 flashcards from every page with a deck so far — click a card to flip it, shuffle for random order.
+    214 flashcards from every page with a deck so far — click a card to flip it, shuffle for random order.
 
     <div class="flashcard-widget" data-title="Flashcards — All Pages">
     <script type="application/json">
@@ -3167,6 +3250,46 @@ Every page's TL;DR in one place, every page's Scenario Check merged into one com
           "front": "Why is this a real, documented interview topic rather than a niche concern?",
           "back": "Real sourced interview questions: 'How do you make sure agents do not double-execute side-effectful operations like charging a card or booking a ticket twice?' and 'Suppose your booking agent sometimes reserves the same hotel twice -- walk through how you'd debug and fix this.' Long-running agents accumulate real side effects at unpredictable points, unlike a typical fast request/response service.",
           "source": "Durable Execution"
+        },
+        {
+          "front": "What is the real, documented formula for naive agent loop cost, and which term is the real 'cost trap'?",
+          "back": "Total = N*S + u*N(N+1)/2 + r*N(N-1)/2, where S=system prompt tokens, u=new input tokens/turn, r=output tokens/turn, N=turns. The N(N+1)/2 TRIANGULAR NUMBER term is the trap -- it's quadratic in N, because every turn rebills the entire accumulating transcript, not just its own new content.",
+          "source": "Cost and Latency"
+        },
+        {
+          "front": "What real, worked example shows the scale of quadratic transcript growth?",
+          "back": "A 20-step loop where each step generates 1,000 tokens produces 210,000 cumulative input tokens -- NOT the 20,000 a flat per-step estimate would suggest. A separate 10-step file-reading example: naive loop = 43.3x a single-pass baseline; windowed/constrained = ~29x -- real savings, but still far above 1x.",
+          "source": "Cost and Latency"
+        },
+        {
+          "front": "In this topic's real repro, what did the naive condition's per-turn input-token counts look like across 7 turns, and what does that pattern indicate?",
+          "back": "665, 1290, 1921, 2552, 3183, 3814, 4445 -- each turn costs ~631 tokens MORE than the last. A roughly CONSTANT per-turn increase is exactly the signature of quadratic cumulative growth (sum of an arithmetic sequence = a triangular number). Real cumulative total: 17,870 input tokens.",
+          "source": "Cost and Latency"
+        },
+        {
+          "front": "What did windowing (keeping only the last 2 tool results) actually buy in the real repro, measured?",
+          "back": "Per-turn tokens: 665, 1300, 1934, 2051, 2168, 2285, 2406 -- nearly identical to naive for the first 3 turns (window had nothing to omit yet), then flattening to ~121 tokens/turn increase. Real cumulative total: 12,809 tokens -- a real 28.3% reduction vs. naive, with the gap widening every additional turn. Correctness was unaffected in this run.",
+          "source": "Cost and Latency"
+        },
+        {
+          "front": "What real current per-token pricing gap makes model routing a large lever, and what did the real routing repro find on cost/accuracy?",
+          "back": "Haiku 4.5: $1/$5 per million (in/out). Sonnet 5: $2/$10 per million -- roughly 2x here, and the real repro's routed condition (mostly Haiku) matched Sonnet's accuracy (9/10) at ~44% of Sonnet-only's real dollar cost ($0.011843 vs $0.026866).",
+          "source": "Cost and Latency"
+        },
+        {
+          "front": "What was the real, sharp limitation found in the confidence-based routing repro -- and did it survive a deliberate retry?",
+          "back": "escalated_count was 0 -- Haiku reported 'high' confidence on ALL 10 questions, including the one it got wrong (the 'strawberry' spelling trap). This held even after adding 2 harder questions AND rewriting the tool description to explicitly instruct calibrated self-assessment ('mark low whenever multi-step reasoning could produce a careless mistake'). Confidence stayed high regardless -- a real, well-tested negative result.",
+          "source": "Cost and Latency"
+        },
+        {
+          "front": "Why does STEER (arXiv 2511.06190) use model-internal confidence instead of self-reported confidence, and why couldn't this topic's repro test that mechanism directly?",
+          "back": "A model that's about to be wrong isn't reliably aware it's about to be wrong -- self-report doesn't track true uncertainty (confirmed by this topic's own real result). STEER instead derives confidence from the smaller model's own OUTPUT-TOKEN PROBABILITIES. This repro couldn't use that directly because the Anthropic Messages API doesn't expose token-level log probabilities.",
+          "source": "Cost and Latency"
+        },
+        {
+          "front": "What are the two SEPARATE real cost levers this topic distinguishes, and what does each one actually change?",
+          "back": "(1) Context management (windowing, summarization) attacks the QUADRATIC term -- how much of the transcript gets rebilled each turn, independent of which model answers. (2) Model routing attacks the PER-TOKEN PRICE -- a real 2x+ lever on current pricing. Routing's COST benefit is separate from its SAFETY benefit (catching mistakes) -- the real repro got the former but not the latter from self-report alone.",
+          "source": "Cost and Latency"
         },
         {
           "front": "What does GRPO replace PPO's critic (value network) with, and what's the exact formula?",
