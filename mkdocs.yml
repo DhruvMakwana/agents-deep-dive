@@ -124,6 +124,7 @@ nav:
       - "Coding Agent Products and Configuration": coding-agent-config.md
   - Production:
       - "Evaluating Agents": evaluating-agents.md
+      - "Benchmark Atlas": benchmark-atlas.md
       - "Agent Security": agent-security.md
       - "Durable Execution": durable-execution.md
   - Training:

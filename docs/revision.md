@@ -157,6 +157,13 @@ Every page's TL;DR in one place, every page's Scenario Check merged into one com
     - **Infrastructure is a real, measurable confound in agent benchmarks.** Running the identical model and benchmark across container configurations from strict to uncapped produced a 6-percentage-point swing (p < 0.01) on Terminal-Bench 2.0 — bigger than many reported leaderboard gaps — purely from resource allocation, with nothing about the model changing at all.
     - **Capability evals and regression evals serve different jobs and shouldn't be conflated.** A capability eval asks how good the agent could be — expensive, exploratory, run rarely. A regression eval asks whether a specific change broke something that used to work — cheap, narrow, run on every change. This page's own regression-suite experiment is exactly that second job, and it worked precisely because the suite was simple enough to run constantly.
 
+    ### [Benchmark Atlas](benchmark-atlas.md)
+
+    - **Benchmark leaderboards drift out of sync with reality fast, and aggregator sites make it worse.** A real, current fetch of official leaderboard data (not secondary blog posts) found SWE-bench Verified's real top score is **79.2%**, while multiple aggregator sites reported 96–97% for the same benchmark — a real, current, checkable discrepancy worth verifying against the primary source before citing any benchmark number.
+    - **SWE-bench Verified has a real, documented contamination problem, from OpenAI's own analysis, not a critic's.** Auditing failed problems, OpenAI found *"at least 59.4% of the audited problems have flawed test cases that reject functionally correct submissions,"* and that *"all frontier models we tested were able to reproduce the original, human-written bug fix... indicating that all of them have seen at least some of the problems and solutions during training."* Their conclusion: *"we have stopped reporting SWE-bench Verified scores, and we recommend that other model developers do so too."*
+    - **"Saturated" isn't one universal state — it's benchmark-specific and sometimes domain-specific within one benchmark.** OSWorld climbed from a 12.24% launch baseline to a real current top of 90.19% (saturated). TheAgentCompany's real top score is still under 43% (clearly not). tau-bench's own real numbers show both at once: 97.8% on its older telecom domain, but only 55.2% on banking_knowledge — a harder domain added specifically because the older ones stopped differentiating models.
+    - **A real repro of tau-bench's actual grading methodology — action-state grading, and pass@1 vs. pass^k — found perfect reliability on one small, illustrative policy-compliance scenario**: 5/5 independent trials correctly refused a plausible-sounding but policy-violating cancellation request, graded by whether the policy-breaking tool was actually called, not by what the reply said. `pass_at_1: 1.0`, `pass_hat_k: true` — a small, real illustration of exactly the kind of easy scenario that stops differentiating frontier models, which is why benchmark maintainers keep adding harder ones.
+
     ### [Agent Security](agent-security.md)
 
     - **The lethal trifecta names the actual precondition for data exfiltration**, not a vague "be careful with untrusted content" warning: private-data access, exposure to untrusted content, and the ability to externally communicate, all live in the same session. Remove any one leg and the specific exfiltration risk this describes goes away, regardless of what the untrusted content says.
@@ -195,7 +202,7 @@ Every page's TL;DR in one place, every page's Scenario Check merged into one com
 
 === "Combined Scenario Check"
 
-    88 questions from every page on this site, one combined pass instead of opening each page separately. Every question shows which page it's from — go re-read that page for anything you get wrong.
+    92 questions from every page on this site, one combined pass instead of opening each page separately. Every question shows which page it's from — go re-read that page for anything you get wrong.
 
     <div class="quiz-widget" data-title="Combined Scenario Check — All Pages">
     <script type="application/json">
@@ -1570,6 +1577,82 @@ Every page's TL;DR in one place, every page's Scenario Check merged into one com
           "sourceUrl": "evaluating-agents.md"
         },
         {
+          "scenario": "A real fetch of official leaderboard data found SWE-bench Verified's actual current top score is 79.2%, while several benchmark-aggregator websites reported 96-97% for the same benchmark at around the same time.",
+          "question": "What is the most accurate lesson to draw from this specific discrepancy?",
+          "options": [
+            "A benchmark's real current score should be checked directly, not via summaries",
+            "SWE-bench Verified must have two separate, independently valid leaderboards",
+            "The official leaderboard's own number must be outdated compared to aggregators",
+            "Aggregator sites are always less reliable than any primary source for any claim"
+          ],
+          "correct": 0,
+          "explanations": [
+            "Correct. The real, demonstrated lesson is specifically about verification practice: this page's own research process found a large, real gap between primary-sourced data and secondary summaries, which is exactly why every number on this page is sourced to its specific official leaderboard or paper.",
+            "Not what was found or claimed -- there is one official leaderboard (swebench.com); the aggregator numbers were simply inaccurate relative to it, not a second legitimate source.",
+            "Backwards -- the official leaderboard is the primary source of truth by definition; there's no basis to assume the aggregators' higher numbers were more current or more correct.",
+            "Overgeneralizes a single observed discrepancy into a sweeping claim about all aggregator sites in all cases -- the real, narrower lesson is about this specific verification practice, not a blanket rule about a category of website."
+          ],
+          "source": "Benchmark Atlas",
+          "sourceUrl": "benchmark-atlas.md"
+        },
+        {
+          "scenario": "OpenAI's own analysis of SWE-bench Verified found that 'at least 59.4% of the audited problems have flawed test cases that reject functionally correct submissions,' and that all tested frontier models could reproduce the original gold-patch solutions verbatim, suggesting training contamination.",
+          "question": "What is the most precise way to characterize what this finding actually calls into question?",
+          "options": [
+            "That models genuinely cannot solve any real-world software engineering tasks at all",
+            "That the SWE-bench Verified score's meaning as a capability measure is now unreliable",
+            "That OpenAI's own frontier models specifically performed worse than competitors on it",
+            "That software engineering benchmarks in general can never be constructed validly"
+          ],
+          "correct": 1,
+          "explanations": [
+            "A sweeping overgeneralization the finding doesn't support -- the concern is specifically about what THIS benchmark's score measures, not a claim that models can't do real software engineering tasks; SWE-bench Pro's own real, climbing scores are direct evidence against that broader claim.",
+            "Correct. The precise, real finding is that a high score on THIS SPECIFIC benchmark no longer reliably indicates real capability, due to two distinct real issues (flawed test cases rejecting correct answers, and training contamination) -- which is exactly why OpenAI's own stated conclusion was to stop reporting this specific score, not to declare all coding benchmarks invalid.",
+            "Not what the finding is about -- OpenAI's analysis was about the benchmark's own construction and data quality issues, affecting all models evaluated on it equally, not a comparison of OpenAI's own models against competitors.",
+            "A vast overreach -- the same real research points to SWE-bench Pro as a benchmark that 'seems to suffer less from contamination issues,' directly showing that better-constructed benchmarks in the same general category are achievable."
+          ],
+          "source": "Benchmark Atlas",
+          "sourceUrl": "benchmark-atlas.md"
+        },
+        {
+          "scenario": "A real repro of tau-bench's methodology used action-state grading (checking whether a policy-violating tool was actually called) rather than checking whether the agent's final reply sounded correct.",
+          "question": "What is the most precise reason this specific grading choice matters?",
+          "options": [
+            "Action-state grading is easier to implement than any text-based grading approach",
+            "Text-based grading is impossible to automate for any agent evaluation task",
+            "A reply can sound compliant while the actual action taken violates policy",
+            "Action-state grading eliminates the need to run more than a single trial"
+          ],
+          "correct": 2,
+          "explanations": [
+            "Not the actual reason given or the real motivation -- implementation ease isn't the point; the point is about what the check can and can't detect, not implementation convenience.",
+            "An overstated, unsupported claim -- text-based grading is used elsewhere in this project (e.g. LLM-as-judge patterns in Evaluating Agents) and is clearly automatable; the issue here is specifically about reliability for THIS kind of policy-compliance check, not automatability in general.",
+            "Correct. This is the real, substantive reason: an agent could plausibly generate polished, policy-sounding language while still having taken the wrong real action (or vice versa) -- grading the actual state change (was cancel_order really invoked on a shipped order) is what makes the check trustworthy regardless of how convincing the accompanying text is.",
+            "Unrelated -- the choice to run multiple trials (for pass@1 vs. pass^k) is a separate methodological decision about reliability measurement, not a consequence of how any single trial is graded."
+          ],
+          "source": "Benchmark Atlas",
+          "sourceUrl": "benchmark-atlas.md"
+        },
+        {
+          "scenario": "The real atlas data shows OSWorld climbing from a 12.24% launch baseline to a real current top score of 90.19%, while tau-bench's real leaderboard shows telecom at 97.8% alongside a newer banking_knowledge domain at only 55.2%.",
+          "question": "What is the most accurate generalization these two real data points together support?",
+          "options": [
+            "Every benchmark eventually reaches the same saturation point at the same rate",
+            "Saturation is a single global property that applies uniformly to an entire benchmark",
+            "tau-bench's banking_knowledge domain is a poorly designed benchmark component",
+            "Saturation can vary meaningfully across time and within parts of one benchmark"
+          ],
+          "correct": 3,
+          "explanations": [
+            "Directly contradicted by the real numbers -- OSWorld and TheAgentCompany (42.9%) are both in this same atlas at very different saturation levels, and even within tau-bench itself, domains sit at wildly different points (55.2% vs. 97.8%); there's no single uniform rate or endpoint.",
+            "Directly contradicted by tau-bench's own real per-domain numbers, which show DIFFERENT saturation levels (97.8% vs. 55.2%) within the exact same benchmark -- saturation clearly isn't a single property of 'the benchmark' as a whole in this case.",
+            "Unsupported speculation not established by the data -- a domain scoring lower than another domain is consistent with it simply being harder or newer, which is exactly the stated reason it was added, not evidence of poor design.",
+            "Correct. The real evidence directly supports this: OSWorld shows saturation can develop within one benchmark over time (12.24% to 90.19%), and tau-bench shows saturation can differ across domains within the SAME benchmark at the SAME time (97.8% vs. 55.2%) -- saturation is neither uniform nor a fixed global property."
+          ],
+          "source": "Benchmark Atlas",
+          "sourceUrl": "benchmark-atlas.md"
+        },
+        {
           "scenario": "A real repro gave an agent all three lethal-trifecta legs (untrusted email, private-record access, unrestricted send) plus a structurally-fixed version (send restricted to the on-file address). In both conditions, the model declined the injected forwarding request -- no exfiltration occurred either way.",
           "question": "What's the most accurate conclusion to draw from this specific result?",
           "options": [
@@ -1880,7 +1963,7 @@ Every page's TL;DR in one place, every page's Scenario Check merged into one com
 
 === "Flashcards"
 
-    174 flashcards from every page with a deck so far — click a card to flip it, shuffle for random order.
+    182 flashcards from every page with a deck so far — click a card to flip it, shuffle for random order.
 
     <div class="flashcard-widget" data-title="Flashcards — All Pages">
     <script type="application/json">
@@ -2595,6 +2678,46 @@ Every page's TL;DR in one place, every page's Scenario Check merged into one com
           "front": "The SWE-bench cross-check in Anthropic's infrastructure-noise study found a smaller effect (+1.54 percentage points at 5x RAM) than the main Terminal-Bench 2.0 finding (6 points). Does this contradict the main finding?",
           "back": "No -- it shows the SIZE of the infrastructure confound depends on the task's own resource profile, not just on infrastructure existing. SWE-bench's tasks are less resource-intensive than Terminal-Bench 2.0's, so the same underlying confound shows up smaller there. Both results are consistent with 'infrastructure is a real, controllable confound.'",
           "source": "Evaluating Agents"
+        },
+        {
+          "front": "A real fetch of official leaderboard data found SWE-bench Verified's real top score, versus what several aggregator sites reported. What's the discrepancy, and why does it matter?",
+          "back": "Official (swebench.com): 79.2%. Aggregator sites: 96-97%. A real, large, checkable gap -- the lesson isn't 'aggregators are always wrong,' it's that any benchmark number should be checked against its official leaderboard directly, not a secondary summary, before citing it.",
+          "source": "Benchmark Atlas"
+        },
+        {
+          "front": "What did OpenAI's own audit find about SWE-bench Verified's test cases, and what did they conclude?",
+          "back": "'At least 59.4% of the audited problems have flawed test cases that reject functionally correct submissions' (35.5% too narrow, 18.8% too wide). Conclusion: 'we have stopped reporting SWE-bench Verified scores, and we recommend that other model developers do so too... OpenAI recommends reporting results for SWE-bench Pro' instead.",
+          "source": "Benchmark Atlas"
+        },
+        {
+          "front": "What did OpenAI find about training contamination on SWE-bench Verified?",
+          "back": "'All frontier models we tested were able to reproduce the original, human-written bug fix... indicating that all of them have seen at least some of the problems and solutions during training. We also found evidence that models that have seen the problems during training are more likely to succeed.'",
+          "source": "Benchmark Atlas"
+        },
+        {
+          "front": "Which real benchmarks in this atlas are genuinely saturated (near-ceiling top scores), and which are clearly not?",
+          "back": "Saturated: OSWorld-Verified (90.19%, up from a 12.24% launch baseline), AppWorld (96.4%/98.3%, up from ~49%/30%). Clearly not: TheAgentCompany (42.9%), SWE-bench Pro (61.5%), MLE-bench (64.4%), BrowseComp (51.5%).",
+          "source": "Benchmark Atlas"
+        },
+        {
+          "front": "How does tau-bench's own real leaderboard show that 'saturation' isn't a single property of a whole benchmark?",
+          "back": "Telecom domain: 97.8% (essentially saturated). Banking_knowledge domain (added later, specifically to stay hard): only 55.2%. Same benchmark, wildly different saturation levels depending on which domain -- maintainers add harder domains once older ones stop differentiating models.",
+          "source": "Benchmark Atlas"
+        },
+        {
+          "front": "What is tau-bench's real reliability metric pass^k, and how does it differ from pass@1?",
+          "back": "pass@1 is the average success rate across independent trials. pass^k asks whether EVERY one of k independent trials succeeded -- a stricter, all-or-nothing reliability check. An agent that's usually right (high pass@1) isn't the same guarantee as one that's always right (pass^k = true).",
+          "source": "Benchmark Atlas"
+        },
+        {
+          "front": "A real repro of tau-bench's grading philosophy graded by 'action state' rather than reply text. What does that mean, and why does it matter?",
+          "back": "It checked whether the policy-violating tool (cancel_order on a shipped order) was actually CALLED, not whether the reply sounded compliant. A reply can sound correct while the real action taken violates policy (or vice versa) -- action-state grading is trustworthy regardless of how convincing the text is.",
+          "source": "Benchmark Atlas"
+        },
+        {
+          "front": "AgentDojo and InjecAgent don't fit the 'saturated vs. unsaturated' framing the way capability benchmarks do. Why not?",
+          "back": "They measure attack success rate (a vulnerability), not a capability ceiling. AgentDojo's real numbers: Claude 3.7 Sonnet had 88.7% utility / 7.3% attack success; GPT-4o had 69.1% utility / 47.7% attack success -- ASR varies wildly by model (1-48%), meaning there's no consistent 'frontier' defense yet, which is itself the interesting finding rather than a ceiling number.",
+          "source": "Benchmark Atlas"
         },
         {
           "front": "What are the three properties of Willison's 'lethal trifecta,' in his own words?",

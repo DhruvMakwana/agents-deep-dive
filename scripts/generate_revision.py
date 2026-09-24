@@ -50,6 +50,7 @@ SECTIONS = [
     ]),
     ("Production", [
         ("Evaluating Agents", "evaluating-agents.md"),
+        ("Benchmark Atlas", "benchmark-atlas.md"),
         ("Agent Security", "agent-security.md"),
         ("Durable Execution", "durable-execution.md"),
     ]),
