@@ -46,6 +46,7 @@ SECTIONS = [
         ("Multi-Agent Systems", "multi-agent-systems.md"),
         ("Harness Engineering", "harness-engineering.md"),
         ("Coding Agents: Mechanisms", "coding-agents-mechanisms.md"),
+        ("Coding Agent Products and Configuration", "coding-agent-config.md"),
     ]),
     ("Production", [
         ("Evaluating Agents", "evaluating-agents.md"),

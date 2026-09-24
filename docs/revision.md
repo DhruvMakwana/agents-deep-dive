@@ -139,6 +139,14 @@ Every page's TL;DR in one place, every page's Scenario Check merged into one com
     - **A second real repro tested the review-loop / verifiable-task pattern directly**: a genuinely subtle binary-search off-by-one bug (confirmed to actually diverge via a 2,000-case random search, since hand-picked test cases initially missed it), fixed with and without a real, independently-run test suite available to check the fix. Another clean, honest tie — Sonnet 5 fixed the bug correctly on the first attempt, every time, with or without the ability to verify its own work.
     - **METR's real, cited trend gives the scale this all sits inside**: model *"time horizon"* — the length of task a model completes with 50% reliability — has grown with *"a doubling time of around 7 months"* over six years; Claude 3.7 Sonnet's measured horizon was *"approximately one hour."* This page's own repros are a small, current, honest data point on a specific slice of that trend: two ACI safety nets that mattered a lot in 2024 didn't move the needle for a 2026 model on small, illustrative tasks.
 
+    ### [Coding Agent Products and Configuration](coding-agent-config.md)
+
+    - **The coding-agent product landscape converges on similar mechanics from different starting points**: Codex CLI (OpenAI, Apache-2.0, local terminal), Cursor (a full IDE, not a CLI), GitHub Copilot (spans inline autocomplete to autonomous "agent mode," natively integrated into GitHub PRs/Issues), Cline (Apache-2.0, markets approval-gated execution — *"every file edit and terminal command requires your approval"* — as its core differentiator over full autonomy), Aider (Apache-2.0, best known for its *"repo map"* of the whole codebase, plus automatic git commits per change), OpenCode (MIT, a "build" agent and read-only "plan" agent switchable by Tab key), Gemini CLI (Google, Apache-2.0, built-in Search grounding), and OpenHands — which has genuinely repositioned from "an autonomous AI software engineer" to *"the self-hosted developer control center for coding agents and automations,"* explicitly orchestrating *"OpenHands, Claude Code, Codex, Gemini, or any agent with Agent-Client Protocol"* rather than just being one agent among many.
+    - **AGENTS.md is a real, genuinely cross-tool open standard** — *"a simple, open format for guiding coding agents,"* described as *"a README for agents."* A long list of tools support it (Codex, Jules, Aider, opencode, Cursor, Copilot, and more); Claude Code added support for reading it directly as of v2.1.277.
+    - **CLAUDE.md's real mechanics are more specific than "a config file"**: Anthropic's own docs state plainly, *"CLAUDE.md content is delivered as a user message after the system prompt, not as part of the system prompt itself,"* and — the load-bearing distinction this page's second repro tests — *"Claude treats them as context, not enforced configuration. To block an action regardless of what Claude decides, use a PreToolUse hook instead."*
+    - **A real repro of CLAUDE.md-style instructions found exactly the compliance shift the mechanism promises**: 0% `do_`-prefix compliance and inconsistent f-string avoidance with no instructions, 100% compliance on both with a project-instructions block delivered the real way — as a user message, not a system prompt — confirmed across multiple full runs.
+    - **A real repro of hooks required a genuine design correction to test the right thing, and the corrected version found a clean, strong result**: with no protective rule anywhere and no hook, an explicit request to delete a file succeeded 5/5 trials. With a real, deterministic PreToolUse-style check and still no prompted rule, the same file survived 5/5 trials — the hook, not the model's judgment, is what actually held.
+
     ## Production
 
     ### [Evaluating Agents](evaluating-agents.md)
@@ -187,7 +195,7 @@ Every page's TL;DR in one place, every page's Scenario Check merged into one com
 
 === "Combined Scenario Check"
 
-    84 questions from every page on this site, one combined pass instead of opening each page separately. Every question shows which page it's from — go re-read that page for anything you get wrong.
+    88 questions from every page on this site, one combined pass instead of opening each page separately. Every question shows which page it's from — go re-read that page for anything you get wrong.
 
     <div class="quiz-widget" data-title="Combined Scenario Check — All Pages">
     <script type="application/json">
@@ -1410,6 +1418,82 @@ Every page's TL;DR in one place, every page's Scenario Check merged into one com
           "sourceUrl": "coding-agents-mechanisms.md"
         },
         {
+          "scenario": "A real repro's first design gave a prompted-only condition an explicit system-level rule ('never delete config.json') and tested whether a persuasive override message could get the model to violate it. The model never did, and the hook (present in a separate condition) was never actually triggered in any trial.",
+          "question": "What was the real methodological problem with this first design?",
+          "options": [
+            "It tested obedience to a stated rule, not what a hook protects with none",
+            "The model's resistance to the override proved hooks are unnecessary in general",
+            "The prompted condition's system prompt was too short to be a fair test",
+            "The override message wasn't persuasive enough to count as a real test"
+          ],
+          "correct": 0,
+          "explanations": [
+            "Correct. The real issue was that the comparison answered a different question than intended: it tested whether the model would violate an EXPLICIT STATED RULE under pressure (it didn't), not what happens when NOTHING protects a resource except the hook -- which is the actual, distinct claim a hook makes.",
+            "Overgeneralizes a narrow result -- resistance to ONE override attempt under ONE stated rule says nothing about the general necessity of hooks, especially since the corrected version of this same repro found hooks mattered a great deal once the rule was removed.",
+            "Not the actual problem -- prompt length wasn't the issue; the issue was that the comparison's premise (rule present vs. rule+hook present) never actually let the hook demonstrate anything distinct, since the model never came close to needing it.",
+            "Backwards -- the override message was reasonable and explicit; the real gap was structural (what was being compared), not that the persuasion attempt itself was too weak."
+          ],
+          "source": "Coding Agent Products and Configuration",
+          "sourceUrl": "coding-agent-config.md"
+        },
+        {
+          "scenario": "A real, corrected repro removed any protective rule from BOTH conditions' system prompts, then compared a real hook-based block against no hook at all, given an identical explicit deletion request in both cases.",
+          "question": "What did this corrected design specifically make possible that the first design didn't?",
+          "options": [
+            "It made the deletion request itself more explicit than before",
+            "It let the hook's real, distinct effect actually surface in the results",
+            "It removed the need to run multiple trials to get a reliable result",
+            "It eliminated the possibility of the model refusing the request on its own"
+          ],
+          "correct": 1,
+          "explanations": [
+            "Not the key change -- the request's explicitness was already high in the redesign, but that alone isn't what fixed the comparison; the critical change was removing the confound of a prompted rule sitting in front of the hook.",
+            "Correct. By removing every other reason the model might decline (no stated rule to obey), any block that occurred in the hook condition could only be attributed to the hook itself -- exactly the isolated, distinct effect the first design failed to expose.",
+            "Not accurate -- the recipe still ran 5 trials per condition in the corrected version; removing the confound didn't eliminate the value of repeated trials, it made what those trials measured meaningful.",
+            "Overstates the guarantee -- nothing in the redesign prevents a model from independently declining a request for its own reasons; it simply removed the STATED rule as a competing explanation, it didn't rule out other real behavior."
+          ],
+          "source": "Coding Agent Products and Configuration",
+          "sourceUrl": "coding-agent-config.md"
+        },
+        {
+          "scenario": "A real repro measured CLAUDE.md-style project instructions producing a 0%-to-100% real compliance shift on two checkable code conventions (a naming prefix and avoiding f-strings), delivered as a user message following Anthropic's own documented CLAUDE.md mechanics.",
+          "question": "What does Anthropic's own documented framing of CLAUDE.md most precisely predict about the LIMITS of this same mechanism, independent of this page's own repro?",
+          "options": [
+            "That CLAUDE.md instructions should never be trusted for any real behavior change",
+            "That CLAUDE.md files must be under a strict line count to have any effect at all",
+            "That CLAUDE.md instructions are treated as context, not a hard enforcement layer",
+            "That CLAUDE.md only works when delivered as part of the system prompt itself"
+          ],
+          "correct": 2,
+          "explanations": [
+            "Overstated and contradicted directly by this page's own real, measured 0%-to-100% compliance result -- the mechanism clearly does produce real behavior change; the documented limit is about GUARANTEES, not effectiveness in general.",
+            "Overstates a real but different guidance point -- Anthropic recommends keeping files under roughly 200 lines for better adherence, but this is about diminishing returns on longer files, not a hard cutoff below which the mechanism has zero effect.",
+            "Correct. Anthropic's own documentation states this precisely: 'Claude treats them as context, not enforced configuration.' This predicts CLAUDE.md can shape behavior effectively (as measured) while still not providing the hard guarantee a hook provides -- exactly the distinction this page's second repro tests directly.",
+            "Contradicts the real, documented delivery mechanism directly, which states CLAUDE.md content is delivered 'as a user message after the system prompt, not as part of the system prompt itself' -- and this page's own repro replicated exactly that mechanism and still measured a strong real effect."
+          ],
+          "source": "Coding Agent Products and Configuration",
+          "sourceUrl": "coding-agent-config.md"
+        },
+        {
+          "scenario": "A real, current survey of primary sources found OpenHands' own README describing it as 'the self-hosted developer control center for coding agents and automations,' explicitly supporting orchestration of 'OpenHands, Claude Code, Codex, Gemini, or any agent with Agent-Client Protocol.'",
+          "question": "What is the most accurate characterization of what this specific finding represents?",
+          "options": [
+            "Confirmation that OpenHands has always been marketed this way since its creation",
+            "Evidence that Agent-Client Protocol is now the only way coding agents can be built",
+            "An unverifiable claim, since only secondary sources described OpenHands this way",
+            "A genuine, dated product repositioning older secondary sources are likely to miss"
+          ],
+          "correct": 3,
+          "explanations": [
+            "Unsupported and contradicted by the framing itself -- the finding is specifically flagged as a notable, current REPOSITIONING (implying change over time), not a claim about how the project has always been described.",
+            "A significant overreach -- ACP being one real, current interoperability mechanism OpenHands supports says nothing about it being the exclusive way any coding agent must be built; other tools in the same survey use entirely different architectures.",
+            "Incorrect -- the quotes cited come directly from OpenHands' own GitHub README, a primary source, not from a secondary blog post or summary describing the project.",
+            "Correct. This is precisely the point worth flagging: OpenHands' own current, primary-source README describes a real shift from being framed as one autonomous coding agent to being a control plane that can orchestrate multiple vendors' agents -- a genuine, dated fact that older secondary sources and blog posts are likely to miss."
+          ],
+          "source": "Coding Agent Products and Configuration",
+          "sourceUrl": "coding-agent-config.md"
+        },
+        {
           "scenario": "A real repro gave a model the option to call a verification tool or answer directly, on both a well-known fact and an unguessable fictional fact. In both cases the model called the tool and got the correct outcome -- no divergence between outcome and trajectory was observed.",
           "question": "What's the most accurate takeaway from this specific result?",
           "options": [
@@ -1796,7 +1880,7 @@ Every page's TL;DR in one place, every page's Scenario Check merged into one com
 
 === "Flashcards"
 
-    166 flashcards from every page with a deck so far — click a card to flip it, shuffle for random order.
+    174 flashcards from every page with a deck so far — click a card to flip it, shuffle for random order.
 
     <div class="flashcard-widget" data-title="Flashcards — All Pages">
     <script type="application/json">
@@ -2431,6 +2515,46 @@ Every page's TL;DR in one place, every page's Scenario Check merged into one com
           "front": "Why is it methodologically wrong to conclude 'linting guardrails and review loops are now universally unnecessary' from this page's repros?",
           "back": "The repros tested small, illustrative tasks (5-line functions) against one current model (Sonnet 5) -- a narrow, scoped result. METR's own trend describes tasks stretching toward hours, days, and weeks; a guardrail with zero measured value on a tiny edit could easily matter again at a much larger, messier scale this page never tested.",
           "source": "Coding Agents: Mechanisms"
+        },
+        {
+          "front": "What is AGENTS.md, and how does it relate to CLAUDE.md?",
+          "back": "AGENTS.md is a real, open, cross-tool standard: 'a simple, open format for guiding coding agents,' like 'a README for agents.' Supported by many tools (Codex, Jules, Aider, opencode, Cursor, Copilot). Claude Code added direct support for reading AGENTS.md as of v2.1.277 -- a format born outside Anthropic that Claude Code later adopted.",
+          "source": "Coding Agent Products and Configuration"
+        },
+        {
+          "front": "What does Anthropic's own documentation say about exactly how CLAUDE.md content is delivered to the model?",
+          "back": "'CLAUDE.md content is delivered as a user message after the system prompt, not as part of the system prompt itself.' A real, specific mechanical detail -- not just 'a config file gets read somehow.'",
+          "source": "Coding Agent Products and Configuration"
+        },
+        {
+          "front": "What is the single most load-bearing quote distinguishing CLAUDE.md from hooks, per Anthropic's own docs?",
+          "back": "'Claude treats them as context, not enforced configuration. To block an action regardless of what Claude decides, use a PreToolUse hook instead.' And: 'Settings rules are enforced by the client regardless of what Claude decides to do. CLAUDE.md instructions shape Claude's behavior but are not a hard enforcement layer.'",
+          "source": "Coding Agent Products and Configuration"
+        },
+        {
+          "front": "A real repro tested CLAUDE.md-style project instructions (no f-strings, do_-prefixed names, imperative docstrings) delivered the real way. What was the measured compliance shift?",
+          "back": "Without instructions: 0% do_-prefix compliance, inconsistent (67-100%) f-string avoidance. With instructions (delivered as a user message, matching real CLAUDE.md mechanics): 100% compliance on both, every trial, across multiple full runs -- a real, strong, measured effect.",
+          "source": "Coding Agent Products and Configuration"
+        },
+        {
+          "front": "A real hooks repro's FIRST design gave the prompted condition an explicit rule ('never delete config.json'). What went wrong, and how was it fixed?",
+          "back": "The model never violated the rule, so the hook never actually fired in any trial -- the comparison tested rule-obedience, not what a hook protects. Fixed by removing the protective rule from BOTH conditions entirely, isolating exactly what the hook adds when nothing else does.",
+          "source": "Coding Agent Products and Configuration"
+        },
+        {
+          "front": "After the redesign (no protective rule anywhere), what was the real result with vs. without the hook, given an explicit request to delete a file?",
+          "back": "Without a hook: 0% survival (5/5 trials, the model complied and deleted the file given a reasonable-sounding explicit request). With a real, deterministic PreToolUse-style check: 100% survival (5/5 trials) -- the hook, not the model's judgment, is what held. The model also gracefully reported the block and suggested real alternatives.",
+          "source": "Coding Agent Products and Configuration"
+        },
+        {
+          "front": "What real, current repositioning did primary-source research find for OpenHands?",
+          "back": "OpenHands' own README now describes it not as an autonomous coding agent but as 'the self-hosted developer control center for coding agents and automations,' explicitly orchestrating 'OpenHands, Claude Code, Codex, Gemini, or any agent with Agent-Client Protocol' -- a genuine shift from being one agent to being a control plane above other vendors' agents, which older secondary sources likely miss.",
+          "source": "Coding Agent Products and Configuration"
+        },
+        {
+          "front": "What real, product-level design choice does Cline make as its stated core differentiator?",
+          "back": "'Every file edit and terminal command requires your approval, so you stay in control of what actually changes' -- approval-gated execution by default, with an opt-in toggle for autonomous mode. A direct, product-level instance of the human-in-the-loop theme.",
+          "source": "Coding Agent Products and Configuration"
         },
         {
           "front": "What's the real difference between outcome grading and trajectory grading, and what documented risk does relying on outcome-only grading create?",
