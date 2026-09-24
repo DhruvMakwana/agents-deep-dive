@@ -164,6 +164,13 @@ Every page's TL;DR in one place, every page's Scenario Check merged into one com
     - **"Saturated" isn't one universal state — it's benchmark-specific and sometimes domain-specific within one benchmark.** OSWorld climbed from a 12.24% launch baseline to a real current top of 90.19% (saturated). TheAgentCompany's real top score is still under 43% (clearly not). tau-bench's own real numbers show both at once: 97.8% on its older telecom domain, but only 55.2% on banking_knowledge — a harder domain added specifically because the older ones stopped differentiating models.
     - **A real repro of tau-bench's actual grading methodology — action-state grading, and pass@1 vs. pass^k — found perfect reliability on one small, illustrative policy-compliance scenario**: 5/5 independent trials correctly refused a plausible-sounding but policy-violating cancellation request, graded by whether the policy-breaking tool was actually called, not by what the reply said. `pass_at_1: 1.0`, `pass_hat_k: true` — a small, real illustration of exactly the kind of easy scenario that stops differentiating frontier models, which is why benchmark maintainers keep adding harder ones.
 
+    ### [Observability and Debugging](observability-debugging.md)
+
+    - **Agent failures don't look like failures from the outside — that's the actual problem this whole track exists to solve.** The real, current framing: *"When your AI agent returns a confidently wrong answer, your monitoring sees a successful 200 response."* (Jamie Mallers, OneUptime, 2026-03-28) — traditional health checks (did the call error, did it time out) are structurally blind to an agent that completes cleanly and is simply wrong.
+    - **OpenTelemetry's real GenAI semantic conventions give this a standard shape, not a bespoke one**: span names follow `{gen_ai.operation.name} {gen_ai.tool.name}` (e.g. `execute_tool get_daily_active_users`), with real, specified attributes — `gen_ai.provider.name`, `gen_ai.request.model`, `gen_ai.usage.input_tokens`/`output_tokens` — and, critically, `gen_ai.input.messages`/`gen_ai.output.messages` as the spec's own designated place for the actual tool call arguments and results.
+    - **A real repro built exactly this: real spec-shaped spans around an agent call to a subtly buggy tool.** The tool silently returned *cumulative all-time* users instead of yesterday's daily figure. The call completed with zero errors — `stop_reason: "end_turn"` — while the real final answer confidently claimed the number was *"very healthy... roughly 46.8x the goal."*
+    - **An independent, trace-only diagnosis — no access to the final answer, no re-running the agent — found the real root cause immediately**: inspecting only the real `gen_ai.output.messages` attribute on the tool-execution span, the check correctly flagged the exact value as *"implausibly large for a single day, likely a cumulative/all-time figure mislabeled as daily."* This is the concrete, working version of the "3 a.m. question": can you tell what actually went wrong from the trace alone, at 3 a.m., without waking anyone else up to help re-run it?
+
     ### [Agent Security](agent-security.md)
 
     - **The lethal trifecta names the actual precondition for data exfiltration**, not a vague "be careful with untrusted content" warning: private-data access, exposure to untrusted content, and the ability to externally communicate, all live in the same session. Remove any one leg and the specific exfiltration risk this describes goes away, regardless of what the untrusted content says.
@@ -202,7 +209,7 @@ Every page's TL;DR in one place, every page's Scenario Check merged into one com
 
 === "Combined Scenario Check"
 
-    92 questions from every page on this site, one combined pass instead of opening each page separately. Every question shows which page it's from — go re-read that page for anything you get wrong.
+    96 questions from every page on this site, one combined pass instead of opening each page separately. Every question shows which page it's from — go re-read that page for anything you get wrong.
 
     <div class="quiz-widget" data-title="Combined Scenario Check — All Pages">
     <script type="application/json">
@@ -1653,6 +1660,82 @@ Every page's TL;DR in one place, every page's Scenario Check merged into one com
           "sourceUrl": "benchmark-atlas.md"
         },
         {
+          "scenario": "A real repro's agent call completed with stop_reason 'end_turn' and no exceptions, while its real final answer confidently misreported a cumulative all-time user count as a healthy daily figure, calling it 'roughly 46.8x the goal' and 'very healthy.'",
+          "question": "What does this specific outcome most precisely demonstrate about traditional 'did the call succeed' monitoring for agents?",
+          "options": [
+            "That such monitoring is structurally blind to failures that don't produce any error",
+            "That traditional monitoring is generally useless and should never be used for anything",
+            "That the model itself was responsible for a bug that traditional monitoring should catch",
+            "That stop_reason values are unreliable and should not be trusted for any purpose"
+          ],
+          "correct": 0,
+          "explanations": [
+            "Correct. The real, demonstrated point is structural: an agent's individual steps can each genuinely succeed (no errors, no timeouts) while the overall task is still wrong, because a monitoring approach built around error detection has no mechanism to catch a semantically wrong but technically clean result.",
+            "A sweeping overgeneralization -- traditional monitoring remains genuinely useful for what it's designed to catch (crashes, timeouts, exceptions); the finding is about a specific class of failure it can't see, not a claim that it's worthless everywhere.",
+            "Misattributes the bug -- the real root cause was in the TOOL's implementation (returning the wrong metric), not something the model did wrong; the model reasoned correctly from data it had no way to know was mislabeled.",
+            "Not what was shown or claimed -- stop_reason 'end_turn' was an accurate, correct report of what actually happened (the model concluded its turn normally); the issue isn't that this signal was wrong, it's that this signal alone is insufficient to detect the real problem."
+          ],
+          "source": "Observability and Debugging",
+          "sourceUrl": "observability-debugging.md"
+        },
+        {
+          "scenario": "OpenTelemetry's real GenAI semantic conventions specify that a tool call's actual arguments and results are recorded via gen_ai.input.messages and gen_ai.output.messages, rather than via a dedicated attribute like gen_ai.tool.call.arguments.",
+          "question": "Why does this specific detail matter for the kind of diagnosis this page's repro performed?",
+          "options": [
+            "It means tool call data is technically impossible to inspect in any real trace",
+            "It means the real content needed for diagnosis has a defined, standard location",
+            "It means every GenAI trace automatically redacts all tool call data by default",
+            "It means tool calls cannot be distinguished from ordinary chat messages in a trace"
+          ],
+          "correct": 1,
+          "explanations": [
+            "Directly contradicted by the repro itself -- the real trace's gen_ai.output.messages attribute was successfully inspected and used to diagnose the bug; the data was fully present and readable, just under a specific attribute name.",
+            "Correct. Knowing that the real spec designates gen_ai.input.messages/gen_ai.output.messages as the place tool call data lives is exactly what let the repro's diagnostic check know where to look -- a standard location means any compliant trace, from any tool, can be inspected the same way.",
+            "Not accurate -- the spec notes this data 'is likely to contain sensitive information' and instrumentations 'MAY provide a way to filter or truncate' it, meaning redaction is an available, optional capability, not an automatic default behavior.",
+            "Unsupported -- the real trace in the repro clearly distinguished a 'chat' operation span from an 'execute_tool' operation span via the gen_ai.operation.name attribute, a real, explicit distinction the spec provides."
+          ],
+          "source": "Observability and Debugging",
+          "sourceUrl": "observability-debugging.md"
+        },
+        {
+          "scenario": "A real repro ran an independent diagnostic check using ONLY the trace's own span data -- no access to the agent's final text answer, and without re-running the agent -- and it correctly identified the exact tool call and exact bad value responsible for the wrong final answer.",
+          "question": "What is the most precise significance of the diagnostic check having no access to the final answer?",
+          "options": [
+            "It proves the final answer's wording was itself completely irrelevant to the bug",
+            "It demonstrates that re-running the agent would have been faster in this case",
+            "It shows the real root cause was findable from structured data, not from reading prose",
+            "It means the diagnostic check could not have used any information from the trace at all"
+          ],
+          "correct": 2,
+          "explanations": [
+            "Overstates the point -- the final answer's wording is a separate, real symptom (it's what a user actually saw), just not what the DIAGNOSTIC check needed to find the cause; both facts can be true without contradiction.",
+            "Not addressed or claimed by the repro -- the entire point of building a trace-based check was to AVOID needing to re-run anything; no comparison of relative speed between re-running and trace inspection was made or implied.",
+            "Correct. The real, demonstrated significance is that a genuinely useful diagnosis didn't require reading or interpreting the agent's natural-language output at all -- the exact tool call and exact wrong value were both directly present in the trace's own structured attributes, which is precisely what makes automated, scalable diagnosis possible.",
+            "Contradicts the setup directly -- the check used exactly the trace's own span data (specifically gen_ai.output.messages) as its sole input; 'no access to the final answer' describes what it excluded, not that it had no data to work with at all."
+          ],
+          "source": "Observability and Debugging",
+          "sourceUrl": "observability-debugging.md"
+        },
+        {
+          "scenario": "The real OpenTelemetry GenAI spec explicitly states that gen_ai.input.messages and gen_ai.output.messages are 'likely to contain sensitive information' and that instrumentations 'MAY provide a way for users to filter or truncate' them.",
+          "question": "What is the most accurate way to reconcile this real privacy note with the value of capturing full tool call data for debugging, as this page frames it?",
+          "options": [
+            "The privacy note means full data capture for debugging should never actually be done",
+            "There's no real tension here since sensitive data and debugging value never overlap",
+            "The spec requires all sensitive fields to be automatically encrypted before being stored",
+            "Filtering and truncation should be a deliberate design choice made for each real case"
+          ],
+          "correct": 3,
+          "explanations": [
+            "Overstates the guidance -- the spec frames filtering/truncation as something instrumentations MAY provide, an optional capability, not an instruction that full capture must never happen; the repro itself captured full data specifically because it was needed for diagnosis.",
+            "Understates the real tension the spec itself acknowledges -- the same field ('likely to contain sensitive information') is explicitly the one needed for the kind of diagnosis this page's repro performed, so the overlap is real and directly named in the spec's own text.",
+            "Not stated anywhere in the real spec text quoted -- the spec mentions optional filtering or truncation, not a requirement for automatic encryption of any specific fields.",
+            "Correct. This is the page's own stated framing: treat what to capture, filter, or truncate as a deliberate decision made with the specific diagnostic need in mind (matching the same discipline context editing and compaction require elsewhere), rather than defaulting to either extreme -- logging everything forever or logging nothing to stay safe."
+          ],
+          "source": "Observability and Debugging",
+          "sourceUrl": "observability-debugging.md"
+        },
+        {
           "scenario": "A real repro gave an agent all three lethal-trifecta legs (untrusted email, private-record access, unrestricted send) plus a structurally-fixed version (send restricted to the on-file address). In both conditions, the model declined the injected forwarding request -- no exfiltration occurred either way.",
           "question": "What's the most accurate conclusion to draw from this specific result?",
           "options": [
@@ -1963,7 +2046,7 @@ Every page's TL;DR in one place, every page's Scenario Check merged into one com
 
 === "Flashcards"
 
-    182 flashcards from every page with a deck so far — click a card to flip it, shuffle for random order.
+    190 flashcards from every page with a deck so far — click a card to flip it, shuffle for random order.
 
     <div class="flashcard-widget" data-title="Flashcards — All Pages">
     <script type="application/json">
@@ -2718,6 +2801,46 @@ Every page's TL;DR in one place, every page's Scenario Check merged into one com
           "front": "AgentDojo and InjecAgent don't fit the 'saturated vs. unsaturated' framing the way capability benchmarks do. Why not?",
           "back": "They measure attack success rate (a vulnerability), not a capability ceiling. AgentDojo's real numbers: Claude 3.7 Sonnet had 88.7% utility / 7.3% attack success; GPT-4o had 69.1% utility / 47.7% attack success -- ASR varies wildly by model (1-48%), meaning there's no consistent 'frontier' defense yet, which is itself the interesting finding rather than a ceiling number.",
           "source": "Benchmark Atlas"
+        },
+        {
+          "front": "What is the real, current quote naming the core problem with monitoring AI agents like traditional services?",
+          "back": "'When your AI agent returns a confidently wrong answer, your monitoring sees a successful 200 response.' (Jamie Mallers, OneUptime, 2026-03-28). Traditional error/timeout monitoring is structurally blind to a semantically wrong but technically clean result.",
+          "source": "Observability and Debugging"
+        },
+        {
+          "front": "What is the real OpenTelemetry GenAI span naming rule for tool execution?",
+          "back": "'Span name SHOULD be {gen_ai.operation.name} {gen_ai.tool.name}.' A call to get_daily_active_users produces a span literally named 'execute_tool get_daily_active_users' -- a standard, mechanical, cross-vendor naming rule, not a bespoke team format.",
+          "source": "Observability and Debugging"
+        },
+        {
+          "front": "Where does the real OTel GenAI spec say a tool call's actual arguments and results get recorded, and what's the real privacy caveat attached?",
+          "back": "Via gen_ai.input.messages and gen_ai.output.messages (structured JSON), NOT a dedicated gen_ai.tool.call.arguments attribute. Real caveat: 'This attribute is likely to contain sensitive information' and instrumentations 'MAY provide a way for users to filter or truncate' it.",
+          "source": "Observability and Debugging"
+        },
+        {
+          "front": "A real repro's agent call to a buggy tool completed with stop_reason 'end_turn' and zero errors. What was the real, confidently wrong final answer, and what was the actual bug?",
+          "back": "'Yesterday's DAU for Nimbus was 2,340,000... roughly 46.8x the goal... This is a very healthy result.' The real bug: get_daily_active_users returned CUMULATIVE all-time users, not yesterday's daily figure -- a tool implementation bug invisible to the model's own reasoning.",
+          "source": "Observability and Debugging"
+        },
+        {
+          "front": "How did the real trace-only diagnostic check find the bug, and what real constraint did it operate under?",
+          "back": "It inspected ONLY the trace's gen_ai.output.messages attribute on the execute_tool span (no access to the final answer, no re-running the agent) and flagged: '2,340,000 -- implausibly large for a single day, likely a cumulative/all-time figure mislabeled as daily.' Real root cause found from structured data alone.",
+          "source": "Observability and Debugging"
+        },
+        {
+          "front": "What real bug did the recipe's own trace-emitter code hit, and what caused it?",
+          "back": "It assumed every non-text content block was a tool_use block and read .name/.input off it unconditionally -- crashed on Sonnet 5's real adaptive-thinking ThinkingBlock, which has neither attribute. Fixed by explicitly handling text, tool_use, and any other block type.",
+          "source": "Observability and Debugging"
+        },
+        {
+          "front": "Why does 'gen_ai.input.messages/output.messages have a defined standard location' matter specifically for automated diagnosis?",
+          "back": "A standard, specified location means ANY compliant trace -- from any tool, any team, any vendor -- can be inspected the same way by the same diagnostic check, rather than every team needing bespoke parsing logic for its own ad hoc logging format.",
+          "source": "Observability and Debugging"
+        },
+        {
+          "front": "How should the real privacy tension in gen_ai.input.messages/output.messages (sensitive data vs. real debugging value) be resolved, per this topic's framing?",
+          "back": "Filtering and truncation should be a deliberate design choice made for each real case -- not a blanket default either way (log everything forever, or log nothing to stay safe). The same discipline context editing and compaction already require elsewhere in this project.",
+          "source": "Observability and Debugging"
         },
         {
           "front": "What are the three properties of Willison's 'lethal trifecta,' in his own words?",
