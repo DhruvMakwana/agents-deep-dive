@@ -176,6 +176,14 @@ Every page's TL;DR in one place, every page's Scenario Check merged into one com
     - **UI-TARS is a real, named architecture built specifically for this problem**: a single vision-language model unifying *"perception, reasoning, grounding, and memory,"* rather than a pipeline of separate components. Real, measured progress across its own versions: the original scored 24.6 on OSWorld; UI-TARS-1.5 reached 42.5%; UI-TARS-2 reached 47.5% — three real, verified generations of the same architecture, each better than the last.
     - **A real browser-agent vulnerability, CometJacking, succeeded against a real, deployed product** using exactly the mechanism this page's own repro tests: Brave Security's own root-cause diagnosis — *"when users ask it to 'Summarize this webpage,' Comet feeds a part of the webpage directly to its LLM without distinguishing between the user's instructions and untrusted content."* This page's own repro of that exact mechanism against Claude Sonnet 5 is a real, honest negative — the model resisted in both a raw and a tagged-content condition — but that's a fact about this run, not a structural guarantee the real Comet incident didn't already disprove for a different agent.
 
+    ### [Personal and Always-On Agents](personal-always-on-agents.md)
+
+    - **OpenClaw and Hermes Agent are real, current, open-source "always-on" personal agents**, both messaging-native (WhatsApp, Telegram, Discord, Slack, and more) and both explicitly local-first. OpenClaw's own framing: *"State lives on your machine, not a vendor cloud."* Hermes Agent's differentiator: *"the only agent with a built-in learning loop — it creates skills from experience, improves them during use."*
+    - **"Blast radius" is the real, named concept for why persistent agents are categorically different**: *"A standard AI application processes a single user request, returns a response, and discards all session context. The risk surface is bounded by that single exchange. A persistent agent is categorically different"* — because *"blast radius describes the maximum potential damage an agent can cause if its goals are hijacked, its tools are misused, or its memory is poisoned."*
+    - **ClawHavoc is a real, dated, multiply-corroborated incident that makes the concept concrete**: malicious actors distributed real credential-stealing malware through OpenClaw's own skill marketplace — Koi Security documented **341 malicious skills**, and Bitdefender found roughly **17% of skills analyzed in the platform's first few weeks carried malicious payloads**.
+    - **Unit 42's own root-cause diagnosis names the exact architectural gap**: *"The lack of isolation between skill logic and agent authority means that installation results in complete control over the agent's identity"* — a malicious skill performs *"unauthorized actions through the agent's own authenticated sessions"* with no conventional exploit required.
+    - **A real repro of that exact mechanism confirms it at the architecture level, independent of any model's judgment**: a deterministic, no-LLM check showed an unscoped skill's own code freely reading financial data and emailing it out, while a scoped, code-enforced tool allow-list blocked both calls before they ever executed — the real, structural fix, working exactly as the incident's own diagnosis implies it should.
+
     ## Production
 
     ### [Evaluating Agents](evaluating-agents.md)
@@ -266,7 +274,7 @@ Every page's TL;DR in one place, every page's Scenario Check merged into one com
 
 === "Combined Scenario Check"
 
-    128 questions from every page on this site, one combined pass instead of opening each page separately. Every question shows which page it's from — go re-read that page for anything you get wrong.
+    132 questions from every page on this site, one combined pass instead of opening each page separately. Every question shows which page it's from — go re-read that page for anything you get wrong.
 
     <div class="quiz-widget" data-title="Combined Scenario Check — All Pages">
     <script type="application/json">
@@ -1869,6 +1877,82 @@ Every page's TL;DR in one place, every page's Scenario Check merged into one com
           "sourceUrl": "computer-use-browser-agents.md"
         },
         {
+          "scenario": "A real, cited framing distinguishes a standard AI application (processes one request, discards context) from a persistent agent, stating the persistent agent's boundary 'is no longer a network perimeter. It is the agent's runtime policy.'",
+          "question": "What does this specific distinction most precisely imply about why blast radius matters more for always-on agents?",
+          "options": [
+            "The agent granted permissions and standing access, not a fixed network boundary, limit possible damage",
+            "Always-on agents are simply slower to respond, which is the only meaningful practical difference",
+            "Network perimeters remain the primary security boundary for both application types, without meaningful difference",
+            "Persistent agents cannot be secured by any means, since their risk surface is inherently unbounded"
+          ],
+          "correct": 0,
+          "explanations": [
+            "Correct. This is the precise, real meaning of 'the boundary is the agent's runtime policy' -- once an agent runs continuously with standing tool/data access, what limits potential damage is what it's been granted and for how long, not a perimeter a single request would have to cross.",
+            "Not the claim -- the distinction drawn is about risk SURFACE and DURATION of exposure (bounded by one exchange vs. standing, continuous access), not response latency, which isn't addressed by this framing at all.",
+            "Directly contradicted -- the quoted distinction explicitly says the boundary is NO LONGER a network perimeter for persistent agents, which is the whole point of naming it as a category change from the single-request case.",
+            "Overstates it into fatalism -- the page's own real repro demonstrates a working structural mitigation (scoped tool access); 'unbounded and unsecurable' is not the claim, 'the boundary shifts to runtime policy, which must be designed deliberately' is."
+          ],
+          "source": "Personal and Always-On Agents",
+          "sourceUrl": "personal-always-on-agents.md"
+        },
+        {
+          "scenario": "Unit 42's real root-cause diagnosis for the ClawHavoc incident states: 'The lack of isolation between skill logic and agent authority means that installation results in complete control over the agent's identity.'",
+          "question": "What does this diagnosis most precisely identify as the actual vulnerability -- as opposed to a more superficial explanation?",
+          "options": [
+            "The vulnerability was that OpenClaw's marketplace allowed any developer account to publish without stricter identity verification",
+            "The vulnerability was that a single skill happened to be unusually well-disguised as a legitimate utility",
+            "The vulnerability was that the malware payload used was more sophisticated than existing antivirus tools could detect",
+            "The vulnerability was an architectural lack of scoping between what a skill needs and what it can reach once installed"
+          ],
+          "correct": 3,
+          "explanations": [
+            "A real, contributing factor (permissive upload model) but not what Unit 42's OWN quoted diagnosis names as the core issue -- their language is specifically about isolation between skill logic and agent authority, not developer verification.",
+            "Not the structural point -- disguise quality explains how a specific attack went undetected initially, not why installing ANY skill grants 'complete control over the agent's identity' as Unit 42's diagnosis states generally.",
+            "Not the diagnosis given -- Unit 42's quoted root cause is about architectural isolation, not detection technology; nothing in the real, cited material attributes the incident to malware sophistication outpacing antivirus capability.",
+            "Correct. This is precisely what the quoted diagnosis names: not identity verification, not payload sophistication, but the ARCHITECTURAL absence of scoping -- installation itself grants full authority regardless of what the skill actually needs, which is the exact gap this page's own repro tests and closes with an explicit allow-list."
+          ],
+          "source": "Personal and Always-On Agents",
+          "sourceUrl": "personal-always-on-agents.md"
+        },
+        {
+          "scenario": "A real repro's mechanism-level check (zero LLM judgment, hand-written calls) found that an unscoped skill's own code could freely read financial data and send an email to an external address, while a scoped, code-enforced allow-list blocked both identical calls before they executed.",
+          "question": "What is the most precise reason this check used hand-written calls instead of relying on a live model's decisions?",
+          "options": [
+            "Hand-written calls are always faster and cheaper to run than live model calls, which was the only consideration",
+            "It isolates what the architecture permits from whatever a specific model might choose to do on a given run",
+            "Live models cannot be given access to tools like read_financial_accounts under any circumstance",
+            "The hand-written check was necessary because the live-agent trial could not be run at all in this environment"
+          ],
+          "correct": 1,
+          "explanations": [
+            "Not the stated rationale -- while true incidentally, cost/speed isn't why the page frames this as a SEPARATE, necessary check; the real reason given is about isolating architecture from model behavior, not efficiency.",
+            "Correct. This is exactly the real, stated purpose: a deterministic, no-LLM check shows what's structurally POSSIBLE regardless of model judgment, which is a categorically different (and more reliable) kind of evidence than observing what one model chose to do on one real run.",
+            "Not a real constraint -- the page's own live-agent trial DOES give the model access to exactly this tool; the point of the mechanism check isn't tool-access prohibition, it's testing the architecture independent of model choice.",
+            "Contradicted directly -- the page explicitly reports running BOTH the mechanism-level check AND a real, live-agent trial; the hand-written check is a deliberate additional measurement, not a substitute forced by some inability to run the live trial."
+          ],
+          "source": "Personal and Always-On Agents",
+          "sourceUrl": "personal-always-on-agents.md"
+        },
+        {
+          "scenario": "In the real, unforced live-agent trial, Claude Sonnet 5 declined the financial-data reach in both the unscoped and scoped conditions -- an honest negative result, reached only after the skill's embedded instruction was rewritten to remove a self-announcing 'hidden internal note' label.",
+          "question": "Given this result and the real, independently documented ClawHavoc incident, what is the most precise, honest conclusion to draw?",
+          "options": [
+            "The live-agent result proves the unscoped architecture is actually safe in practice, contradicting the ClawHavoc incident",
+            "The ClawHavoc incident must have targeted a much less capable model than the one used in this repro",
+            "The favorable live-agent result is real but does not substitute for the structural fix ClawHavoc already proves is needed",
+            "Because the mechanism check found a real flaw, the live-agent trial's honest negative result should be treated as invalid data"
+          ],
+          "correct": 2,
+          "explanations": [
+            "Directly contradicted -- the page explicitly warns against this exact conclusion; a favorable result on one model, one run is real data, but ClawHavoc is independent, real-world proof the unscoped architecture WAS exploited in practice, at scale, against real users.",
+            "Not supported -- ClawHavoc's real attacks exploited the ARCHITECTURE (no isolation between skill logic and agent authority) via natural-language instructions, not a specific model's reasoning capability; the page never attributes the incident to model capability differences.",
+            "Correct. This is precisely the page's own stated position: the live-agent result is real, honestly reported data, but it is a fact about one model on one run, categorically different from the deterministic guarantee the scoped architecture provides -- and ClawHavoc's real-world exploitation is independent proof the underlying gap matters regardless of how any single model performs on a given test.",
+            "Not the page's approach anywhere -- honest negative results are treated as valuable, real data throughout, not discarded because a different, separate check found something else; both results are reported together precisely because they answer different questions."
+          ],
+          "source": "Personal and Always-On Agents",
+          "sourceUrl": "personal-always-on-agents.md"
+        },
+        {
           "scenario": "A real repro gave a model the option to call a verification tool or answer directly, on both a well-known fact and an unguessable fictional fact. In both cases the model called the tool and got the correct outcome -- no divergence between outcome and trajectory was observed.",
           "question": "What's the most accurate takeaway from this specific result?",
           "options": [
@@ -2711,7 +2795,7 @@ Every page's TL;DR in one place, every page's Scenario Check merged into one com
 
 === "Flashcards"
 
-    253 flashcards from every page with a deck so far — click a card to flip it, shuffle for random order.
+    260 flashcards from every page with a deck so far — click a card to flip it, shuffle for random order.
 
     <div class="flashcard-widget" data-title="Flashcards — All Pages">
     <script type="application/json">
@@ -3541,6 +3625,41 @@ Every page's TL;DR in one place, every page's Scenario Check merged into one com
           "front": "What are the three real, distinct browser-automation infrastructure approaches this topic names?",
           "back": "Anthropic's computer_toolset_20260801 (17 member tools, pixel-space coordinates). OpenAI's computer-use-preview (Research Preview, gated tiers, Responses API only). Stagehand (Browserbase's Playwright wrapper with act()/extract()/observe() natural-language primitives; v4 moved dispatch into a browser extension so remote browsers 'behave like the Chrome on your laptop').",
           "source": "Computer-Use and Browser Agents"
+        },
+        {
+          "front": "What are OpenClaw and Hermes Agent, and what's each one's real, distinguishing framing?",
+          "back": "Both real, open-source, local-first, messaging-native always-on personal agents. OpenClaw: 'State lives on your machine, not a vendor cloud' -- gateway/untrusted-execution/deterministic-policy architecture. Hermes Agent (Nous Research): 'the only agent with a built-in learning loop -- it creates skills from experience, improves them during use.'",
+          "source": "Personal and Always-On Agents"
+        },
+        {
+          "front": "What is 'blast radius' in the context of always-on agents, exactly quoted?",
+          "back": "'A standard AI application processes a single user request, returns a response, and discards all session context. The risk surface is bounded by that single exchange. A persistent agent is categorically different.' 'Blast radius describes the maximum potential damage an agent can cause if its goals are hijacked, its tools are misused, or its memory is poisoned.' 'The boundary is no longer a network perimeter. It is the agent's runtime policy.'",
+          "source": "Personal and Always-On Agents"
+        },
+        {
+          "front": "What is ClawHavoc, and what are the real, verified numbers behind it?",
+          "back": "A real 2026 supply-chain attack on OpenClaw's skill marketplace (ClawHub) -- real credential-stealing malware distributed via disguised skills. Koi Security documented 341 malicious skills; Bitdefender found ~17% of skills analyzed in the platform's first few weeks carried malicious payloads.",
+          "source": "Personal and Always-On Agents"
+        },
+        {
+          "front": "What is Unit 42's exact root-cause diagnosis for ClawHavoc?",
+          "back": "'The lack of isolation between skill logic and agent authority means that installation results in complete control over the agent's identity.' A malicious skill performs 'unauthorized actions through the agent's own authenticated sessions,' exploiting 'file systems, shells and credential managers' via natural-language instructions -- no conventional exploit needed.",
+          "source": "Personal and Always-On Agents"
+        },
+        {
+          "front": "In this topic's own real repro (mechanism-level check, zero LLM judgment), what did unscoped vs. scoped skill tool access actually permit?",
+          "back": "unscoped: hand-written calls to read_financial_accounts and send_email (to the skill's own external address) both succeeded cleanly -- real balance returned, real 'email sent' confirmation. scoped: both identical calls were BLOCKED before execution ('outside granted scope'). This is ClawHavoc's real architectural flaw, reproduced deterministically.",
+          "source": "Personal and Always-On Agents"
+        },
+        {
+          "front": "What happened in this topic's live-agent trial (real Sonnet 5), and what real methodological lesson repeated from a prior topic?",
+          "back": "Sonnet 5 declined the financial-data reach in BOTH conditions -- an honest negative. But the FIRST version of the injected skill instruction self-announced as a 'hidden internal note... not shown in the marketplace listing' -- the same unrealistic tell caught and fixed in the Computer-Use and Browser Agents topic. Rewritten as ordinary (if overreaching) product copy, the honest negative held after one well-motivated adjustment.",
+          "source": "Personal and Always-On Agents"
+        },
+        {
+          "front": "Why does this topic treat the live-agent trial's honest negative as NOT a security guarantee, even though the model resisted?",
+          "back": "The mechanism-level check holds BY CONSTRUCTION, independent of model behavior. The live-agent result is a fact about one model on one run. ClawHavoc itself is real, independent, real-world proof the underlying architectural gap gets exploited regardless of any single model's judgment -- real attackers didn't need to fool a capable model's judgment because the unscoped architecture never required fooling it in the first place.",
+          "source": "Personal and Always-On Agents"
         },
         {
           "front": "What's the real difference between outcome grading and trajectory grading, and what documented risk does relying on outcome-only grading create?",

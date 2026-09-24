@@ -51,6 +51,7 @@ SECTIONS = [
         ("Coding Agent Products and Configuration", "coding-agent-config.md"),
         ("Deep Research Agents", "deep-research-agents.md"),
         ("Computer-Use and Browser Agents", "computer-use-browser-agents.md"),
+        ("Personal and Always-On Agents", "personal-always-on-agents.md"),
     ]),
     ("Production", [
         ("Evaluating Agents", "evaluating-agents.md"),
