@@ -90,6 +90,13 @@ Every page's TL;DR in one place, every page's Scenario Check merged into one com
     - **A real, separately-confirmed finding: even a genuinely popular server can be absent.** Microsoft's own official `playwright-mcp` (37.5k+ GitHub stars) does not currently appear in the registry under any query tried, including a direct `search=microsoft`. As a real preview-stage product, the registry's population is honest but incomplete.
     - **Gateways, remote-hosted servers, and tool platforms are the real, separate layers that exist because raw discovery and raw protocol aren't enough on their own**: gateways add auth/rate-limiting/routing in front of many servers; companies like Stripe, GitHub, Notion, and Cloudflare now host their own official *remote* MCP servers (reachable over HTTP, not run locally); and platforms like Composio aggregate hundreds of third-party integrations behind one MCP interface — each solving a real, different gap the base protocol and the registry alone leave open.
 
+    ### [Skills, A2A and Other Protocols](skills-a2a-protocols.md)
+
+    - **Agent Skills load in real, verified stages, not all at once.** Anthropic's own docs: *"until a Skill is triggered, only its name and description occupy context"* — roughly **~100 tokens** per skill at Level 1 (name + description, always loaded), the full body loaded only when triggered (Level 2, *"under 5k tokens"*), and bundled scripts/resources loaded only as referenced, where *"the script code itself never enters context."* A real repro confirmed this directly: loading three skills' full bodies upfront cost **4,975 real tokens** on a task needing only one; progressive disclosure cost **3,069** — a real **38.3% reduction** — and correctly never touched the two irrelevant skills at all.
+    - **A2A (Agent2Agent) standardizes agent-to-agent interoperability**, not agent-to-tool — Google announced it April 2025 with 50+ launch partners, and it's since moved to Linux Foundation governance: *"A2A will remain vendor neutral, emphasize inclusive contributions and continue the protocol's focus on extensibility, security and real-world usability."* Its core discovery mechanism is the **Agent Card** — a JSON document *"describing the server's identity, capabilities, skills, service endpoint URL, and how clients should authenticate and interact with it,"* typically served at `.well-known/agent-card.json`.
+    - **AG-UI standardizes the agent-to-user-interface layer** — real, verified: *"an open, lightweight, event-based protocol that standardizes how AI agents connect to user-facing applications,"* created by CopilotKit in partnership with LangChain and CrewAI. Three distinct layers, three distinct protocols: MCP (agent↔tools), A2A (agent↔agent), AG-UI (agent↔user interface).
+    - **The Agent Client Protocol (ACP) is coding agents' answer to LSP** — real, verified, explicit analogy from its own docs: *"ACP solves this by providing a standardized protocol for agent-editor communication, similar to how the Language Server Protocol (LSP) standardized language server integration."* Created by Zed (August 2025), now community-governed. **AGENTS.md** is the same idea for repo-level instructions — real, verified: *"a README for agents,"* now used by *"over 60k open-source projects"* and stewarded by the Linux Foundation.
+
     ### [KV-Cache Economics](kv-cache-economics.md)
 
     - **Prompt caching isn't a flat discount — it's a hierarchy with a precise cost structure.** A 5-minute cache write costs 1.25x base input price; a cache read costs 0.1x (cheaper still — 0.025x–0.05x — on some model families). The cache follows a strict prefix order, `tools` → `system` → `messages`, and a change at any level invalidates that level *and everything after it*.
@@ -244,7 +251,7 @@ Every page's TL;DR in one place, every page's Scenario Check merged into one com
 
 === "Combined Scenario Check"
 
-    116 questions from every page on this site, one combined pass instead of opening each page separately. Every question shows which page it's from — go re-read that page for anything you get wrong.
+    120 questions from every page on this site, one combined pass instead of opening each page separately. Every question shows which page it's from — go re-read that page for anything you get wrong.
 
     <div class="quiz-widget" data-title="Combined Scenario Check — All Pages">
     <script type="application/json">
@@ -1009,6 +1016,82 @@ Every page's TL;DR in one place, every page's Scenario Check merged into one com
           ],
           "source": "MCP and Tool Ecosystem",
           "sourceUrl": "mcp-tool-ecosystem.md"
+        },
+        {
+          "scenario": "A real repro measured two real conditions on an identical task needing only one of three fictional skills: all_upfront (all 3 skills' full bodies in the system prompt) cost 4,975 real input tokens; progressive (only short metadata upfront, one skill's body loaded on demand) cost 3,069 real tokens, and correctly never loaded the other two skills.",
+          "question": "What does this specific result most precisely demonstrate about Agent Skills' progressive disclosure?",
+          "options": [
+            "Progressive disclosure eliminates all context cost for skills the agent doesn't end up using at all",
+            "The real token gap between the two conditions would stay exactly 38.3% regardless of how many skills are installed",
+            "The all-upfront condition failed to complete the task correctly, unlike the progressive condition",
+            "The real token savings scale with how many INSTALLED skills are irrelevant to a given task, not a fixed percentage"
+          ],
+          "correct": 3,
+          "explanations": [
+            "Overstates it slightly -- there's still a real, small, nonzero cost even for unused skills under progressive disclosure: their Level-1 metadata (~100 tokens each) is always loaded, per Anthropic's own docs; only Level 2 (the full body) is truly free until triggered.",
+            "Not what the page claims -- it explicitly says the gap is STRUCTURAL and scales with the total number of installed skills relative to what's actually used, not a fixed percentage that would hold constant as more skills are added.",
+            "Not indicated anywhere -- both conditions are about real TOKEN COST measured on the same task; nothing in the real results suggests the all-upfront condition failed or produced an incorrect answer, only that it cost more.",
+            "Correct. The page states this directly: 'all_upfront's cost scales with the total number of installed skills regardless of relevance, while progressive's cost scales with the number of skills actually used' -- the 38.3% figure is this specific run's real result, not a fixed, general ratio."
+          ],
+          "source": "Skills, A2A and Other Protocols",
+          "sourceUrl": "skills-a2a-protocols.md"
+        },
+        {
+          "scenario": "A team is building a system where one agent needs to occasionally hand off part of a task to a completely separate agent built by a different vendor, using a different framework.",
+          "question": "Based on this page's own relationship-type framing, which real protocol is specifically designed for this scenario?",
+          "options": [
+            "AG-UI, since it standardizes how agents connect to user-facing applications",
+            "A2A, since it standardizes communication and discovery between separate agents",
+            "MCP, since it standardizes how an agent connects to its own tools and data",
+            "AGENTS.md, since it provides instructions for coding agents working in a repository"
+          ],
+          "correct": 1,
+          "explanations": [
+            "Mismatched relationship -- AG-UI is explicitly the agent-to-USER-INTERFACE layer (rendering what an agent is doing for a human watching), not agent-to-agent communication between two separate backends.",
+            "Correct. The page's own relationship-type framing maps this exactly: A2A standardizes AGENT-TO-AGENT communication and discovery (via the real Agent Card mechanism), which is precisely a handoff between two separate, differently-built agents -- distinct from MCP's agent-to-tool relationship.",
+            "Mismatched relationship -- MCP standardizes an agent's connection to ITS OWN tools and data sources, not communication with a separate, independently-built agent; that's explicitly the distinction the page draws between MCP and A2A.",
+            "Mismatched relationship -- AGENTS.md is a static, repo-level convention for giving ANY coding agent working in that repo context and instructions; it doesn't address live communication or handoff between two running agents."
+          ],
+          "source": "Skills, A2A and Other Protocols",
+          "sourceUrl": "skills-a2a-protocols.md"
+        },
+        {
+          "scenario": "The Agent Client Protocol's own documentation states: 'ACP solves this by providing a standardized protocol for agent-editor communication, similar to how the Language Server Protocol (LSP) standardized language server integration.'",
+          "question": "What is the most precise real-world problem this LSP analogy indicates ACP is solving?",
+          "options": [
+            "Before ACP, each editor needed custom integration work for every different coding agent it supported",
+            "Before ACP, coding agents were unable to read or write any files within a code editor's workspace",
+            "Before ACP, language servers and coding agents used completely incompatible communication protocols",
+            "Before ACP, there was no way for any coding agent to run inside a terminal-based development environment"
+          ],
+          "correct": 0,
+          "explanations": [
+            "Correct. This mirrors exactly what LSP solved for language servers -- before LSP, every editor needed custom integration per language server; before ACP, per the same analogy, every editor needed custom integration per coding agent. ACP standardizes that N-times-M integration problem down to one protocol each side implements once.",
+            "Not indicated -- the LSP analogy is about COMMUNICATION STANDARDIZATION between two already-functional systems (editors and agents), not about a prior total inability for agents to access files; file access is a capability question, not the integration problem LSP/ACP solve.",
+            "Not the analogy being drawn -- ACP is compared to LSP as a NEW protocol solving a similar STRUCTURAL problem (N-times-M custom integrations), not because language servers and coding agents were previously trying and failing to use the same protocol.",
+            "Not supported by the quote or the page's broader description -- ACP's docs describe local (stdio) and remote (HTTP/WebSocket) transport options, with no claim that terminal-based environments were previously unable to run any coding agent at all."
+          ],
+          "source": "Skills, A2A and Other Protocols",
+          "sourceUrl": "skills-a2a-protocols.md"
+        },
+        {
+          "scenario": "AGENTS.md's own documentation describes it as 'a README for agents' and states it 'is just standard Markdown... the agent simply parses the text you provide,' with no required schema, and separately notes it is 'used by over 60k open-source projects.'",
+          "question": "What does the combination of 'no required schema' and the real, verified adoption figure most directly suggest about why AGENTS.md succeeded as a convention?",
+          "options": [
+            "Its adoption figure proves it is technically more powerful than structured formats like JSON or YAML for this purpose",
+            "60k projects were contractually required to adopt it as a condition of using coding agent tools",
+            "Its lack of structure requirements lowered the barrier to writing one, plausibly helping drive broad adoption",
+            "The lack of a schema means AGENTS.md files cannot actually be parsed or used reliably by any coding agent"
+          ],
+          "correct": 2,
+          "explanations": [
+            "Not a supported claim -- adoption figures reflect real usage, not a technical power comparison against structured formats; the page doesn't argue Markdown is 'more powerful' than JSON/YAML, just that it's low-friction to adopt.",
+            "Not stated or implied anywhere -- there's no real evidence of any contractual requirement; adoption is described as organic usage across open-source projects, not an enforced condition.",
+            "Correct. A near-zero-friction format (just Markdown, no schema to learn or validate against) plausibly lowers the barrier for any project to add one, which is a reasonable, direct connection to why a convention like this could reach broad real adoption quickly -- consistent with both real, verified facts given.",
+            "Directly contradicted -- the quote states 'the agent simply parses the text you provide,' meaning the format explicitly IS usable without a schema; the real, verified adoption figure is direct evidence it works in practice, not evidence against usability."
+          ],
+          "source": "Skills, A2A and Other Protocols",
+          "sourceUrl": "skills-a2a-protocols.md"
         },
         {
           "scenario": "A real repro sent four calls with an identical, cached tools+system prefix. Call 3 changed only tool_choice (same tools, same system prompt) and still showed cache_read_input_tokens unchanged from call 2. Call 4 edited one word in one tool's description and showed a full cache_creation_input_tokens write instead.",
@@ -2461,7 +2544,7 @@ Every page's TL;DR in one place, every page's Scenario Check merged into one com
 
 === "Flashcards"
 
-    230 flashcards from every page with a deck so far — click a card to flip it, shuffle for random order.
+    238 flashcards from every page with a deck so far — click a card to flip it, shuffle for random order.
 
     <div class="flashcard-widget" data-title="Flashcards — All Pages">
     <script type="application/json">
@@ -2866,6 +2949,46 @@ Every page's TL;DR in one place, every page's Scenario Check merged into one com
           "front": "What are the four real, separate layers this topic distinguishes in the MCP ecosystem, and why doesn't fixing one fix the others?",
           "back": "Registry (discovery -- what exists), gateways (access control/routing across known servers), remote servers (where code runs), tool platforms (integration aggregation, e.g. Composio's 1,000+/3,000+ self-reported toolkits/tools). A well-known but unlisted server is a REGISTRY gap a gateway can't fix; a rate-limit need is a GATEWAY problem a bigger registry can't fix either -- each layer solves a genuinely different problem.",
           "source": "MCP and Tool Ecosystem"
+        },
+        {
+          "front": "What are the three real, documented levels of Agent Skills' progressive disclosure, and their real approximate costs?",
+          "back": "Level 1: metadata (name+description), ALWAYS loaded, ~100 tokens/skill. Level 2: full SKILL.md body, loaded only when triggered, 'under 5k tokens.' Level 3+: bundled resources/scripts, loaded only as referenced -- for scripts, 'the script code itself never enters context,' only its output does.",
+          "source": "Skills, A2A and Other Protocols"
+        },
+        {
+          "front": "In this topic's own real repro, what were the real, measured token costs of all-upfront vs. progressive skill loading on a task needing only 1 of 3 skills?",
+          "back": "all_upfront (all 3 full bodies in system prompt): 4,975 real input tokens. progressive (metadata only + on-demand read_skill tool): 3,069 real cumulative tokens across 2 turns -- and correctly loaded ONLY the relevant skill (pdf-forms), never the other two. Real 38.3% reduction, structural: scales with installed-but-irrelevant skill count.",
+          "source": "Skills, A2A and Other Protocols"
+        },
+        {
+          "front": "What does A2A (Agent2Agent Protocol) standardize, and what is its real core discovery mechanism?",
+          "back": "Communication and interoperability BETWEEN separate agents (potentially different vendors/frameworks) -- distinct from MCP's agent-to-TOOL relationship. Core mechanism: the Agent Card, a JSON doc at .well-known/agent-card.json 'describing the server's identity, capabilities, skills, service endpoint URL, and how clients should authenticate and interact with it.'",
+          "source": "Skills, A2A and Other Protocols"
+        },
+        {
+          "front": "What is A2A's real governance history?",
+          "back": "Google announced A2A April 2025 with 50+ launch partners. Donated to the Linux Foundation's Agent2Agent Protocol Project by June 2025 -- 'A2A will remain vendor neutral, emphasize inclusive contributions and continue the protocol's focus on extensibility, security and real-world usability.' Named supporters: Google, AWS, Cisco, Salesforce, SAP, Microsoft, ServiceNow.",
+          "source": "Skills, A2A and Other Protocols"
+        },
+        {
+          "front": "What does AG-UI standardize, and who created it?",
+          "back": "The agent-to-USER-INTERFACE layer: 'an open, lightweight, event-based protocol that standardizes how AI agents connect to user-facing applications... bi-directional connection between a user-facing application and any agentic backend.' Created by CopilotKit, 'born from CopilotKit's initial partnership with LangChain and CrewAI' -- not one of the major model/framework vendors.",
+          "source": "Skills, A2A and Other Protocols"
+        },
+        {
+          "front": "What is the Agent Client Protocol (ACP), and what's its own explicit analogy for what problem it solves?",
+          "back": "Standardizes editor<->coding-agent communication. Own docs: 'ACP solves this by providing a standardized protocol for agent-editor communication, similar to how the Language Server Protocol (LSP) standardized language server integration' -- i.e. removes the N-times-M custom-integration problem. Local: JSON-RPC over stdio. Remote: HTTP/WebSocket. Created by Zed (Aug 2025), now community-governed.",
+          "source": "Skills, A2A and Other Protocols"
+        },
+        {
+          "front": "What is AGENTS.md, and what real adoption figure is verified for it?",
+          "back": "'A README for agents' -- a repo-root file with build steps/tests/conventions for AI coding agents, deliberately unstructured ('just standard Markdown... the agent simply parses the text you provide,' no schema). Real, verified: 'used by over 60k open-source projects,' now stewarded by the Linux Foundation.",
+          "source": "Skills, A2A and Other Protocols"
+        },
+        {
+          "front": "What real protocol handles agentic payments, and what's its core trust mechanism?",
+          "back": "Google's Agent Payments Protocol (AP2): 'an open protocol developed with leading payments and technology companies to securely initiate and transact agent-led payments across platforms.' Core mechanism: Mandates -- 'tamper-proof, cryptographically-signed digital contracts that serve as verifiable proof of a user's instructions,' proving an agent was actually authorized to spend.",
+          "source": "Skills, A2A and Other Protocols"
         },
         {
           "front": "What is the exact cache prefix hierarchy Anthropic's prompt cache follows, and why does the order matter?",

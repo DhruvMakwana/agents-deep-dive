@@ -114,6 +114,7 @@ nav:
       - "Tools at Scale": tools-at-scale.md
       - "MCP Deep Dive": mcp-deep-dive.md
       - "MCP and Tool Ecosystem": mcp-tool-ecosystem.md
+      - "Skills, A2A and Other Protocols": skills-a2a-protocols.md
       - "KV-Cache Economics": kv-cache-economics.md
       - "Memory Architectures": memory-architectures.md
       - "Models for Agents": models-for-agents.md
