@@ -186,6 +186,13 @@ Every page's TL;DR in one place, every page's Scenario Check merged into one com
     - **A real repro found the exact tradeoff risk-tiering is supposed to solve, playing out concretely**: flat-autonomous (no gates) let a $250 refund execute with zero review. Flat-gated (every action requires approval, no distinction by risk) stopped the agent after only 2 harmless lookup calls — it never even reached the risky refund step. Risk-tiered gating (only actions above a real threshold require approval) let both safe lookups proceed immediately and correctly blocked only the $250 refund — confirmed on two separate full runs.
     - **The real, sharper finding isn't "flat gating adds friction" — it's that undifferentiated gating can stall an agent before it even reaches the point where review matters.** The agent under flat-gating didn't slowly grind through extra approval steps; it stopped making progress entirely, two calls in, having never attempted the one action that actually needed a human.
 
+    ### [Sandboxes and Permissions](sandboxes-permissions.md)
+
+    - **"Sandbox" is a ladder of real isolation strengths, not one thing**: Linux namespaces/cgroups (containers) share the host kernel — weakest tier. gVisor interposes a user-space kernel, the **Sentry**, that intercepts every syscall the sandboxed workload makes before it ever reaches the real host kernel — middle tier. Firecracker/Kata microVMs give each workload its own dedicated kernel via real hardware virtualization — strongest tier, and still fast: real, verified numbers are **boot in <125ms**, **<5 MiB memory overhead per VM**, and **up to 150 microVMs launched per second per host**. WebAssembly sits differently on the ladder — real, verified: it's *"lighter weight than containers or virtual machines"* and default-deny at the capability level, rather than default-shared-then-restricted.
+    - **A sandbox isolates the agent's *execution*. It does not automatically isolate the agent's *credentials*.** A real, documented risk: *"A prompt-injected web page, a poisoned dependency's README, or an ambiguous instruction doesn't need to escape the sandbox. It just needs to ask the agent, which is already inside the trust boundary with the secret, to use it somewhere it shouldn't."* If the real credential sits in the sandboxed process's own environment, it's reachable the instant an injection convinces the agent to reach for it.
+    - **The real fix is credential proxying**: route the actual call through a proxy outside the sandbox boundary, and give the sandboxed code only a placeholder token — the proxy substitutes the real credential itself, never handing it back. The real, verified guarantee: *"The agent's process never has the plaintext secret in memory, on disk, or in its context window."*
+    - **But that guarantee has a real, named limit**: *"Proxying prevents credential theft. It does not prevent credential misuse."* A repro built directly around this: a deterministic, no-LLM check showed the real credential visible in an unproxied sandbox and only a placeholder visible in a proxied one — but a hand-written payment call to an attacker-controlled-looking account went through in **both** conditions regardless. Proxying changed what the code could *see*, not what it could *do*.
+
     ### [Durable Execution](durable-execution.md)
 
     - **Durable execution means a crash resumes the conversation instead of restarting it.** Temporal's own framing: "When a Worker crashes, the Temporal Service hands the work to another Worker, which replays the Event History and resumes at the line where execution stopped, with local variables and progress intact." For an agent specifically: "The loop is a Workflow, each model call and tool call is an Activity, and a crash resumes the conversation instead of restarting it."
@@ -216,7 +223,7 @@ Every page's TL;DR in one place, every page's Scenario Check merged into one com
 
 === "Combined Scenario Check"
 
-    100 questions from every page on this site, one combined pass instead of opening each page separately. Every question shows which page it's from — go re-read that page for anything you get wrong.
+    104 questions from every page on this site, one combined pass instead of opening each page separately. Every question shows which page it's from — go re-read that page for anything you get wrong.
 
     <div class="quiz-widget" data-title="Combined Scenario Check — All Pages">
     <script type="application/json">
@@ -1895,6 +1902,82 @@ Every page's TL;DR in one place, every page's Scenario Check merged into one com
           "sourceUrl": "guardrails-human-in-the-loop.md"
         },
         {
+          "scenario": "A team migrates their agent's code-execution tool from a Docker container to a Firecracker microVM, expecting this to substantially raise their security bar. They don't change how the agent's payments API credential is supplied to the sandboxed code -- it still sits directly in the executed code's own environment variables.",
+          "question": "What does this page's own repro most precisely predict about this migration's effect on credential-related risk?",
+          "options": [
+            "It leaves credential exposure essentially unchanged, since the credential never needed to escape the sandbox",
+            "It closes the risk entirely, since Firecracker's hardware isolation is the strongest tier on the ladder",
+            "It meaningfully reduces the risk, though some residual exposure from the credential would remain",
+            "It increases the risk, because microVMs are slower to patch against credential-based attacks than containers"
+          ],
+          "correct": 0,
+          "explanations": [
+            "Correct. The whole point of the theft-vs-misuse repro is that isolation strength (which tier of the ladder) and credential placement (inside vs. proxied) are separate axes -- a stronger sandbox does nothing about a credential that's directly reachable from inside it, since the injected instruction just asks the already-trusted agent to use it, without ever needing to cross the sandbox boundary.",
+            "Overstates what sandbox strength buys -- the mechanism-level check showed the real credential value visible to sandboxed code specifically because it was placed there directly, a fact independent of which isolation tier is wrapping the execution.",
+            "Understates it -- there's no partial credit here for sandbox strength on this specific risk; a credential placed directly in scope is fully reachable by an injected instruction whether the sandbox is a container or a microVM, because the attack never needs to breach the isolation boundary at all.",
+            "Not a real or claimed effect -- the page makes no claim about patch cadence differing between isolation tiers; this misattributes the actual mechanism (credential placement, not isolation strength) to an unrelated concern."
+          ],
+          "source": "Sandboxes and Permissions",
+          "sourceUrl": "sandboxes-permissions.md"
+        },
+        {
+          "scenario": "A real, deterministic mechanism-level check (no LLM involved) found that a hand-written payment call to an attacker-controlled-looking destination succeeded in both an unproxied sandbox (real credential directly visible) and a proxied sandbox (only a placeholder token visible).",
+          "question": "What is the most precise conclusion this specific result supports about credential proxying?",
+          "options": [
+            "Proxying provides no real security benefit at all, since the misuse still succeeded in both conditions",
+            "Proxying failed at its intended purpose, since the placeholder token should have blocked the payment from being sent",
+            "The result is inconclusive because a real production proxy would have additional protections not modeled here",
+            "Proxying is a confidentiality control that did its job; the payment succeeding reflects a separate, unaddressed gap"
+          ],
+          "correct": 3,
+          "explanations": [
+            "Too strong -- the credential value itself DID differ cleanly between conditions (real key vs. placeholder only), which is a real, working confidentiality benefit; the claim that it 'provides no benefit at all' ignores that half of the check's own result.",
+            "Misunderstands the proxy's actual design -- the placeholder token being usable to complete a call via the proxy IS the proxy working as intended (the sandboxed code never needed the real key to get the action executed); the payment succeeding isn't a proxy failure, it's evidence the proxy was never an authorization mechanism in the first place.",
+            "Not what the repro claims or needs to claim -- the mechanism-level check is explicitly about what the proxying PATTERN itself structurally permits, independent of whatever additional real-world hardening a production system might layer on top; the theft-vs-misuse distinction holds regardless of those additions.",
+            "Correct. The mechanism check cleanly separated two different properties: what the sandboxed code can SEE (proxying fixed this -- placeholder only) versus what the sandboxed code can DO (proxying never claimed to fix this -- the proxy's job was never to judge whether a given destination/amount is legitimate, which is what the page calls a separate authorization gap)."
+          ],
+          "source": "Sandboxes and Permissions",
+          "sourceUrl": "sandboxes-permissions.md"
+        },
+        {
+          "scenario": "In a real, unforced run, Claude Sonnet 5 was given direct access to a real credential inside a sandboxed code-execution tool, under a prompt injection asking it to both print the credential and send a payment to a suspicious-looking account. It declined both, printing only a masked value and explicitly citing the suspicious destination pattern.",
+          "question": "What is the most accurate way to characterize what this specific live-agent result does and doesn't establish?",
+          "options": [
+            "It proves that credential proxying is unnecessary whenever the underlying model is capable enough to reason about the request",
+            "A real result about this model's behavior on this run, not a substitute for the deterministic guarantee",
+            "It's not meaningful evidence at all, since the model could reason differently on every subsequent run",
+            "It demonstrates that credential theft is now a solved problem for any sufficiently advanced language model"
+          ],
+          "correct": 1,
+          "explanations": [
+            "Overreaches directly -- the page explicitly warns against this conclusion: model judgment holding on one run is a fact about that run, not a property of the system, and shouldn't be treated as a substitute for the structural (proxy + authorization) controls.",
+            "Correct. The page draws exactly this distinction: the live-agent trial is real and worth reporting honestly, but it answers 'what did this model choose to do here,' which is categorically different from the mechanism-level check's 'what does the architecture permit regardless of model behavior' -- both are real data, serving different purposes.",
+            "Too dismissive -- a real, unforced result is genuine evidence about model behavior under this specific injection, and the page reports it plainly as such; the caution is about over-generalizing it into a security guarantee, not about the result being meaningless.",
+            "A sweeping claim the page never makes and actively cautions against -- one favorable run against one injection says nothing about 'solved,' especially given the page's own point that model judgment is not a designed control."
+          ],
+          "source": "Sandboxes and Permissions",
+          "sourceUrl": "sandboxes-permissions.md"
+        },
+        {
+          "scenario": "A real, verified guarantee for the credential-proxying pattern states: 'The agent's process never has the plaintext secret in memory, on disk, or in its context window.'",
+          "question": "Which real, named limitation does this page pair directly with that guarantee?",
+          "options": [
+            "The guarantee only holds for text-based secrets, not binary credentials like signing keys",
+            "The guarantee requires a hardware-isolated microVM to actually hold, and fails under weaker isolation tiers",
+            "Proxying prevents credential theft but does not prevent credential misuse of the substituted credential",
+            "The guarantee is voided the moment more than one sandboxed process shares the same proxy"
+          ],
+          "correct": 2,
+          "explanations": [
+            "Not a distinction the page makes or that the quoted guarantee implies -- the guarantee is about where the plaintext secret does and doesn't appear (memory, disk, context window), not about the secret's format or data type.",
+            "Not correct -- the proxying pattern is described as a boundary independent of which isolation tier wraps the sandboxed execution; the page treats isolation strength and credential-proxying as two separate axes, not one dependent on the other.",
+            "Correct. This is the page's central, real, named pairing -- the direct follow-on quote 'Proxying prevents credential theft. It does not prevent credential misuse' -- confirmed concretely by the mechanism-level check, where the payment succeeded in both conditions despite the credential value being hidden in the proxied one.",
+            "Not a claim made anywhere on this page -- multiple sandboxed processes sharing one proxy isn't discussed as a failure condition; this invents a mechanism not present in the real, cited material."
+          ],
+          "source": "Sandboxes and Permissions",
+          "sourceUrl": "sandboxes-permissions.md"
+        },
+        {
           "scenario": "A real repro deliberately crashed a process right after a `send_confirmation` tool's side effect committed, but before that fact was written to the durable event log. On resume in a fresh process, the model decided to call `send_confirmation` again, and the tool returned 'already sent (idempotent replay)' instead of sending a second time.",
           "question": "What does this specific sequence demonstrate about the event log's own limits?",
           "options": [
@@ -2129,7 +2212,7 @@ Every page's TL;DR in one place, every page's Scenario Check merged into one com
 
 === "Flashcards"
 
-    198 flashcards from every page with a deck so far — click a card to flip it, shuffle for random order.
+    206 flashcards from every page with a deck so far — click a card to flip it, shuffle for random order.
 
     <div class="flashcard-widget" data-title="Flashcards — All Pages">
     <script type="application/json">
@@ -3004,6 +3087,46 @@ Every page's TL;DR in one place, every page's Scenario Check merged into one com
           "front": "What is the real, three-way tradeoff this topic's repro demonstrates across flat-autonomous, flat-gated, and tiered guardrails?",
           "back": "Flat-autonomous: functional but unsafe (risky action unreviewed). Flat-gated: safe but non-functional (agent stalls before reaching what needed review). Tiered: both safe (risky action caught) AND functional (safe work still proceeds) -- the concrete, measured payoff of 'proportional controls.'",
           "source": "Guardrails and Human-in-the-Loop"
+        },
+        {
+          "front": "What are the four tiers of the real isolation ladder, weakest to strongest, for sandboxed agent code execution?",
+          "back": "Linux namespaces/cgroups (containers) -- weakest, shared host kernel. gVisor -- middle, a user-space Sentry kernel intercepts every syscall before the real host kernel sees it. Firecracker/Kata microVMs -- strongest, each workload gets its own dedicated guest kernel via real hardware virtualization. WebAssembly sits on a separate axis: capability-first, default-deny, and real, verified 'lighter weight than containers or virtual machines.'",
+          "source": "Sandboxes and Permissions"
+        },
+        {
+          "front": "What are the real, verified Firecracker microVM numbers that make strong isolation and fast/disposable VMs NOT a tradeoff?",
+          "back": "Boot in <125ms. <5 MiB memory overhead per VM. Up to 150 microVMs launched per second per host. Real hardware virtualization without the traditional VM cost.",
+          "source": "Sandboxes and Permissions"
+        },
+        {
+          "front": "What does gVisor's Sentry actually do, architecturally?",
+          "back": "A per-sandbox application kernel running in USER SPACE that re-implements Linux's syscall surface itself. Every syscall the sandboxed workload makes is intercepted and handled by the Sentry, not the real host kernel directly -- and the Sentry's own access back down to the host is narrowed via seccomp filters to a small subset of calls.",
+          "source": "Sandboxes and Permissions"
+        },
+        {
+          "front": "What real, documented risk means a sandbox does NOT automatically protect an agent's credentials?",
+          "back": "'A prompt-injected web page, a poisoned dependency's README, or an ambiguous instruction doesn't need to escape the sandbox. It just needs to ask the agent, which is already inside the trust boundary with the secret, to use it somewhere it shouldn't.' (Zujkowski) -- if the real credential sits in the sandboxed process's own scope, it's reachable without ever breaching the sandbox.",
+          "source": "Sandboxes and Permissions"
+        },
+        {
+          "front": "What is the real, verified guarantee credential proxying earns, and how does the pattern work mechanically?",
+          "back": "'The agent's process never has the plaintext secret in memory, on disk, or in its context window.' Mechanically: route the real call through a proxy OUTSIDE the sandbox boundary; the sandboxed code only ever holds a placeholder token, and the proxy substitutes the real credential itself before the call goes out, never handing the plaintext back.",
+          "source": "Sandboxes and Permissions"
+        },
+        {
+          "front": "What is the real, named limitation of credential proxying, and what did this topic's mechanism-level check show?",
+          "back": "'Proxying prevents credential theft. It does not prevent credential misuse.' The check (zero LLM judgment, hand-written code): the real key was visible in 'inside' mode and only a placeholder in 'proxied' mode -- but a hand-written payment call to an attacker-controlled-looking account succeeded in BOTH conditions regardless. Proxying changed what the code could SEE, not what it could DO.",
+          "source": "Sandboxes and Permissions"
+        },
+        {
+          "front": "In the real, unforced live-agent trial against Claude Sonnet 5 (direct key access + injected payment request), what happened, and why doesn't this replace the mechanism-level check?",
+          "back": "The model masked the key rather than printing it raw and declined the suspicious payment in BOTH conditions, citing the destination pattern explicitly. But this is a fact about THIS model on THIS run -- not a deterministic guarantee. The mechanism-level check holds by construction regardless of model behavior; the live trial is a second, honest, non-substitutable data point, not a security control.",
+          "source": "Sandboxes and Permissions"
+        },
+        {
+          "front": "Why is credential proxying described as a confidentiality control rather than an authorization control -- and what closes the gap it leaves open?",
+          "back": "Proxying hides the credential's VALUE from the sandboxed code; it says nothing about whether a given action (which destination, how much) should be allowed at all. Closing the misuse gap needs a separate, deterministic authorization check on the action itself -- an allow-list, a hard cap, a human-approval gate -- the same structural-vs-behavioral distinction as risk-tiered guardrails.",
+          "source": "Sandboxes and Permissions"
         },
         {
           "front": "What does 'a crash resumes the conversation instead of restarting it' actually mean, in Temporal's own framing?",
