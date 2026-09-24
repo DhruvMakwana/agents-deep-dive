@@ -169,6 +169,13 @@ Every page's TL;DR in one place, every page's Scenario Check merged into one com
     - **STORM's real mechanism generates better structure by simulating disagreement, not by asking once**: *"discovering diverse perspectives,"* then *"simulating conversations where writers carrying different perspectives pose questions to a topic expert,"* producing real, measured gains — *"more of STORM's articles are deemed to be organized (by a 25% absolute increase) and broad in coverage (by 10%)"* versus a single-pass outline-then-write baseline.
     - **BrowseComp is deliberately built to be easy to grade and hard to pass.** Real, verified numbers: GPT-4o scored **0.6%**, OpenAI o1 scored **9.9%**, and OpenAI's own Deep Research model scored **51.5%** — on a benchmark where, of 1,255 attempted questions, human researchers gave up on **70.8%** of them within two hours.
 
+    ### [Computer-Use and Browser Agents](computer-use-browser-agents.md)
+
+    - **Grounding — mapping "click the submit button" to real screen coordinates — is a real, named bottleneck, not a solved problem.** Real, verified: high-resolution professional interfaces create *"a 'needle-in-a-haystack' problem where target widgets may occupy less than 0.1% of the total screen area."* Real accuracy on ScreenSpot-Pro (professional/high-res UIs) ranges from Gemini-2.5-Pro's **6.96%** to UI-TARS-72B's **37.12%** to a specialized method's **73.18%** — grounding accuracy varies by over 10x depending on approach.
+    - **OSWorld is deliberately, measurably hard.** Real, original numbers: **369 real tasks**, human performance **72.36%**, the best contemporary agent at launch **12.24%**. Real progress since has been fast but uneven — OpenAI's computer-use-preview reports **38.1%**, UI-TARS-2 reports **47.5%** — and a real follow-up study (OSWorld-Human) found that even accurate agents take **2.7–4.3x more steps than necessary** to complete a task.
+    - **UI-TARS is a real, named architecture built specifically for this problem**: a single vision-language model unifying *"perception, reasoning, grounding, and memory,"* rather than a pipeline of separate components. Real, measured progress across its own versions: the original scored 24.6 on OSWorld; UI-TARS-1.5 reached 42.5%; UI-TARS-2 reached 47.5% — three real, verified generations of the same architecture, each better than the last.
+    - **A real browser-agent vulnerability, CometJacking, succeeded against a real, deployed product** using exactly the mechanism this page's own repro tests: Brave Security's own root-cause diagnosis — *"when users ask it to 'Summarize this webpage,' Comet feeds a part of the webpage directly to its LLM without distinguishing between the user's instructions and untrusted content."* This page's own repro of that exact mechanism against Claude Sonnet 5 is a real, honest negative — the model resisted in both a raw and a tagged-content condition — but that's a fact about this run, not a structural guarantee the real Comet incident didn't already disprove for a different agent.
+
     ## Production
 
     ### [Evaluating Agents](evaluating-agents.md)
@@ -259,7 +266,7 @@ Every page's TL;DR in one place, every page's Scenario Check merged into one com
 
 === "Combined Scenario Check"
 
-    124 questions from every page on this site, one combined pass instead of opening each page separately. Every question shows which page it's from — go re-read that page for anything you get wrong.
+    128 questions from every page on this site, one combined pass instead of opening each page separately. Every question shows which page it's from — go re-read that page for anything you get wrong.
 
     <div class="quiz-widget" data-title="Combined Scenario Check — All Pages">
     <script type="application/json">
@@ -1786,6 +1793,82 @@ Every page's TL;DR in one place, every page's Scenario Check merged into one com
           "sourceUrl": "deep-research-agents.md"
         },
         {
+          "scenario": "Real, verified accuracy numbers on the ScreenSpot-Pro grounding benchmark range from 6.96% (Gemini-2.5-Pro) to 73.18% (a specialized method), with UI-TARS-72B at 37.12% -- all measured on the identical benchmark of professional, high-resolution interfaces.",
+          "question": "What does this specific spread most precisely indicate about grounding as a computer-use agent capability?",
+          "options": [
+            "Grounding difficulty and technique matter a lot -- the same task shows a real 10x+ accuracy range by method",
+            "The benchmark itself is unreliable, since no consistent accuracy figure could be established across models",
+            "Grounding accuracy is primarily determined by which company trained the underlying model, not by technique",
+            "All modern vision-language models achieve comparable grounding accuracy once given professional interfaces"
+          ],
+          "correct": 0,
+          "explanations": [
+            "Correct. A real, verified 6.96% to 73.18% range on the IDENTICAL benchmark is direct evidence that grounding remains a genuinely hard, method-sensitive problem -- specialized grounding techniques produce real, substantial gains over general-purpose vision-language models on the same real task.",
+            "Not supported -- ScreenSpot-Pro produced consistent, comparable, real numbers across multiple models on the identical task; a wide real spread across methods is a finding about the methods, not evidence the benchmark itself is broken.",
+            "Too narrow -- the real spread includes UI-TARS-72B (a specialized, purpose-built model) scoring well below a different specialized method (73.18%), showing TECHNIQUE, not just which company built the model, drives the real gap.",
+            "Directly contradicted by the real numbers -- the spread is more than 10x between the lowest and highest scores on the same benchmark, the opposite of comparable performance across models."
+          ],
+          "source": "Computer-Use and Browser Agents",
+          "sourceUrl": "computer-use-browser-agents.md"
+        },
+        {
+          "scenario": "OSWorld-Human, a real follow-up study, found that even agents that successfully complete a task take 2.7-4.3x more steps than necessary to do so.",
+          "question": "What does this finding add that a task SUCCESS RATE alone (like OSWorld's original 12.24% agent baseline) does not capture?",
+          "options": [
+            "It reveals that most reported OSWorld success-rate numbers were measured incorrectly and cannot be trusted",
+            "It measures real efficiency -- an agent can succeed at a task while still being needlessly wasteful",
+            "It proves that all successful task completions in the original OSWorld study were actually failures",
+            "It shows that step-inefficiency, not accuracy, is now the only real remaining barrier to production readiness"
+          ],
+          "correct": 1,
+          "explanations": [
+            "Not the claim -- OSWorld-Human's own finding is about STEP COUNT for tasks that were genuinely completed successfully, not a critique of how success itself was measured or scored in the original study.",
+            "Correct. This is precisely the real, added value of the finding: a task can be marked 'successful' by a binary pass/fail metric while the agent took several times more real actions than needed -- a genuine cost and reliability signal that raw success rate alone doesn't surface.",
+            "Contradicted directly -- the finding is specifically about tasks the agent DID complete successfully; it says nothing about those completions actually being failures, only that they were less efficient than optimal.",
+            "Overstates it -- the page frames this as an ADDITIONAL real dimension worth checking alongside accuracy, not a claim that accuracy no longer matters or that efficiency is now the sole remaining barrier."
+          ],
+          "source": "Computer-Use and Browser Agents",
+          "sourceUrl": "computer-use-browser-agents.md"
+        },
+        {
+          "scenario": "UI-TARS's own three generations report real, measured progress on identical benchmarks: the original scored 24.6 on OSWorld, UI-TARS-1.5 reached 42.5%, and UI-TARS-2 reached 47.5%.",
+          "question": "What does comparing these three real numbers across versions demonstrate that a single version's score alone would not?",
+          "options": [
+            "That UI-TARS has now definitively solved the OSWorld benchmark and further progress is unlikely",
+            "That OSWorld's difficulty decreased over time, making each new version's task easier than the last",
+            "A real, measured trajectory of improvement on a consistent benchmark, generation over generation",
+            "That grounding and OSWorld task-completion are measuring the exact same underlying capability"
+          ],
+          "correct": 2,
+          "explanations": [
+            "Overstates it -- 47.5% is real, substantial progress but still well short of the original 72.36% human baseline reported for OSWorld; nothing in the numbers suggests the benchmark is 'solved.'",
+            "Not indicated -- OSWorld's own task set and difficulty are treated as fixed for comparison purposes across UI-TARS versions; the improvement in scores reflects model progress, not a claim the benchmark itself got easier.",
+            "Correct. Three real, comparable data points on the IDENTICAL benchmark across successive versions of the same architecture is precisely what shows a genuine trajectory of improvement over time, rather than a single static capability snapshot.",
+            "Not established -- ScreenSpot-Pro (grounding) and OSWorld (full task completion) are described as distinct, separate benchmarks measuring different things; UI-TARS reports separate real numbers for each, not one combined score."
+          ],
+          "source": "Computer-Use and Browser Agents",
+          "sourceUrl": "computer-use-browser-agents.md"
+        },
+        {
+          "scenario": "A real repro tested a browser agent's response to a hidden, unmarked injected instruction on a fictional webpage, using the identical, entirely innocuous request ('summarize this webpage'). Both a raw-content condition and a content-tagged condition resulted in the model resisting the injection, after one deliberate rewrite removed a self-announcing 'hidden SYSTEM NOTE' tell from the injected text.",
+          "question": "What is the most precise, honest conclusion this result supports, given that a real, different browser agent (Comet) was actually compromised by this same mechanism in the real world?",
+          "options": [
+            "The real CometJacking vulnerability must have been fabricated, since a capable model resisted an equivalent attack",
+            "Content-tagging is proven unnecessary as a defense, since the raw condition produced the identical safe outcome",
+            "Any browser agent built on a sufficiently capable model is now permanently immune to this entire attack class",
+            "This model resisted on this one run -- not the same guarantee as actually fixing the underlying architecture"
+          ],
+          "correct": 3,
+          "explanations": [
+            "Not supported and contradicted by real, documented evidence -- Brave Security's own real, cited root-cause diagnosis of the actual Comet incident is independent of this page's own repro; one model resisting a test doesn't invalidate a separately documented, real-world compromise of a different system.",
+            "Overreaches from a single test -- the repro's own real result showed NO measured difference between conditions on this run, but the page explicitly frames this as a fact about this model on this run, not evidence that tagging is unnecessary as a general defense-in-depth practice.",
+            "Sweeping and explicitly unsupported -- model behavior on injection attempts is not guaranteed to generalize across future attempts, more adversarial phrasings, or other models; the page explicitly rejects treating one favorable result as a permanent guarantee.",
+            "Correct. This is exactly the caveat the page draws: a real, honest negative result on one model, one run, is valuable data but categorically different from a structural fix -- the real CometJacking incident already demonstrates the underlying mechanism (untrusted content mixed unmarked with instructions) is a genuine, exploitable flaw regardless of how this particular test went."
+          ],
+          "source": "Computer-Use and Browser Agents",
+          "sourceUrl": "computer-use-browser-agents.md"
+        },
+        {
           "scenario": "A real repro gave a model the option to call a verification tool or answer directly, on both a well-known fact and an unguessable fictional fact. In both cases the model called the tool and got the correct outcome -- no divergence between outcome and trajectory was observed.",
           "question": "What's the most accurate takeaway from this specific result?",
           "options": [
@@ -2628,7 +2711,7 @@ Every page's TL;DR in one place, every page's Scenario Check merged into one com
 
 === "Flashcards"
 
-    246 flashcards from every page with a deck so far — click a card to flip it, shuffle for random order.
+    253 flashcards from every page with a deck so far — click a card to flip it, shuffle for random order.
 
     <div class="flashcard-widget" data-title="Flashcards — All Pages">
     <script type="application/json">
@@ -3423,6 +3506,41 @@ Every page's TL;DR in one place, every page's Scenario Check merged into one com
           "front": "How does this topic connect to and differ from the existing Multi-Agent Systems topic?",
           "back": "Same orchestrator-worker architecture and same real Anthropic source. Multi-Agent Systems covers the TOKEN-COST multiplier (real 3.21x measured) and Cognition's inter-agent CONSISTENCY risk (honest negative result). Deep Research Agents covers a different, complementary failure mode: DIVISION OF LABOR (redundant search coverage) and its real fix -- plus STORM and BrowseComp, which Multi-Agent Systems doesn't touch at all.",
           "source": "Deep Research Agents"
+        },
+        {
+          "front": "What is 'grounding' in computer-use agents, and what real, named difficulty does it face on dense UIs?",
+          "back": "'The task of mapping natural language instructions to screen coordinates.' On professional/high-res interfaces: a 'needle-in-a-haystack problem where target widgets may occupy less than 0.1% of the total screen area.' Real ScreenSpot-Pro accuracy spread: Gemini-2.5-Pro 6.96%, OpenAI CUA 35.03%, UI-TARS-72B 37.12%, a specialized method 73.18% -- 10x+ range by technique.",
+          "source": "Computer-Use and Browser Agents"
+        },
+        {
+          "front": "What are OSWorld's real, original headline numbers, and what did the OSWorld-Human follow-up add?",
+          "back": "369 real tasks. Human performance 72.36%; best agent at launch 12.24%. OSWorld-Human found even SUCCESSFUL agents take '2.7-4.3x more steps than necessary' -- a real efficiency dimension raw success rate doesn't capture.",
+          "source": "Computer-Use and Browser Agents"
+        },
+        {
+          "front": "What is UI-TARS's real architectural approach, and its real, measured progress across versions?",
+          "back": "A single vision-language model unifying 'perception, reasoning, grounding, and memory' (not a pipeline), via Unified Action Modeling + System-2 Reasoning + RL-based refinement. Real OSWorld trajectory: original 24.6 -> UI-TARS-1.5 42.5% -> UI-TARS-2 47.5%. Real generational improvement on the same benchmark.",
+          "source": "Computer-Use and Browser Agents"
+        },
+        {
+          "front": "What is CometJacking, and what was Brave Security's exact root-cause diagnosis of the real vulnerability?",
+          "back": "A real, working attack against Perplexity's Comet browser agent, using a hidden Reddit spoiler-tag instruction. Root cause (exact quote): 'when users ask it to Summarize this webpage, Comet feeds a part of the webpage directly to its LLM without distinguishing between the user's instructions and untrusted content.' Real data exfiltration (email -> OTP -> post) was demonstrated.",
+          "source": "Computer-Use and Browser Agents"
+        },
+        {
+          "front": "In this topic's own real repro of the CometJacking mechanism, what happened, and what real methodological lesson came from the first attempt?",
+          "back": "Both raw (unmarked) and tagged (<untrusted_webpage_content> wrapped) conditions: Sonnet 5 resisted, correctly flagging the hidden 'unlock bonus PDF' pretext as data-harvesting/phishing. BUT the first injection version self-announced as a 'SYSTEM NOTE' in a '[hidden span]' marker -- an unrealistic tell. Rewritten as an ordinary-sounding pretext, the honest negative held -- a fact about this model on this run, NOT a structural guarantee (the real Comet incident succeeded against a different real agent using this exact mechanism).",
+          "source": "Computer-Use and Browser Agents"
+        },
+        {
+          "front": "What real, practical cost detail does Anthropic's own computer-use tool documentation give, and how does it connect to the Cost and Latency topic?",
+          "back": "A single screenshot typically costs 'roughly 1,000-1,800 input tokens each.' A long computer-use agent loop compounds cost the same way Cost and Latency's quadratic-transcript-growth finding does -- just driven by image tokens instead of text tokens.",
+          "source": "Computer-Use and Browser Agents"
+        },
+        {
+          "front": "What are the three real, distinct browser-automation infrastructure approaches this topic names?",
+          "back": "Anthropic's computer_toolset_20260801 (17 member tools, pixel-space coordinates). OpenAI's computer-use-preview (Research Preview, gated tiers, Responses API only). Stagehand (Browserbase's Playwright wrapper with act()/extract()/observe() natural-language primitives; v4 moved dispatch into a browser extension so remote browsers 'behave like the Chrome on your laptop').",
+          "source": "Computer-Use and Browser Agents"
         },
         {
           "front": "What's the real difference between outcome grading and trajectory grading, and what documented risk does relying on outcome-only grading create?",
