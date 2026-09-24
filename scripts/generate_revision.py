@@ -53,6 +53,7 @@ SECTIONS = [
         ("Benchmark Atlas", "benchmark-atlas.md"),
         ("Observability and Debugging", "observability-debugging.md"),
         ("Agent Security", "agent-security.md"),
+        ("Guardrails and Human-in-the-Loop", "guardrails-human-in-the-loop.md"),
         ("Durable Execution", "durable-execution.md"),
     ]),
     ("Training", [

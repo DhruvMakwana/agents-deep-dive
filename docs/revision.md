@@ -179,6 +179,13 @@ Every page's TL;DR in one place, every page's Scenario Check merged into one com
     - **Meta's Rule of Two is a repackaging of the trifecta into a session-design rule, not an independent discovery** — and it's more permissive than it's often summarized: an agent may satisfy *any two* of the three properties, not zero.
     - **CaMeL's guarantee costs measurable capability**: provable security against prompt injection in AgentDojo, at 77% task success versus 84% for an undefended system — a real, quantified trade-off between structural safety and raw usefulness, not a free upgrade.
 
+    ### [Guardrails and Human-in-the-Loop](guardrails-human-in-the-loop.md)
+
+    - **Guardrails work in real, layered stages, not as one blanket switch** — a real, current framing names the stack directly: data and context guardrails, design-time governance, runtime guardrails and gateways, identity/access/security, and human-in-the-loop oversight as the final layer, not the only one.
+    - **Risk tiering is a real, specific practice, not just "be careful with risky stuff"**: *"Define explicit risk tiers for agent use cases and apply proportional controls. Low-risk tasks like data summarization can run with lighter oversight. High-risk actions involving financial transactions, PII, or policy changes require multi-step verification, human approval, and comprehensive audit trails."*
+    - **A real repro found the exact tradeoff risk-tiering is supposed to solve, playing out concretely**: flat-autonomous (no gates) let a $250 refund execute with zero review. Flat-gated (every action requires approval, no distinction by risk) stopped the agent after only 2 harmless lookup calls — it never even reached the risky refund step. Risk-tiered gating (only actions above a real threshold require approval) let both safe lookups proceed immediately and correctly blocked only the $250 refund — confirmed on two separate full runs.
+    - **The real, sharper finding isn't "flat gating adds friction" — it's that undifferentiated gating can stall an agent before it even reaches the point where review matters.** The agent under flat-gating didn't slowly grind through extra approval steps; it stopped making progress entirely, two calls in, having never attempted the one action that actually needed a human.
+
     ### [Durable Execution](durable-execution.md)
 
     - **Durable execution means a crash resumes the conversation instead of restarting it.** Temporal's own framing: "When a Worker crashes, the Temporal Service hands the work to another Worker, which replays the Event History and resumes at the line where execution stopped, with local variables and progress intact." For an agent specifically: "The loop is a Workflow, each model call and tool call is an Activity, and a crash resumes the conversation instead of restarting it."
@@ -209,7 +216,7 @@ Every page's TL;DR in one place, every page's Scenario Check merged into one com
 
 === "Combined Scenario Check"
 
-    96 questions from every page on this site, one combined pass instead of opening each page separately. Every question shows which page it's from — go re-read that page for anything you get wrong.
+    100 questions from every page on this site, one combined pass instead of opening each page separately. Every question shows which page it's from — go re-read that page for anything you get wrong.
 
     <div class="quiz-widget" data-title="Combined Scenario Check — All Pages">
     <script type="application/json">
@@ -1812,6 +1819,82 @@ Every page's TL;DR in one place, every page's Scenario Check merged into one com
           "sourceUrl": "agent-security.md"
         },
         {
+          "scenario": "A real repro ran the identical refund task under a flat-gated policy (every tool call requires approval, regardless of risk). The agent made only 2 total calls -- both harmless order lookups -- and never attempted the actual $250 refund call at all.",
+          "question": "What is the most precise characterization of what this specific result demonstrates?",
+          "options": [
+            "That undifferentiated gating stalled real progress before review was even needed",
+            "That the agent refused the task entirely due to a policy violation it detected",
+            "That flat gating is always the safest possible guardrail choice for any task",
+            "That the refund tool itself was broken and could not be called under any condition"
+          ],
+          "correct": 0,
+          "explanations": [
+            "Correct. The real, sharper finding is specifically about HOW FAR the agent got, not just how many calls were gated -- flat gating stopped it before it reached the one action that actually needed protecting, which is a different and more concrete cost than simple 'added friction.'",
+            "Not what happened -- there's no policy violation in the setup; the agent simply stopped making progress after its first two calls returned PENDING_HUMAN_APPROVAL, it didn't detect or object to anything.",
+            "Overstates the case -- flat gating did prevent the risky refund, but at a real cost (the agent never made it that far); 'always safest' ignores the real tradeoff the repro itself measured.",
+            "Contradicted directly by the other two real conditions in the same repro, where issue_refund was called successfully (flat-autonomous) or correctly gated (tiered) -- the tool itself worked fine; only the flat-gated condition's approval policy prevented it from ever being attempted."
+          ],
+          "source": "Guardrails and Human-in-the-Loop",
+          "sourceUrl": "guardrails-human-in-the-loop.md"
+        },
+        {
+          "scenario": "A real repro computed risk per tool call using the actual arguments (e.g., the refund amount), not just which tool was named -- so issue_refund for $10 and issue_refund for $250 were treated as different real risk levels despite being the same tool.",
+          "question": "What is the most accurate reason this specific design choice matters?",
+          "options": [
+            "Naming a tool 'issue_refund' is inherently unsafe regardless of any arguments passed",
+            "Real risk often depends on the specific parameters of a call, not just its name",
+            "Every tool call should always be treated as maximum risk to be safe by default",
+            "Argument-based risk scoring makes tool names themselves completely unnecessary"
+          ],
+          "correct": 1,
+          "explanations": [
+            "Not the point being made -- the repro's own design shows the SAME tool name being treated as different risk depending on arguments, directly contradicting the idea that the tool name alone determines danger.",
+            "Correct. This is exactly the real distinction the repro's risk_tier function encodes: a $10 refund and a $250 refund are the same tool but meaningfully different real risk -- gating decisions that only look at tool names would miss this and either over-gate cheap refunds or under-gate expensive ones.",
+            "Contradicts the entire point of tiering -- treating everything as maximum risk is exactly the flat-gated condition, which the repro's own results show has a real, measured cost (stalled progress) compared to proportional tiering.",
+            "An unsupported leap -- tool names remain necessary for identifying WHICH action is being taken; argument-based risk scoring is an additional layer on top of tool identification, not a replacement for it."
+          ],
+          "source": "Guardrails and Human-in-the-Loop",
+          "sourceUrl": "guardrails-human-in-the-loop.md"
+        },
+        {
+          "scenario": "A real, cited guideline states: 'Define explicit risk tiers for agent use cases and apply proportional controls. Low-risk tasks like data summarization can run with lighter oversight. High-risk actions... require multi-step verification, human approval, and comprehensive audit trails.'",
+          "question": "What does the phrase 'lighter oversight' for low-risk tasks most precisely imply, given this page's own real repro?",
+          "options": [
+            "That low-risk tasks should receive zero guardrails or safety consideration of any kind",
+            "That only high-risk actions were ever intended to be part of any guardrail system",
+            "That distinguishing risk levels is itself considered a legitimate, deliberate practice",
+            "That lighter oversight means slower, more thorough review for every single action"
+          ],
+          "correct": 2,
+          "explanations": [
+            "Overstates 'lighter' as 'none' -- the real quote says lighter oversight, not zero; this page's own tiered condition still tracked and logged every call's tier, it simply didn't gate the low-risk ones.",
+            "Contradicted directly by the quote itself, which explicitly names 'low-risk tasks' as a category the guidance addresses, with its own appropriate (lighter, not absent) level of control.",
+            "Correct. The real guidance explicitly frames applying DIFFERENT levels of control based on risk as the correct practice, not an oversight or a corner being cut -- this page's own repro operationalized exactly this principle and showed it producing a real, measured benefit (the agent completed low-risk work while the high-risk action was still caught).",
+            "Directly contradicts the quoted phrase -- 'lighter oversight' is the opposite of 'slower, more thorough review'; the quote's own contrast is between lighter oversight (low-risk) and multi-step verification (high-risk)."
+          ],
+          "source": "Guardrails and Human-in-the-Loop",
+          "sourceUrl": "guardrails-human-in-the-loop.md"
+        },
+        {
+          "scenario": "A real, five-layer guardrail framework names human-in-the-loop oversight as its final, fifth layer, coming after data/context guardrails, design-time governance, runtime guardrails/gateways, and identity/access/security controls.",
+          "question": "What does human review being positioned as the LAST layer, rather than the only layer, most precisely imply about its intended role?",
+          "options": [
+            "That human review is the least important layer and could reasonably be skipped entirely",
+            "That the first four layers are expected to eliminate all risk before review is needed",
+            "That the five layers must always execute in strict sequential order for every single action",
+            "That human review exists to catch residual risk the earlier automated layers didn't resolve"
+          ],
+          "correct": 3,
+          "explanations": [
+            "Not supported -- being positioned last in a defense-in-depth stack typically signals it catches what earlier layers miss, which is a specific and real function, not a signal of lower importance or optional status.",
+            "Overstates what defense-in-depth architectures claim -- the entire premise of a layered stack is that no single layer (including the earlier ones) is assumed to be perfect; human review's real role is exactly to catch what slips through, not to be a redundant final check on a supposedly risk-free process.",
+            "Not established by the framework as described -- layers in a defense-in-depth model are not necessarily strictly sequential gates for every action; some may apply continuously or in parallel (e.g., identity/access controls), rather than each action passing through all five in fixed order.",
+            "Correct. This is the standard, real logic of a layered defense stack: earlier layers (data/context guards, governance, runtime gates, identity/access controls) handle what they can automatically and cheaply, and human review is reserved specifically for the risk that remains after those layers have already acted -- exactly why it shouldn't be applied uniformly to everything, including things the earlier layers already handled."
+          ],
+          "source": "Guardrails and Human-in-the-Loop",
+          "sourceUrl": "guardrails-human-in-the-loop.md"
+        },
+        {
           "scenario": "A real repro deliberately crashed a process right after a `send_confirmation` tool's side effect committed, but before that fact was written to the durable event log. On resume in a fresh process, the model decided to call `send_confirmation` again, and the tool returned 'already sent (idempotent replay)' instead of sending a second time.",
           "question": "What does this specific sequence demonstrate about the event log's own limits?",
           "options": [
@@ -2046,7 +2129,7 @@ Every page's TL;DR in one place, every page's Scenario Check merged into one com
 
 === "Flashcards"
 
-    190 flashcards from every page with a deck so far — click a card to flip it, shuffle for random order.
+    198 flashcards from every page with a deck so far — click a card to flip it, shuffle for random order.
 
     <div class="flashcard-widget" data-title="Flashcards — All Pages">
     <script type="application/json">
@@ -2881,6 +2964,46 @@ Every page's TL;DR in one place, every page's Scenario Check merged into one com
           "front": "How does tool poisoning differ from the lethal trifecta as an attack category?",
           "back": "The trifecta is a session-level combination of properties across a conversation (private data + untrusted content + external comms all present at once). Tool poisoning is about a single artifact's metadata (a tool/MCP description) being untrustworthy -- a supply-chain risk that exists before any conversation even starts, with a different fix (auditing/sanitizing descriptions, not session design).",
           "source": "Agent Security"
+        },
+        {
+          "front": "What is the real, five-layer guardrail stack, and where does human-in-the-loop sit within it?",
+          "back": "Data and context guardrails, design-time governance, runtime guardrails and gateways, identity/access/security controls, and human-in-the-loop oversight -- as the FINAL layer, not the only one. It's meant to catch residual risk the earlier, cheaper, automated layers didn't already resolve.",
+          "source": "Guardrails and Human-in-the-Loop"
+        },
+        {
+          "front": "What is the real, specific risk-tiering guideline this topic is built around?",
+          "back": "'Define explicit risk tiers for agent use cases and apply proportional controls. Low-risk tasks like data summarization can run with lighter oversight. High-risk actions involving financial transactions, PII, or policy changes require multi-step verification, human approval, and comprehensive audit trails.'",
+          "source": "Guardrails and Human-in-the-Loop"
+        },
+        {
+          "front": "A real repro ran the identical refund task (2 lookups + a $250 refund) under flat-autonomous (no gates). What happened?",
+          "back": "All 3 calls executed immediately, including the $250 refund -- risky_refund_executed_without_review: true. The high-risk action went through with zero review, indistinguishable from the safe lookups in a raw success/failure view.",
+          "source": "Guardrails and Human-in-the-Loop"
+        },
+        {
+          "front": "The same task under flat-gated (every call requires approval, no risk distinction) -- what was the real, sharper finding, beyond just 'more friction'?",
+          "back": "The agent made only 2 total calls -- both harmless lookups -- and NEVER attempted the refund call at all. Undifferentiated gating didn't just slow things down; it stalled real progress before the agent even reached the action that actually needed review.",
+          "source": "Guardrails and Human-in-the-Loop"
+        },
+        {
+          "front": "The same task under risk-tiered gating (only actions above a real threshold require approval) -- what was the real result?",
+          "back": "All 3 calls were attempted. Only the $250 refund was gated (gated_count: 1). risky_refund_executed_without_review: false. The agent completed everything it safely could and stopped exactly at the one point needing human review -- confirmed on two separate full runs.",
+          "source": "Guardrails and Human-in-the-Loop"
+        },
+        {
+          "front": "Why did the recipe compute risk per tool CALL (using actual arguments) rather than per tool NAME?",
+          "back": "A $10 issue_refund call and a $250 issue_refund call are the identical tool with very different real risk. Risk-based gating that only looked at tool names would either over-gate cheap refunds or under-gate expensive ones -- matching the real framing of risk scoring that 'weighs the specific action against its current context.'",
+          "source": "Guardrails and Human-in-the-Loop"
+        },
+        {
+          "front": "What real, concrete criterion does OWASP-adjacent guidance name for what belongs in the highest risk tier, beyond just dollar amount?",
+          "back": "Reversibility: 'require human approval on any irreversible action like moving money or deleting data.' This gives a defensible heuristic independent of a specific threshold number -- gate what can't be cleanly undone, then calibrate size-based thresholds from there.",
+          "source": "Guardrails and Human-in-the-Loop"
+        },
+        {
+          "front": "What is the real, three-way tradeoff this topic's repro demonstrates across flat-autonomous, flat-gated, and tiered guardrails?",
+          "back": "Flat-autonomous: functional but unsafe (risky action unreviewed). Flat-gated: safe but non-functional (agent stalls before reaching what needed review). Tiered: both safe (risky action caught) AND functional (safe work still proceeds) -- the concrete, measured payoff of 'proportional controls.'",
+          "source": "Guardrails and Human-in-the-Loop"
         },
         {
           "front": "What does 'a crash resumes the conversation instead of restarting it' actually mean, in Temporal's own framing?",
