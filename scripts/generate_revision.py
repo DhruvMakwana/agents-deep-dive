@@ -60,6 +60,7 @@ SECTIONS = [
     ]),
     ("Training", [
         ("Training Agents: Reward and Credit", "training-agents.md"),
+        ("RL for Search and Tool Agents", "rl-search-tool-agents.md"),
     ]),
     ("Interview", [
         ("Interview Playbook", "interview-playbook.md"),

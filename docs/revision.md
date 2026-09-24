@@ -218,6 +218,13 @@ Every page's TL;DR in one place, every page's Scenario Check merged into one com
     - **Outcome reward and process reward answer different questions, with a measured real gap between them.** "Process supervision significantly outperforms outcome supervision for training models to solve problems from the challenging MATH dataset" — a process-supervised model reported solving 78% of a representative MATH subset. A real toy repro shows exactly why: outcome-only credit can't tell a uniformly-bad trajectory from one where only the middle step failed; step-level credit can.
     - **DPO turns preference pairs directly into a classification loss, no separate reward model or RL loop needed** — "solve the standard RLHF problem with only a simple classification loss," reported to match or exceed PPO-based RLHF while being "stable, performant, and computationally lightweight." A real repro constructed one such pair from two real, independently sampled completions and a real judge call.
 
+    ### [RL for Search and Tool Agents](rl-search-tool-agents.md)
+
+    - **Search-R1 trains an LLM to interleave real search calls with reasoning, using outcome-only reward.** Real, verified: *"Search-R1 optimizes LLM reasoning trajectories with multi-turn search interactions... Experiments on seven question-answering datasets show that Search-R1 improves performance by 41% (Qwen2.5-7B) and 20% (Qwen2.5-3B) over various RAG baselines."* R1-Searcher and ReSearch train the same joint reasoning+search behavior via RL with no supervised reasoning-step data at all — R1-Searcher via a two-stage outcome-only process, ReSearch by treating search as guided by the model's own "text-based thinking."
+    - **ToolRL studied reward design for tool use directly, and found coarse reward isn't enough.** Real, verified: *"coarse-grained reward signals, such as answer matching, fail to offer the finegrained feedback required for effective learning."* Its fix — decomposing reward into tool-name, parameter-name, and parameter-value components — produced *"a 17% improvement over base models and a 15% gain over SFT models."* This page's own repro reproduces the exact mechanism on real tool calls.
+    - **ReTool shows RL can teach WHEN to reach for a tool, not just how.** Real, verified: on AIME, *"67% accuracy with 400 training steps"* vs. a text-only RL baseline's *"40% accuracy, 1080 steps"* — higher accuracy in roughly a third of the training steps — with the paper describing an emergent *"aha moment"* where the model starts self-correcting code mid-reasoning without being explicitly taught to.
+    - **RAGEN names a real, recurring multi-turn RL failure mode: the Echo Trap.** Real, verified: *"a recurring instability pattern, Echo Trap, where agents overfit to locally rewarded reasoning patterns, marked by reward variability collapse, entropy drop, and gradient spikes."* Models converge to *"near-identical phrasing... without justification"* — real, multi-turn RL training doesn't just get slower when it goes wrong, it can collapse into repeating a shallow, memorized pattern that happens to score well locally.
+
     ## Interview
 
     ### [Interview Playbook](interview-playbook.md)
@@ -230,7 +237,7 @@ Every page's TL;DR in one place, every page's Scenario Check merged into one com
 
 === "Combined Scenario Check"
 
-    108 questions from every page on this site, one combined pass instead of opening each page separately. Every question shows which page it's from — go re-read that page for anything you get wrong.
+    112 questions from every page on this site, one combined pass instead of opening each page separately. Every question shows which page it's from — go re-read that page for anything you get wrong.
 
     <div class="quiz-widget" data-title="Combined Scenario Check — All Pages">
     <script type="application/json">
@@ -2213,6 +2220,82 @@ Every page's TL;DR in one place, every page's Scenario Check merged into one com
           "sourceUrl": "training-agents.md"
         },
         {
+          "scenario": "A real repro scored two different real tool-call completions against the identical target action using both binary reward (exact match only) and a fine-grained, decomposed reward (tool name / parameter names / parameter values). One completion used the right tool with one reasonably guessed wrong value; the other used a completely different tool. Binary reward scored both 0.0.",
+          "question": "What is the most precise real problem this identical binary score demonstrates?",
+          "options": [
+            "Binary reward assigns zero gradient signal distinguishing a near-correct completion from a completely wrong one",
+            "Binary reward is always a worse choice than fine-grained reward for every possible RL training scenario",
+            "The fine-grained reward function contains a bug, since two genuinely different completions should never both score low",
+            "Binary reward only fails when exactly two tools are available for the model to choose between"
+          ],
+          "correct": 0,
+          "explanations": [
+            "Correct. The real, measured finding is that binary reward gave the SAME score (0.0) to two meaningfully different real completions -- one nearly perfect, one entirely wrong -- meaning a policy trained on it alone has no signal telling those two cases apart, exactly the gap ToolRL's own verified claim describes.",
+            "Overstates the claim -- the page doesn't argue binary reward is categorically worse in every scenario (e.g. it's fine for genuinely all-or-nothing tasks); the specific, demonstrated problem is about DIFFERENTIATING degrees of correctness within multi-parameter tool calls.",
+            "Backwards -- the fine-grained reward function correctly gave the two completions DIFFERENT scores (0.8889 vs 0.2222), which is it working as intended; it's binary reward that failed to differentiate them, not a bug in the fine-grained one.",
+            "Not what the repro shows or claims -- the identical-score problem is about reward GRANULARITY (exact-match vs. component-wise), not about how many tools happen to be available in any specific trial; it would recur with any number of available tools."
+          ],
+          "source": "RL for Search and Tool Agents",
+          "sourceUrl": "rl-search-tool-agents.md"
+        },
+        {
+          "scenario": "RAGEN's real, verified abstract names a recurring instability pattern in multi-turn LLM agent RL training called the 'Echo Trap,' described as being 'marked by reward variability collapse, entropy drop, and gradient spikes,' where models converge to near-identical phrasing without justification.",
+          "question": "What would be the most accurate way to distinguish a real Echo Trap from ordinary, healthy training convergence, based on RAGEN's own described signature?",
+          "options": [
+            "Ordinary convergence and the Echo Trap are indistinguishable from training metrics alone and require no further investigation",
+            "The Echo Trap is defined purely by the loss curve flattening out over time, regardless of any other training signal",
+            "Any drop in entropy during training is sufficient on its own to confirm an Echo Trap has occurred",
+            "Reward variability collapse, entropy drop, and gradient spikes together signal the Echo Trap specifically"
+          ],
+          "correct": 3,
+          "explanations": [
+            "Contradicted directly -- RAGEN's own abstract gives a specific, named, checkable signature (the three co-occurring signals), which is precisely a way to distinguish it from other training dynamics, not evidence that it can't be distinguished at all.",
+            "Incomplete -- a flattening loss curve alone is ambiguous between genuine convergence and collapse; RAGEN's own named signature requires the CO-OCCURRENCE of reward variability collapse, entropy drop, AND gradient spikes together, not loss flattening in isolation.",
+            "Overstates a single signal -- entropy naturally decreases somewhat during normal training as a policy becomes more confident and less exploratory; RAGEN's own definition requires it to co-occur with reward variability collapse and gradient spikes, not to appear alone.",
+            "Correct. RAGEN's own quoted definition names three co-occurring signals as the Echo Trap's signature, and the paper's own qualitative description adds that models converge to near-identical, unjustified phrasing -- checking rollout text directly for that repetition, alongside the three metrics, is the most complete match to what RAGEN actually documented."
+          ],
+          "source": "RL for Search and Tool Agents",
+          "sourceUrl": "rl-search-tool-agents.md"
+        },
+        {
+          "scenario": "Search-R1, R1-Searcher, and ReSearch are all real, separate 2026 papers that train LLMs to interleave search calls with reasoning using reinforcement learning.",
+          "question": "What real, shared design choice do all three papers make regarding supervision of the reasoning process itself?",
+          "options": [
+            "All three require large amounts of supervised data labeling the correct reasoning steps before any RL training begins",
+            "All three rely only on final-answer correctness, without supervising intermediate reasoning or search steps",
+            "All three require a human reviewer to approve each individual search query before it is allowed to execute",
+            "All three use a separately trained critic model to score every intermediate reasoning step during training"
+          ],
+          "correct": 1,
+          "explanations": [
+            "Directly contradicted -- the whole point of outcome-based RL in these papers is to AVOID needing supervised data on the reasoning steps; R1-Searcher's own quote is explicit that it works 'without requiring process rewards or distillation for a cold start,' and Search-R1/ReSearch make the same real design choice.",
+            "Correct. All three papers' real, verified descriptions confirm this shared choice: Search-R1 uses 'a simple outcome-based reward function,' R1-Searcher is explicitly 'outcome-based... without requiring process rewards,' and ReSearch trains 'without using any supervised data on reasoning steps' -- only the final answer's correctness supervises training in each case.",
+            "Not a real mechanism described in any of the three papers -- these are automated RL training loops without a human-in-the-loop approval step on individual search queries during training.",
+            "Not accurate for this shared design choice -- GRPO (used by at least Search-R1 and ReSearch) specifically avoids a separate critic model, estimating the baseline from the sampled group instead; a critic-based approach is the PPO-style alternative these methods are contrasted against, not what they share."
+          ],
+          "source": "RL for Search and Tool Agents",
+          "sourceUrl": "rl-search-tool-agents.md"
+        },
+        {
+          "scenario": "ReTool reports a real, verified result on AIME: a 32B model reaches 67% accuracy after 400 training steps, compared to a text-only RL baseline reaching 40% accuracy after 1080 steps.",
+          "question": "What is the most precise interpretation of what this specific comparison demonstrates about ReTool's contribution?",
+          "options": [
+            "ReTool proves that tool-augmented models are always more accurate than text-only models on any reasoning benchmark",
+            "The 1080-step baseline failed to converge at all, which is why its accuracy remained lower than ReTool's",
+            "ReTool reached higher accuracy while needing meaningfully fewer training steps than the text-only baseline here",
+            "ReTool's higher accuracy came entirely from a larger model size rather than from its RL training approach"
+          ],
+          "correct": 2,
+          "explanations": [
+            "Overgeneralizes a single benchmark result into a universal claim -- the real, verified numbers are specific to AIME with this particular model and setup; the page doesn't claim this result generalizes to 'any reasoning benchmark.'",
+            "Not stated or implied -- there's no claim the baseline 'failed to converge'; it's presented as reaching a real, specific accuracy figure (40%) after its own training budget, a comparison point, not a description of a broken run.",
+            "Correct. The real, verified numbers show BOTH a higher accuracy (67% vs. 40%) AND fewer training steps (400 vs. 1080) for ReTool's approach on this benchmark -- roughly a third of the steps for a substantially better result, which is precisely the comparison the page reports.",
+            "Not supported by the given comparison -- the page attributes the result to ReTool's RL training approach (the cold-start-plus-RL method and outcome-based refinement), not to model size; no model-size confound is described in this comparison."
+          ],
+          "source": "RL for Search and Tool Agents",
+          "sourceUrl": "rl-search-tool-agents.md"
+        },
+        {
           "scenario": "A prep repository's README states that its per-company interview question lists are 'synthesised from this company's publicly known focus areas and role descriptions \u2014 not leaked questions,' the same disclosure appearing on every company's page in the repo.",
           "question": "What's the most accurate way to use this repository's content in interview prep?",
           "options": [
@@ -2295,7 +2378,7 @@ Every page's TL;DR in one place, every page's Scenario Check merged into one com
 
 === "Flashcards"
 
-    214 flashcards from every page with a deck so far — click a card to flip it, shuffle for random order.
+    222 flashcards from every page with a deck so far — click a card to flip it, shuffle for random order.
 
     <div class="flashcard-widget" data-title="Flashcards — All Pages">
     <script type="application/json">
@@ -3330,6 +3413,46 @@ Every page's TL;DR in one place, every page's Scenario Check merged into one com
           "front": "Why is credit assignment described as a genuinely unsolved, active research area rather than a solved problem?",
           "back": "A 2026 survey counts 69 papers (56 core credit-assignment methods) still working on it. Methods span from GRPO's group-relative baseline to GiGPO's 'anchor state grouping' (grouping identical states recurring across different rollouts) for finer-grained, step-level credit while keeping GRPO's critic-free, low-memory properties -- an active spectrum, not a settled question.",
           "source": "Training Agents: Reward and Credit"
+        },
+        {
+          "front": "What is Search-R1's real, verified core mechanism and headline result?",
+          "back": "The model 'learns to autonomously generate (multiple) search queries during step-by-step reasoning with real-time retrieval,' trained with PPO or GRPO using 'a simple outcome-based reward function.' Real result: 'improves performance by 41% (Qwen2.5-7B) and 20% (Qwen2.5-3B) over various RAG baselines' across 7 QA datasets.",
+          "source": "RL for Search and Tool Agents"
+        },
+        {
+          "front": "What do R1-Searcher and ReSearch share with Search-R1, and how does ReSearch frame search differently?",
+          "back": "All three train joint reasoning+search behavior via RL with NO supervised data on reasoning steps -- outcome-only. R1-Searcher: explicit two-stage process (learn to invoke search, then learn to use it well). ReSearch: frames search as 'guided by text-based thinking' -- integral to the reasoning chain itself, not a separately triggered action -- and reports reflection/self-correction emerging as a side effect of RL, unprompted.",
+          "source": "RL for Search and Tool Agents"
+        },
+        {
+          "front": "What is ToolRL's real, central claim about reward design for tool-use RL, and its fix?",
+          "back": "'Coarse-grained reward signals, such as answer matching, fail to offer the finegrained feedback required for effective learning.' Fix: decompose reward into tool-name, parameter-name, and parameter-value components (trained with GRPO). Real result: 'a 17% improvement over base models and a 15% gain over SFT models.'",
+          "source": "RL for Search and Tool Agents"
+        },
+        {
+          "front": "In this topic's own real repro (reproducing ToolRL's claim), what happened when a near-correct tool call and a completely-wrong-tool call were both scored with binary reward vs. fine-grained reward?",
+          "back": "Binary reward gave BOTH real completions the identical score: 0.0 -- no differentiation. Fine-grained (tool name / param names / param values, averaged) gave real, different scores: 0.8889 (near-correct, one guessed value wrong) vs. 0.2222 (wrong tool entirely) -- exactly the gap ToolRL's abstract describes, demonstrated on real Claude completions.",
+          "source": "RL for Search and Tool Agents"
+        },
+        {
+          "front": "What is ReTool's real, verified headline number on AIME, and what real emergent behavior did the paper document?",
+          "back": "67% accuracy at 400 training steps (32B model) vs. a text-only RL baseline's 40% accuracy at 1080 steps -- higher accuracy in ~1/3 the steps. Real, named emergent behavior: 'code self-correction, signaling an \"aha moment\" in which the model autonomously masters adaptive tool use' -- not explicitly trained, it emerged from outcome-based RL.",
+          "source": "RL for Search and Tool Agents"
+        },
+        {
+          "front": "What is RAGEN's real, named failure mode for multi-turn LLM agent RL, and its exact defining signature?",
+          "back": "The 'Echo Trap' -- 'a recurring instability pattern... where agents overfit to locally rewarded reasoning patterns, marked by reward variability collapse, entropy drop, and gradient spikes.' Models converge to 'near-identical phrasing... without justification' -- a shallow, repetitive pattern that scores adequately locally, not a loss curve just flattening.",
+          "source": "RL for Search and Tool Agents"
+        },
+        {
+          "front": "What is RAGEN's proposed fix for the Echo Trap, and what is its third real finding connecting reward design to reasoning quality?",
+          "back": "Fix: StarPO-S, using 'trajectory filtering, critic incorporation, and gradient stabilization.' Third finding: 'without fine-grained, reasoning-aware reward signals, agent reasoning hardly emerge[s] through multi-turn RL and they may show shallow strategies or hallucinated thoughts' -- directly connecting RAGEN's stability problem to ToolRL's reward-granularity problem.",
+          "source": "RL for Search and Tool Agents"
+        },
+        {
+          "front": "How do the six methods on this topic split into two connected layers?",
+          "back": "Layer 1 -- WHEN to act: Search-R1/R1-Searcher/ReSearch show outcome-only RL is enough to teach a model to decide when to search, no step-level supervision needed. Layer 2 -- HOW to reward that action well: ToolRL (fine-grained reward beats coarse) and ReTool (RL improves tool-use TIMING specifically) show coarse reward isn't enough. RAGEN names the real risk of getting layer 2 wrong across many turns: the Echo Trap.",
+          "source": "RL for Search and Tool Agents"
         },
         {
           "front": "Of 106 collected 'agent interview questions,' how many actually trace to a real candidate report or company-published process (vs prep material)?",
