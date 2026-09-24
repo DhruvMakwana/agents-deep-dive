@@ -83,6 +83,13 @@ Every page's TL;DR in one place, every page's Scenario Check merged into one com
     - **A real, current list of deprecations matters for anything built today**: HTTP+SSE transport (migrate to Streamable HTTP), Roots/Sampling/Logging features (migrate to tool parameters, direct provider APIs, and OpenTelemetry respectively), and OAuth Dynamic Client Registration (migrate to Client ID Metadata Documents) are all now formally Deprecated under a twelve-month removal window, not just "discouraged."
     - **Token passthrough is explicitly forbidden, not just risky**: *"MCP servers **MUST NOT** accept any tokens that were not explicitly issued for the MCP server"* — a server that blindly forwards a client-supplied token downstream breaks a real OAuth security boundary and reintroduces the confused-deputy problem the rest of the spec's auth model is built to prevent.
 
+    ### [MCP and Tool Ecosystem](mcp-tool-ecosystem.md)
+
+    - **A real, live, official MCP registry exists and is publicly callable right now**: `registry.modelcontextprotocol.io`, launched in preview 2025-09-08, backed by Anthropic, GitHub, PulseMCP, Block, and others — described in its own launch post as "an open catalog and API for publicly available MCP servers." Unauthenticated reads via `GET /v0/servers?search=...`. A real repro called this exact live API.
+    - **The real repro found the registry's search is closer to keyword/brand matching than semantic search.** Natural-language capability queries (`"browser automation form filling"`, `"payment charges status"`) reliably returned **zero results**; single-keyword, brand-style queries (`"Stripe"`, `"playwright"`, `"browser"`) worked. An agent had to burn 6 real search attempts, 4 of them dead ends, before finding a usable browser-automation server.
+    - **A real, separately-confirmed finding: even a genuinely popular server can be absent.** Microsoft's own official `playwright-mcp` (37.5k+ GitHub stars) does not currently appear in the registry under any query tried, including a direct `search=microsoft`. As a real preview-stage product, the registry's population is honest but incomplete.
+    - **Gateways, remote-hosted servers, and tool platforms are the real, separate layers that exist because raw discovery and raw protocol aren't enough on their own**: gateways add auth/rate-limiting/routing in front of many servers; companies like Stripe, GitHub, Notion, and Cloudflare now host their own official *remote* MCP servers (reachable over HTTP, not run locally); and platforms like Composio aggregate hundreds of third-party integrations behind one MCP interface — each solving a real, different gap the base protocol and the registry alone leave open.
+
     ### [KV-Cache Economics](kv-cache-economics.md)
 
     - **Prompt caching isn't a flat discount — it's a hierarchy with a precise cost structure.** A 5-minute cache write costs 1.25x base input price; a cache read costs 0.1x (cheaper still — 0.025x–0.05x — on some model families). The cache follows a strict prefix order, `tools` → `system` → `messages`, and a change at any level invalidates that level *and everything after it*.
@@ -237,7 +244,7 @@ Every page's TL;DR in one place, every page's Scenario Check merged into one com
 
 === "Combined Scenario Check"
 
-    112 questions from every page on this site, one combined pass instead of opening each page separately. Every question shows which page it's from — go re-read that page for anything you get wrong.
+    116 questions from every page on this site, one combined pass instead of opening each page separately. Every question shows which page it's from — go re-read that page for anything you get wrong.
 
     <div class="quiz-widget" data-title="Combined Scenario Check — All Pages">
     <script type="application/json">
@@ -926,6 +933,82 @@ Every page's TL;DR in one place, every page's Scenario Check merged into one com
           ],
           "source": "MCP Deep Dive",
           "sourceUrl": "mcp-deep-dive.md"
+        },
+        {
+          "scenario": "A real repro against the live official MCP registry found that natural-language queries like 'browser automation form filling' and 'payment charges status' returned zero results, while brand-name queries like 'Stripe' and 'playwright' returned real matches.",
+          "question": "What is the most precise real conclusion this pattern supports about the registry's current search behavior?",
+          "options": [
+            "The registry's search behaves closer to keyword or brand matching than to semantic search",
+            "The registry's search is broken and should not be used by any agent for any purpose",
+            "The registry only indexes servers made by large, well-known companies and excludes smaller developers",
+            "Natural-language queries always fail while single-word queries always succeed, without exception"
+          ],
+          "correct": 0,
+          "explanations": [
+            "Correct. The real, repeated pattern -- natural-language capability descriptions failing, specific product/brand names succeeding -- is precisely the signature of keyword/substring-style matching rather than a semantic search that understands intent or synonyms.",
+            "Overstates the finding -- the repro shows a specific, characterizable LIMITATION (keyword-style matching), not that the search is non-functional; brand-name queries worked correctly and returned real, relevant results.",
+            "Not what the evidence shows -- the successful queries were about MATCHING TERMS (brand names), not about company size; nothing in the repro tested or claims a bias toward large companies specifically.",
+            "Overgeneralizes into an absolute rule -- the repro reports what happened on the SPECIFIC queries tried, not a proven universal law; the page is careful to characterize this as an observed pattern on real trials, not an exceptionless guarantee."
+          ],
+          "source": "MCP and Tool Ecosystem",
+          "sourceUrl": "mcp-tool-ecosystem.md"
+        },
+        {
+          "scenario": "A direct, separate check of the real MCP registry found that Microsoft's own official playwright-mcp server -- a genuinely popular project with 37.5k+ GitHub stars -- does not appear in the registry under any search term tried, including a direct search for 'microsoft'.",
+          "question": "What is the most accurate interpretation of what this specific finding demonstrates?",
+          "options": [
+            "Microsoft's playwright-mcp is not a real or trustworthy MCP server, which is why it's absent",
+            "The registry is a fully complete and authoritative source of every MCP server that currently exists",
+            "The agent's search strategy in the repro was flawed, which is why it failed to find this server",
+            "The registry, as a real preview-stage product, has genuine gaps even for well-known servers today"
+          ],
+          "correct": 3,
+          "explanations": [
+            "Not supported and not the claim -- popularity (37.5k+ stars) is independent evidence the server is real and widely used; its absence from the registry says something about the REGISTRY's completeness, not the server's legitimacy.",
+            "Directly contradicted -- this is exactly the finding that disproves completeness; a well-known, popular server missing entirely is direct evidence against the registry being authoritative or exhaustive at this stage.",
+            "Not supported -- the check that found this was a DIRECT query for 'microsoft' itself, not a flawed derived query; the absence held regardless of search phrasing, pointing to the registry's own data rather than a searcher's mistake.",
+            "Correct. The registry is explicitly described as a real, preview-stage product (launched 2025-09-08), and this finding is direct, confirmed evidence of a real current gap in its population -- consistent with 'honest but incomplete,' not a flaw in how anyone searched it."
+          ],
+          "source": "MCP and Tool Ecosystem",
+          "sourceUrl": "mcp-tool-ecosystem.md"
+        },
+        {
+          "scenario": "This page distinguishes four real, separate layers in the MCP ecosystem: the registry (discovery), gateways (auth/rate-limiting/routing), remote servers (where code runs), and tool platforms (integration aggregation).",
+          "question": "Based on the page's own framing, what happens when a well-known server is missing from the registry (as with the Playwright example), and a team ALSO adds a gateway product in front of their MCP servers?",
+          "options": [
+            "The gateway automatically expands the registry's listings, so the missing server becomes discoverable through the registry itself",
+            "The registry gap remains unaffected by the gateway, since gateways address access control, not discovery completeness",
+            "Adding a gateway makes the registry unnecessary, since gateways independently solve the discovery problem too",
+            "The gateway and the registry are two names for the same underlying system, so fixing one automatically fixes the other"
+          ],
+          "correct": 1,
+          "explanations": [
+            "Not how these layers relate per the page -- gateways sit in front of servers for auth/routing/rate-limiting; they don't write to or expand the registry's own listings, which is a separate real system entirely.",
+            "Correct. The page explicitly frames these as solving DIFFERENT real problems -- 'a well-known, unlisted server... is a registry gap a gateway or platform doesn't fix' -- a gateway operates on servers you already know about and have configured, not on expanding what's discoverable in the registry.",
+            "Overstates a gateway's role -- the page frames gateways as an access-control/routing layer over KNOWN servers, not as a discovery mechanism that could substitute for the registry's cataloging function.",
+            "Contradicted directly -- the page treats these as four distinct, separately real layers solving different problems, not interchangeable names for the same system."
+          ],
+          "source": "MCP and Tool Ecosystem",
+          "sourceUrl": "mcp-tool-ecosystem.md"
+        },
+        {
+          "scenario": "In the real repro's payment task, the agent chose the official com.stripe/mcp server over a third-party hosted wrapper (eu.nordicmcp/stripe) that also appeared in the real search results and offered a broader toolset (18 tools).",
+          "question": "What was the real, stated reasoning behind this choice, according to the agent's own actual output?",
+          "options": [
+            "The third-party wrapper was reported as non-functional or broken in the real search results returned",
+            "The official server was the only one of the two that had any remote endpoint URL listed at all",
+            "The official server avoids the added trust and dependency cost of a nearby third-party intermediary",
+            "The third-party wrapper had fewer tools available, making it strictly less capable for the task"
+          ],
+          "correct": 2,
+          "explanations": [
+            "Not indicated anywhere -- both real servers appeared as valid, listed entries in the real search results; nothing in the repro's data suggests the third-party option was broken or non-functional.",
+            "Factually reversed from what's described -- the third-party wrapper DID have a real remote endpoint listed (a token-based URL); the distinguishing factor wasn't presence/absence of an endpoint.",
+            "Correct. The agent's own real output explicitly reasoned about trust: choosing the first-party server specifically to avoid 'a trust/dependency layer you don't need when the official one exists' -- a security-aware judgment about intermediary risk near sensitive payment data, not a capability comparison.",
+            "Backwards -- the third-party wrapper was described as offering a BROADER toolset (18 tools including reporting), not a narrower one; capability breadth wasn't the deciding factor and if anything favored the wrapper, which the agent still declined in favor of trust."
+          ],
+          "source": "MCP and Tool Ecosystem",
+          "sourceUrl": "mcp-tool-ecosystem.md"
         },
         {
           "scenario": "A real repro sent four calls with an identical, cached tools+system prefix. Call 3 changed only tool_choice (same tools, same system prompt) and still showed cache_read_input_tokens unchanged from call 2. Call 4 edited one word in one tool's description and showed a full cache_creation_input_tokens write instead.",
@@ -2378,7 +2461,7 @@ Every page's TL;DR in one place, every page's Scenario Check merged into one com
 
 === "Flashcards"
 
-    222 flashcards from every page with a deck so far — click a card to flip it, shuffle for random order.
+    230 flashcards from every page with a deck so far — click a card to flip it, shuffle for random order.
 
     <div class="flashcard-widget" data-title="Flashcards — All Pages">
     <script type="application/json">
@@ -2743,6 +2826,46 @@ Every page's TL;DR in one place, every page's Scenario Check merged into one com
           "front": "Why does the real requestState repro's request-binding check (test 3: same token, different cart_id) matter as a DISTINCT property from tamper detection (test 2)?",
           "back": "Tamper detection catches a MODIFIED token (broken AEAD tag). Request-binding catches an UNMODIFIED, validly-sealed token being replayed against different arguments than it was minted for -- the token cryptographically commits to its original method/target/args, so even a legitimately-obtained token can't be reused for a different operation.",
           "source": "MCP Deep Dive"
+        },
+        {
+          "front": "What is the official MCP registry, and how is it described in its own launch material?",
+          "back": "registry.modelcontextprotocol.io -- launched in preview 2025-09-08, backed by Anthropic, GitHub, PulseMCP, Block and others. Its own description: 'an open catalog and API for publicly available MCP servers.' Unauthenticated reads via GET /v0/servers?search=<query>&limit=<n>.",
+          "source": "MCP and Tool Ecosystem"
+        },
+        {
+          "front": "In this topic's real repro against the LIVE registry, what pattern emerged between natural-language queries and brand-name queries?",
+          "back": "Natural-language capability queries ('browser automation form filling', 'payment charges status') reliably returned ZERO results. Brand/product-name queries ('Stripe', 'playwright', 'browser', 'puppeteer') returned real matches. Real conclusion: the registry's search behaves closer to keyword/brand matching than semantic search.",
+          "source": "MCP and Tool Ecosystem"
+        },
+        {
+          "front": "What real, separately-confirmed finding did a direct check of the registry reveal about Microsoft's own playwright-mcp server?",
+          "back": "Microsoft's official playwright-mcp (37.5k+ GitHub stars) does NOT appear in the registry under any query tried, including a direct search=microsoft. A real, honest gap in a genuine preview-stage product -- even well-known servers can be absent, through no fault of the searcher.",
+          "source": "MCP and Tool Ecosystem"
+        },
+        {
+          "front": "In the real repro's payment task, why did the agent pick the official com.stripe/mcp over a third-party wrapper (eu.nordicmcp/stripe) that had MORE tools (18)?",
+          "back": "Real, stated reasoning: the official server 'avoids the added trust and dependency cost of a third-party intermediary' near payment data -- a security-aware judgment about trust, not a capability comparison. The agent picked the narrower-featured but first-party option specifically to avoid an extra intermediary touching sensitive data.",
+          "source": "MCP and Tool Ecosystem"
+        },
+        {
+          "front": "What real job do MCP gateways do that neither the base protocol nor the registry covers?",
+          "back": "AuthN/authZ, per-tool/per-team rate limiting, audit logging, and routing across many MCP servers at once. Real, named examples: Bifrost, TrueFoundry MCP Gateway, Docker/Microsoft gateway offerings, ToolHive, agentgateway -- positioned as the 'enterprise readiness' layer the base spec deliberately leaves out.",
+          "source": "MCP and Tool Ecosystem"
+        },
+        {
+          "front": "What real shift is happening with how companies expose their own MCP servers, and what are 3 real, currently-live examples?",
+          "back": "A shift from local stdio processes to hosted, remote Streamable-HTTP endpoints. Real, confirmed-live examples: GitHub (api.githubcopilot.com/mcp/, GA'd 2025-09-04), Stripe (mcp.stripe.com -- stops accepting non-Agent-tagged secret keys from 2026-10-31), Notion (mcp.notion.com/mcp -- old stdio server no longer maintained), and Cloudflare's own suite of a dozen+ scoped subdomains (docs.mcp.cloudflare.com, browser.mcp.cloudflare.com, etc.).",
+          "source": "MCP and Tool Ecosystem"
+        },
+        {
+          "front": "What are the two real, different philosophies of MCP browser automation this topic's own repro surfaced?",
+          "back": "Microsoft's playwright-mcp: runs LOCALLY, drives Playwright's accessibility tree directly ('no vision models needed, operates purely on structured data'), tools like browser_click/browser_snapshot. Browserbase's MCP server: runs in Browserbase's MANAGED CLOUD, built on Stagehand, resolves natural-language actions ('click the login button') to real DOM interactions -- the one this topic's own agent actually picked for its browser task.",
+          "source": "MCP and Tool Ecosystem"
+        },
+        {
+          "front": "What are the four real, separate layers this topic distinguishes in the MCP ecosystem, and why doesn't fixing one fix the others?",
+          "back": "Registry (discovery -- what exists), gateways (access control/routing across known servers), remote servers (where code runs), tool platforms (integration aggregation, e.g. Composio's 1,000+/3,000+ self-reported toolkits/tools). A well-known but unlisted server is a REGISTRY gap a gateway can't fix; a rate-limit need is a GATEWAY problem a bigger registry can't fix either -- each layer solves a genuinely different problem.",
+          "source": "MCP and Tool Ecosystem"
         },
         {
           "front": "What is the exact cache prefix hierarchy Anthropic's prompt cache follows, and why does the order matter?",
