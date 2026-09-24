@@ -223,6 +223,14 @@ Every page's TL;DR in one place, every page's Scenario Check merged into one com
     - **A real repro found the exact tradeoff risk-tiering is supposed to solve, playing out concretely**: flat-autonomous (no gates) let a $250 refund execute with zero review. Flat-gated (every action requires approval, no distinction by risk) stopped the agent after only 2 harmless lookup calls — it never even reached the risky refund step. Risk-tiered gating (only actions above a real threshold require approval) let both safe lookups proceed immediately and correctly blocked only the $250 refund — confirmed on two separate full runs.
     - **The real, sharper finding isn't "flat gating adds friction" — it's that undifferentiated gating can stall an agent before it even reaches the point where review matters.** The agent under flat-gating didn't slowly grind through extra approval steps; it stopped making progress entirely, two calls in, having never attempted the one action that actually needed a human.
 
+    ### [Identity, Governance and Compliance](identity-governance-compliance.md)
+
+    - **Real, current identity standards agree on the same principle: an agent should be identifiable AS an agent, not blended into the user it acts for.** Okta's Agent SSO (GA August 24, 2026) is real and verified: *"Agent SSO establishes a first-class identity model for AI agents at the point of connection"* — it *"registers it as a first-class identity in Universal Directory alongside human employees"* and *"issues short-lived, identity-governed tokens in place of stored credentials."* A real repro confirmed this is a design choice, not automatic: an agent told to just "act as the user" sent a fully anonymous approval email; the identical agent given an explicit identity and scoped delegation named itself and its authority in the same real, sent output.
+    - **OWASP's real, current Top 10 for Agentic Applications (published December 9, 2025) names identity and trust failures directly**, not just technique-level attacks: **ASI03 – Identity & Privilege Abuse** ("leaked credentials enable agents to operate beyond intended scope") and **ASI09 – Human-Agent Trust Exploitation** ("confident explanations mislead operators into approving harmful actions") are real, distinct, named risk categories in the current list.
+    - **NIST's real CAISI AI Agent Standards Initiative (launched February 17, 2026) exists specifically because the original AI RMF predates this problem** — its own three real, stated pillars: facilitating industry-led agent standards, fostering open-source protocol development, and *"advancing research in areas of AI agent security and identity to enable new use cases."*
+    - **The EU AI Act has no agent-specific chapter — it applies its existing, real risk categories to agentic systems, not a bespoke agent regime.** Real, verified provisions: Article 50 (AI-interaction transparency, applies from August 2, 2026), Article 14 (human oversight for high-risk systems, including a real requirement for a "stop" mechanism), and Article 6/Annex III (high-risk classification by use case, applying from December 2027 and August 2028). Don't imply a dedicated "agent article" exists — it doesn't.
+    - **MITRE ATLAS is the real, adversary-technique counterpart to OWASP's risk list** — a living knowledge base, modeled on MITRE ATT&CK, now real and verified as expanding "to capture attack paths that emerge at the orchestration and execution layers" as agents act with growing autonomy.
+
     ### [Sandboxes and Permissions](sandboxes-permissions.md)
 
     - **"Sandbox" is a ladder of real isolation strengths, not one thing**: Linux namespaces/cgroups (containers) share the host kernel — weakest tier. gVisor interposes a user-space kernel, the **Sentry**, that intercepts every syscall the sandboxed workload makes before it ever reaches the real host kernel — middle tier. Firecracker/Kata microVMs give each workload its own dedicated kernel via real hardware virtualization — strongest tier, and still fast: real, verified numbers are **boot in <125ms**, **<5 MiB memory overhead per VM**, and **up to 150 microVMs launched per second per host**. WebAssembly sits differently on the ladder — real, verified: it's *"lighter weight than containers or virtual machines"* and default-deny at the capability level, rather than default-shared-then-restricted.
@@ -274,7 +282,7 @@ Every page's TL;DR in one place, every page's Scenario Check merged into one com
 
 === "Combined Scenario Check"
 
-    132 questions from every page on this site, one combined pass instead of opening each page separately. Every question shows which page it's from — go re-read that page for anything you get wrong.
+    136 questions from every page on this site, one combined pass instead of opening each page separately. Every question shows which page it's from — go re-read that page for anything you get wrong.
 
     <div class="quiz-widget" data-title="Combined Scenario Check — All Pages">
     <script type="application/json">
@@ -2333,6 +2341,82 @@ Every page's TL;DR in one place, every page's Scenario Check merged into one com
           "sourceUrl": "guardrails-human-in-the-loop.md"
         },
         {
+          "scenario": "A real repro sent the identical underlying task (approve a vendor invoice by email) under two conditions: an agent told to 'just act as the user,' and an agent given a distinct identity plus an explicit, scoped delegation with instructions to disclose both externally. The first produced a fully anonymous email; the second explicitly named the agent and its authorized scope.",
+          "question": "What is the most precise conclusion this specific result supports?",
+          "options": [
+            "Identity disclosure and delegation traceability follow directly from explicit instruction, not automatically from careful agent behavior",
+            "The blended condition's email was defective or malformed compared to the delegated condition's output",
+            "Identity disclosure requires a separate enforcement mechanism beyond instructions, since models cannot be trusted to follow such instructions",
+            "Both conditions are functionally identical from a compliance perspective, since the underlying action taken was the same"
+          ],
+          "correct": 0,
+          "explanations": [
+            "Correct. The real, first-try result shows the difference came directly from what was specified in the system instructions -- explicit identity and delegation produced explicit disclosure; its absence produced none. This is precisely the page's own stated takeaway: disclosure is a design choice, not an automatic byproduct.",
+            "Not indicated -- the blended email was well-formed and clearly communicated the approval; it wasn't broken, it simply lacked any identity or delegation disclosure, which is a different property than malformation.",
+            "Overstates it -- the real repro's own result is a clean, first-try SUCCESS from instruction alone, not a demonstrated failure requiring additional enforcement; the finding is that the instruction worked, not that it's untrustworthy.",
+            "Contradicted directly -- the page treats WHO the recipient can identify as taking the action as a substantive difference, directly relevant to transparency obligations like EU AI Act Article 50; the underlying action being identical doesn't make the disclosure difference irrelevant."
+          ],
+          "source": "Identity, Governance and Compliance",
+          "sourceUrl": "identity-governance-compliance.md"
+        },
+        {
+          "scenario": "OWASP's real, current Top 10 for Agentic Applications names ASI03 (Identity & Privilege Abuse) and ASI09 (Human-Agent Trust Exploitation) as distinct, separate risk categories, alongside other categories like ASI01 (Agent Goal Hijack) and ASI02 (Tool Misuse).",
+          "question": "What real, distinct problem do ASI03 and ASI09 specifically name, as opposed to the technique-level attacks this page's companion Agent Security post already covers?",
+          "options": [
+            "ASI03 and ASI09 are simply renamed duplicates of the lethal trifecta and indirect injection already covered elsewhere",
+            "ASI03 and ASI09 apply exclusively to multi-agent systems and have no relevance to single-agent deployments",
+            "ASI03 and ASI09 are deprecated categories that OWASP has since removed from its current list",
+            "ASI03 and ASI09 name identity/privilege-scope failures and human over-trust in agent authority claims specifically"
+          ],
+          "correct": 3,
+          "explanations": [
+            "Not accurate -- the real, quoted descriptions are distinct: ASI03 is specifically about credentials enabling operation 'beyond intended scope' and ASI09 about humans being misled by 'confident explanations,' neither of which restates the lethal trifecta or injection mechanics covered in the companion post.",
+            "Not supported -- nothing in the real, cited list restricts these categories to multi-agent contexts specifically; identity/privilege abuse and human trust exploitation are described as general agentic risks.",
+            "Contradicted directly -- these are presented as part of OWASP's CURRENT, real, published December 2025 list, not as removed or deprecated categories.",
+            "Correct. ASI03's real description names credential/privilege-scope failures directly; ASI09's names a distinct human-trust failure mode (being misled by a confident agent into approving something harmful) -- both are governance/identity-layer risks, complementary to but distinct from the technique-level attacks (trifecta, injection) covered elsewhere."
+          ],
+          "source": "Identity, Governance and Compliance",
+          "sourceUrl": "identity-governance-compliance.md"
+        },
+        {
+          "scenario": "The EU AI Act's real, verified text includes Article 50 (AI-interaction transparency), Article 14 (human oversight for high-risk systems), and Article 6/Annex III (high-risk classification by use case) -- but no provision specifically named 'AI agents' or 'autonomous agents' as a defined regulatory category.",
+          "question": "What is the most precise, honest way to determine which EU AI Act obligations apply to a given agentic system, based on this real structure?",
+          "options": [
+            "Agentic systems are entirely exempt from the EU AI Act, since no provision specifically names them as a category",
+            "Classify the system by what it does using the Act's existing risk categories, not by searching for an agent chapter",
+            "All agentic systems are automatically classified as high-risk under Annex III regardless of their specific use case",
+            "The EU AI Act does not yet apply to any AI system as of this writing, agentic or otherwise"
+          ],
+          "correct": 1,
+          "explanations": [
+            "Not supported and likely incorrect -- the absence of an agent-specific chapter doesn't mean exemption; it means agentic systems are evaluated under the SAME existing categories (transparency, high-risk use cases) that apply to any AI system meeting those criteria.",
+            "Correct. This is the precise, honest reading the page gives: since no agent-specific chapter exists, the correct approach is applying the Act's real, existing categories (Article 50 transparency, Annex III high-risk use cases) based on what the system actually does, not searching for an 'agent' label that isn't in the text.",
+            "Not accurate -- Annex III's real, verified structure defines high-risk status by SPECIFIC USE CASES (biometrics, employment, essential services, etc.), not by architecture; an agentic system isn't automatically high-risk merely for being agentic.",
+            "Directly contradicted by the real, verified dates given -- Article 50 applies from August 2, 2026, and other provisions have their own real, specific application dates; parts of the Act are already in force or scheduled with concrete dates, not universally inapplicable."
+          ],
+          "source": "Identity, Governance and Compliance",
+          "sourceUrl": "identity-governance-compliance.md"
+        },
+        {
+          "scenario": "MITRE ATLAS is described as a real, living knowledge base of adversary tactics and techniques against AI systems, modeled on MITRE ATT&CK, and is reported to be expanding to cover attack paths at the orchestration and execution layers as agents act more autonomously.",
+          "question": "What is the most precise way to characterize MITRE ATLAS's real role relative to OWASP's Top 10 for Agentic Applications, as this page frames them?",
+          "options": [
+            "ATLAS replaces OWASP's list entirely, since ATLAS is the more comprehensive and authoritative framework",
+            "ATLAS and OWASP's list cover completely unrelated domains with no meaningful connection between them",
+            "ATLAS provides the adversary-technique vocabulary that complements OWASP's named risk categories",
+            "ATLAS is a proprietary, closed framework unlike OWASP's fully open, community-maintained list"
+          ],
+          "correct": 2,
+          "explanations": [
+            "Not the framing given -- the page presents ATLAS and OWASP's list as complementary, serving different purposes (risk categories vs. adversary techniques), not as one superseding the other.",
+            "Contradicted directly -- the page explicitly frames ATLAS as the 'adversary-technique counterpart' to OWASP's risk list, describing a direct, deliberate connection between the two, not an unrelated domain.",
+            "Correct. This is precisely the page's own framing: OWASP names WHAT can go wrong (risk categories like ASI03, ASI09), while ATLAS catalogs HOW adversaries actually achieve it (tactics and techniques) -- complementary tools, with ATLAS specifically useful for red-teaming and demonstrating compliance coverage against a recognized framework.",
+            "Not supported -- MITRE ATLAS is described as 'a globally accessible, living knowledge base,' consistent with an openly accessible resource; the page doesn't characterize it as proprietary or closed, nor does it draw an open-vs-closed contrast with OWASP."
+          ],
+          "source": "Identity, Governance and Compliance",
+          "sourceUrl": "identity-governance-compliance.md"
+        },
+        {
           "scenario": "A team migrates their agent's code-execution tool from a Docker container to a Firecracker microVM, expecting this to substantially raise their security bar. They don't change how the agent's payments API credential is supplied to the sandboxed code -- it still sits directly in the executed code's own environment variables.",
           "question": "What does this page's own repro most precisely predict about this migration's effect on credential-related risk?",
           "options": [
@@ -2795,7 +2879,7 @@ Every page's TL;DR in one place, every page's Scenario Check merged into one com
 
 === "Flashcards"
 
-    260 flashcards from every page with a deck so far — click a card to flip it, shuffle for random order.
+    267 flashcards from every page with a deck so far — click a card to flip it, shuffle for random order.
 
     <div class="flashcard-widget" data-title="Flashcards — All Pages">
     <script type="application/json">
@@ -3860,6 +3944,41 @@ Every page's TL;DR in one place, every page's Scenario Check merged into one com
           "front": "What is the real, three-way tradeoff this topic's repro demonstrates across flat-autonomous, flat-gated, and tiered guardrails?",
           "back": "Flat-autonomous: functional but unsafe (risky action unreviewed). Flat-gated: safe but non-functional (agent stalls before reaching what needed review). Tiered: both safe (risky action caught) AND functional (safe work still proceeds) -- the concrete, measured payoff of 'proportional controls.'",
           "source": "Guardrails and Human-in-the-Loop"
+        },
+        {
+          "front": "What is Okta's real, verified Agent SSO, and what does it establish?",
+          "back": "GA August 24, 2026. 'Agent SSO establishes a first-class identity model for AI agents at the point of connection' -- registers agents 'as a first-class identity in Universal Directory alongside human employees,' and 'issues short-lived, identity-governed tokens in place of stored credentials.' Its Cross App Access protocol is 'formally incorporated as the official Enterprise-Managed Authorization extension for the Model Context Protocol.'",
+          "source": "Identity, Governance and Compliance"
+        },
+        {
+          "front": "In this topic's own real repro, what happened when an agent was told to 'just act as the user' vs. given a distinct identity + scoped delegation?",
+          "back": "Blended: sent email was fully anonymous -- 'This email confirms approval of Invoice #INV-4471...' no identity, no delegation trail. Delegated: 'I am Agent-Finance-07, an AI agent acting on behalf of Priya Shah (Finance Ops) under an explicit, scoped delegation...' Real, first-try result: identity disclosure is a design choice specified via instruction, not an automatic byproduct.",
+          "source": "Identity, Governance and Compliance"
+        },
+        {
+          "front": "What are OWASP's real ASI03 and ASI09 risk categories (Top 10 for Agentic Applications, Dec 9 2025)?",
+          "back": "ASI03 -- Identity & Privilege Abuse: 'leaked credentials enable agents to operate beyond intended scope.' ASI09 -- Human-Agent Trust Exploitation: 'confident explanations mislead operators into approving harmful actions.' Both are governance/identity-layer risks, distinct from technique-level attacks (trifecta, injection) covered in Agent Security.",
+          "source": "Identity, Governance and Compliance"
+        },
+        {
+          "front": "What is NIST's real CAISI AI Agent Standards Initiative, and its three stated pillars?",
+          "back": "Launched Feb 17, 2026. Pillars (exact quotes): (1) 'facilitating industry-led development of agent standards and U.S. leadership in international standards bodies,' (2) 'fostering community-led open source protocol development and maintenance for agents,' (3) 'advancing research in areas of AI agent security and identity to enable new use cases.'",
+          "source": "Identity, Governance and Compliance"
+        },
+        {
+          "front": "What real EU AI Act provisions apply to agentic systems, and what's the critical thing NOT to imply?",
+          "back": "Article 50 (AI-interaction transparency, applies Aug 2, 2026) -- must disclose AI interaction unless obvious. Article 14 (human oversight for high-risk systems, incl. a real 'stop' mechanism requirement). Article 6/Annex III (high-risk classification by USE CASE, applies Dec 2027/Aug 2028). CRITICAL: no provision names 'AI agents' as a defined category -- classify by what the system does, not by an agent-specific chapter (none exists).",
+          "source": "Identity, Governance and Compliance"
+        },
+        {
+          "front": "What is MITRE ATLAS, and how does this topic frame its relationship to OWASP's list?",
+          "back": "A real, living knowledge base of adversary tactics/techniques against AI systems, modeled on MITRE ATT&CK, built from 'empirical evidence... of real-world attacks.' Expanding 'to capture attack paths that emerge at the orchestration and execution layers' as agents act autonomously. Framing: OWASP names WHAT can go wrong (risk categories); ATLAS catalogs HOW adversaries achieve it (techniques) -- complementary, not competing.",
+          "source": "Identity, Governance and Compliance"
+        },
+        {
+          "front": "What real, unratified IETF draft proposes a delegation-chain mechanism for agent identity, and what does it add?",
+          "back": "draft-oauth-ai-agents-on-behalf-of-user (expired/archived, NOT an approved standard -- flag this). Introduces a 'requested_actor' parameter identifying the specific agent, and an 'actor_token' authenticating it during exchange; resulting access tokens carry 'the delegation chain from the user to the agent via a client application' -- a real, traceable record of who authorized what.",
+          "source": "Identity, Governance and Compliance"
         },
         {
           "front": "What are the four tiers of the real isolation ladder, weakest to strongest, for sandboxed agent code execution?",

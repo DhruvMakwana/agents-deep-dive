@@ -59,6 +59,7 @@ SECTIONS = [
         ("Observability and Debugging", "observability-debugging.md"),
         ("Agent Security", "agent-security.md"),
         ("Guardrails and Human-in-the-Loop", "guardrails-human-in-the-loop.md"),
+        ("Identity, Governance and Compliance", "identity-governance-compliance.md"),
         ("Sandboxes and Permissions", "sandboxes-permissions.md"),
         ("Durable Execution", "durable-execution.md"),
         ("Cost and Latency", "cost-latency.md"),
