@@ -68,6 +68,7 @@ SECTIONS = [
         ("Training Agents: Reward and Credit", "training-agents.md"),
         ("RL for Search and Tool Agents", "rl-search-tool-agents.md"),
         ("Data and Environments", "data-environments.md"),
+        ("Self-Improving Agents", "self-improving-agents.md"),
     ]),
     ("Interview", [
         ("Interview Playbook", "interview-playbook.md"),
