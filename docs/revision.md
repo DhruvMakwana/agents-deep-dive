@@ -270,6 +270,13 @@ Every page's TL;DR in one place, every page's Scenario Check merged into one com
     - **ReTool shows RL can teach WHEN to reach for a tool, not just how.** Real, verified: on AIME, *"67% accuracy with 400 training steps"* vs. a text-only RL baseline's *"40% accuracy, 1080 steps"* — higher accuracy in roughly a third of the training steps — with the paper describing an emergent *"aha moment"* where the model starts self-correcting code mid-reasoning without being explicitly taught to.
     - **RAGEN names a real, recurring multi-turn RL failure mode: the Echo Trap.** Real, verified: *"a recurring instability pattern, Echo Trap, where agents overfit to locally rewarded reasoning patterns, marked by reward variability collapse, entropy drop, and gradient spikes."* Models converge to *"near-identical phrasing... without justification"* — real, multi-turn RL training doesn't just get slower when it goes wrong, it can collapse into repeating a shallow, memorized pattern that happens to score well locally.
 
+    ### [Data and Environments](data-environments.md)
+
+    - **Real trajectory-synthesis methods turn scarce, expensive real data into cheap, scalable synthetic data — with real, automated verification built in, not just generation.** AgentTrek converts web tutorials into agent trajectories at a real, verified cost of *"$0.55 per high-quality trajectory without human annotators,"* using *"a VLM-based evaluator [to verify] trajectory correctness."* ToolACE builds *"a comprehensive API pool of 26,507 diverse APIs"* across 390 domains, checked by a real *"dual-layer verification system combining rule-based and model-based checks."*
+    - **SWE-Gym and SWE-smith attack the same real bottleneck — realistic SWE training environments — from two different angles.** SWE-Gym curates *"2,438 real-world Python task instances"* from actual GitHub issues, producing *"up to 19% absolute gains in resolve rate"* on SWE-bench. SWE-smith instead *"automatically synthesizes"* tasks by breaking tests in *"50k instances sourced from 128 GitHub repositories"* — no real historical bug report required at all.
+    - **A real repro of SWE-smith's exact mechanism, run start to finish**: a real Claude call introduced a genuine, subtle boundary bug into working code; a real pytest run confirmed the task was real (4 of 5 tests passed, 1 genuinely failed); a second real Claude call, given only the real failing test output, fixed it; a real pytest re-run confirmed all 5 tests passed.
+    - **"Verifiers" is the real, general term for what makes RL training at scale possible: a deterministic pass/fail signal instead of an LLM's opinion.** RLVR's own framing: *"for code, a compiler ran the output and returned pass or fail, producing binary rewards: 1 for correct, 0 for wrong."* Prime Intellect's real, open-source `verifiers` library formalizes this as an Environment — *"a dataset of task inputs, a harness for the model... and a reward function or rubric to score the model's performance."*
+
     ## Interview
 
     ### [Interview Playbook](interview-playbook.md)
@@ -282,7 +289,7 @@ Every page's TL;DR in one place, every page's Scenario Check merged into one com
 
 === "Combined Scenario Check"
 
-    136 questions from every page on this site, one combined pass instead of opening each page separately. Every question shows which page it's from — go re-read that page for anything you get wrong.
+    140 questions from every page on this site, one combined pass instead of opening each page separately. Every question shows which page it's from — go re-read that page for anything you get wrong.
 
     <div class="quiz-widget" data-title="Combined Scenario Check — All Pages">
     <script type="application/json">
@@ -2797,6 +2804,82 @@ Every page's TL;DR in one place, every page's Scenario Check merged into one com
           "sourceUrl": "rl-search-tool-agents.md"
         },
         {
+          "scenario": "A real repro had a Claude call introduce one bug into a working function, then ran the real test suite: 4 of 5 tests passed, and exactly 1 failed -- the specific test covering the broken behavior.",
+          "question": "What does this specific pattern of partial failure (not 0 passed, not 5 passed) most precisely indicate about the synthesized task's quality?",
+          "options": [
+            "The synthesized bug is narrow and realistic, breaking only the specific behavior it targeted",
+            "The test suite itself must be broken, since a genuine bug should cause every test to fail",
+            "This pattern proves the bug was too subtle to be a genuine, realistic software defect",
+            "The result is inconclusive, since partial test failures cannot distinguish a real bug from a flawed test suite"
+          ],
+          "correct": 0,
+          "explanations": [
+            "Correct. This is precisely the real, well-formed synthesized task the page describes: narrow enough that most of the function's behavior remains correct (4 passing tests), but genuinely broken in one specific, testable way (1 failing test) -- exactly the shape SWE-smith's approach aims to produce, verified by actual execution rather than assumed.",
+            "Not supported -- a real bug in one specific code path (a boundary condition) legitimately only breaks tests that exercise that exact path; expecting every test to fail conflates 'any bug exists' with 'every code path is affected,' which isn't how real bugs work.",
+            "Backwards -- a bug that's TOO subtle to matter wouldn't fail any test at all; failing exactly the test that covers the affected boundary condition is evidence the bug is realistic and consequential, not too subtle to be genuine.",
+            "Overstates the ambiguity -- the real, deterministic pytest run directly attributes the failure to a specific assertion (test_touching_intervals) with a specific diff, which is concrete, traceable evidence of a real behavioral change, not an inconclusive result."
+          ],
+          "source": "Data and Environments",
+          "sourceUrl": "data-environments.md"
+        },
+        {
+          "scenario": "SWE-smith's real, verified approach generates 50k task instances from 128 GitHub repositories by breaking existing tests in arbitrary working code, explicitly without requiring a real historical PR or issue -- contrasted with SWE-Gym's real, curated 2,438 instances sourced from actual GitHub issues.",
+          "question": "What is the most precise, real distinction between these two approaches' core mechanisms?",
+          "options": [
+            "SWE-Gym generates entirely synthetic tasks with no connection to real code, while SWE-smith only uses real historical bugs",
+            "SWE-smith curates real historical bug reports at greater scale than SWE-Gym's smaller, hand-picked selection",
+            "The two approaches are functionally identical, differing only in which specific GitHub repositories they draw from",
+            "SWE-Gym curates tasks from real historical bug reports; SWE-smith synthesizes tasks from arbitrary working code instead"
+          ],
+          "correct": 3,
+          "explanations": [
+            "Backwards on both counts -- SWE-Gym's real tasks ARE sourced from actual GitHub issues (real code, real bugs), while SWE-smith is the one that does NOT require any real historical bug report at all, synthesizing tasks instead.",
+            "Backwards -- SWE-smith is explicitly the SYNTHESIS approach (breaking tests in arbitrary code, no historical report needed); it's SWE-Gym that curates from real historical GitHub issues, not SWE-smith.",
+            "Not supported -- the real, core mechanisms differ fundamentally (curation from real historical issues vs. synthesis from arbitrary working code), not merely which specific repos were selected; this difference is exactly what explains the real scale gap between the two.",
+            "Correct. This is precisely the real, distinguishing mechanism: SWE-Gym's 2,438 instances come from real, curated GitHub issues; SWE-smith's 50k instances are SYNTHESIZED by deliberately breaking tests in arbitrary working repositories, with no real historical bug report required -- the core reason SWE-smith reaches a real, dramatically larger scale (50k vs. 2,438)."
+          ],
+          "source": "Data and Environments",
+          "sourceUrl": "data-environments.md"
+        },
+        {
+          "scenario": "RLVR's real, quoted framing states: 'for code, a compiler ran the output and returned pass or fail, producing binary rewards: 1 for correct, 0 for wrong.' Separately, ToolACE uses 'a dual-layer verification system combining rule-based and model-based checks.'",
+          "question": "What real, practical reason would a pipeline choose ToolACE's dual-layer approach over a pure RLVR-style binary compiler check?",
+          "options": [
+            "Dual-layer verification is strictly more accurate in every case, so it should always replace binary compiler-based checks",
+            "Model-based checks are needed when correctness can't be reduced to a single deterministic pass/fail signal alone",
+            "Binary compiler checks are being phased out industry-wide in favor of model-based verification exclusively",
+            "The dual-layer approach exists purely for redundancy, providing no capability a single-layer check couldn't already provide"
+          ],
+          "correct": 1,
+          "explanations": [
+            "Overclaims universality -- the page frames deterministic execution-based verification (RLVR's compiler check) as the MORE reliable default when available, not something dual-layer checking should always replace; each is suited to different task types.",
+            "Correct. This is the precise, real reason the page gives for layering rule-based and model-based checks: some correctness properties (e.g., whether a generated tool-calling dialogue is realistic and diverse, not just syntactically valid) aren't reducible to a single deterministic pass/fail test the way compiled code execution is -- model-based judgment fills that real gap.",
+            "Not supported anywhere in the real, cited material -- nothing in the page suggests compiler/execution-based verification is being phased out; RLVR's binary pass/fail approach is presented as real and current, not obsolete.",
+            "Contradicted directly -- the page frames the dual-layer approach as covering DIFFERENT kinds of correctness (rule-based for what can be checked deterministically, model-based for what can't), not as redundant duplication of the same capability."
+          ],
+          "source": "Data and Environments",
+          "sourceUrl": "data-environments.md"
+        },
+        {
+          "scenario": "A real repro's own recipe code initially broke with 'AttributeError: ThinkingBlock object has no attribute text' when indexing response.content[0].text directly, and was fixed by filtering for block.type == 'text' explicitly before trusting any result.",
+          "question": "What does this specific bug and fix illustrate about applying this page's own 'verify, don't assume' principle to the recipe's own development process?",
+          "options": [
+            "The bug proves LLM API responses are fundamentally unreliable and unsuitable for any verification pipeline",
+            "The fix was unnecessary, since the original indexing approach would have worked correctly in most real cases",
+            "Catching this via a real run before trusting results applies the same discipline this page argues for",
+            "This bug specifically demonstrates a flaw in the SWE-smith method's own task-synthesis mechanism"
+          ],
+          "correct": 2,
+          "explanations": [
+            "Overreaches -- one indexing assumption being wrong (position isn't guaranteed) isn't evidence the API itself is unreliable; the response structure was well-defined, just not in the shape the code assumed.",
+            "Not accurate -- the error was a real, reproducible crash on an actual run, not a hypothetical edge case; the fix (filtering by type rather than position) was necessary to get a working result at all, not an unnecessary precaution.",
+            "Correct. This is precisely the page's own throughline applied reflexively: the bug was only caught because the code's own output was actually run and checked, rather than assumed correct -- the identical discipline ('verify by execution, don't assume') the page argues every synthesized task and every RL reward signal needs.",
+            "Not related -- this was a bug in the RECIPE'S OWN Python code for parsing an API response, unrelated to SWE-smith's actual task-synthesis mechanism (which is about generating bugs in target code, not about how this blog's demo code parses API responses)."
+          ],
+          "source": "Data and Environments",
+          "sourceUrl": "data-environments.md"
+        },
+        {
           "scenario": "A prep repository's README states that its per-company interview question lists are 'synthesised from this company's publicly known focus areas and role descriptions \u2014 not leaked questions,' the same disclosure appearing on every company's page in the repo.",
           "question": "What's the most accurate way to use this repository's content in interview prep?",
           "options": [
@@ -2879,7 +2962,7 @@ Every page's TL;DR in one place, every page's Scenario Check merged into one com
 
 === "Flashcards"
 
-    267 flashcards from every page with a deck so far — click a card to flip it, shuffle for random order.
+    274 flashcards from every page with a deck so far — click a card to flip it, shuffle for random order.
 
     <div class="flashcard-widget" data-title="Flashcards — All Pages">
     <script type="application/json">
@@ -4179,6 +4262,41 @@ Every page's TL;DR in one place, every page's Scenario Check merged into one com
           "front": "How do the six methods on this topic split into two connected layers?",
           "back": "Layer 1 -- WHEN to act: Search-R1/R1-Searcher/ReSearch show outcome-only RL is enough to teach a model to decide when to search, no step-level supervision needed. Layer 2 -- HOW to reward that action well: ToolRL (fine-grained reward beats coarse) and ReTool (RL improves tool-use TIMING specifically) show coarse reward isn't enough. RAGEN names the real risk of getting layer 2 wrong across many turns: the Echo Trap.",
           "source": "RL for Search and Tool Agents"
+        },
+        {
+          "front": "What is AgentTrek, and what's its real, verified cost per trajectory?",
+          "back": "Converts web tutorials into agent trajectories: harvest tutorials, convert to task specs, then 'use a visual-language model (VLM) agent to execute these instructions in real environments, while a VLM-based evaluator verifies trajectory correctness.' Real cost: '$0.55 per high-quality trajectory without human annotators.'",
+          "source": "Data and Environments"
+        },
+        {
+          "front": "What is ToolACE's real scale and verification mechanism?",
+          "back": "'A comprehensive API pool of 26,507 diverse APIs' across 390 domains, via 'a novel self-evolution synthesis process.' Verified by 'a dual-layer verification system combining rule-based and model-based checks.' Topped BFCL-v1 at 91.41% (ahead of Claude 3.5 Sonnet's 90.53%) -- note BFCL moved to a harder v3 since, where ToolACE-8B scores lower (59.22, rank #3).",
+          "source": "Data and Environments"
+        },
+        {
+          "front": "What are SWE-Gym's and SWE-smith's real, contrasting mechanisms and scale?",
+          "back": "SWE-Gym: CURATES 2,438 real-world Python task instances from actual GitHub issues -- 'up to 19% absolute gains in resolve rate' on SWE-bench. SWE-smith: SYNTHESIZES tasks by breaking tests in arbitrary working code, no historical bug report needed -- '50k instances sourced from 128 GitHub repositories' (vs. prior work's 'at most 1,000s... from 11 or fewer'). SWE-agent-LM-32B: 40.2% Pass@1 on SWE-bench Verified.",
+          "source": "Data and Environments"
+        },
+        {
+          "front": "In this topic's own real repro (SWE-smith's exact mechanism), what happened in the synthesis and fix steps?",
+          "back": "Synthesis: Claude changed 'start <= last_end' to 'start < last_end' -- a genuine boundary bug. Real pytest: 4 passed, 1 failed (test_touching_intervals) -- narrow, realistic. Fix: given ONLY the failing pytest output (not original code), Claude correctly restored '<=' . Real pytest: 5 passed. A complete, real, first-try synthesis-and-verification loop.",
+          "source": "Data and Environments"
+        },
+        {
+          "front": "What real bug was caught in this topic's own recipe code, and what's the general lesson?",
+          "back": "response.content[0].text crashed with 'AttributeError: ThinkingBlock object has no attribute text' -- the first content block isn't reliably the text block. Fixed by filtering block.type == 'text' explicitly. Lesson: the same 'verify by execution, don't assume' discipline the page argues for in synthesized tasks applies reflexively to the demo's own code.",
+          "source": "Data and Environments"
+        },
+        {
+          "front": "What is RLVR's real, quoted framing for verifiers, and how does Prime Intellect's `verifiers` library formalize it?",
+          "back": "RLVR: 'for code, a compiler ran the output and returned pass or fail, producing binary rewards: 1 for correct, 0 for wrong.' Prime Intellect's Environment = 'a dataset of task inputs, a harness for the model..., and a reward function or rubric to score the model's performance' -- decoupled from any specific training stack since 'environment implementations are often tied to a specific training RL stack and can be difficult to adapt to a new trainer.'",
+          "source": "Data and Environments"
+        },
+        {
+          "front": "Why would a real pipeline choose a dual-layer (rule + model) verifier over a pure binary compiler-style check?",
+          "back": "When correctness can't be reduced to a single deterministic pass/fail signal -- e.g. whether a generated tool-calling dialogue is realistic and diverse, not just syntactically valid. Deterministic execution (RLVR's compiler check) remains the more reliable DEFAULT when available; model-based judgment is the real fallback when it isn't, which is why ToolACE and AgentTrek both layer both kinds rather than picking one.",
+          "source": "Data and Environments"
         },
         {
           "front": "Of 106 collected 'agent interview questions,' how many actually trace to a real candidate report or company-published process (vs prep material)?",
