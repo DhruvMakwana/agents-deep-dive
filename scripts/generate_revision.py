@@ -49,6 +49,7 @@ SECTIONS = [
         ("Harness Engineering", "harness-engineering.md"),
         ("Coding Agents: Mechanisms", "coding-agents-mechanisms.md"),
         ("Coding Agent Products and Configuration", "coding-agent-config.md"),
+        ("Deep Research Agents", "deep-research-agents.md"),
     ]),
     ("Production", [
         ("Evaluating Agents", "evaluating-agents.md"),

@@ -161,6 +161,14 @@ Every page's TL;DR in one place, every page's Scenario Check merged into one com
     - **A real repro of CLAUDE.md-style instructions found exactly the compliance shift the mechanism promises**: 0% `do_`-prefix compliance and inconsistent f-string avoidance with no instructions, 100% compliance on both with a project-instructions block delivered the real way — as a user message, not a system prompt — confirmed across multiple full runs.
     - **A real repro of hooks required a genuine design correction to test the right thing, and the corrected version found a clean, strong result**: with no protective rule anywhere and no hook, an explicit request to delete a file succeeded 5/5 trials. With a real, deterministic PreToolUse-style check and still no prompted rule, the same file survived 5/5 trials — the hook, not the model's judgment, is what actually held.
 
+    ### [Deep Research Agents](deep-research-agents.md)
+
+    - **Anthropic's own real numbers on their Research system**: a multi-agent system (Opus 4 lead, Sonnet 4 subagents) *"outperformed single-agent Claude Opus 4 by 90.2%"* on their internal eval — but *"token usage by itself explains 80% of the variance"* in performance, and *"agents typically use about 4× more tokens than chat interactions, and multi-agent systems use about 15× more tokens than chats."*
+    - **A real, named failure mode, and a real, direct repro of it**: Anthropic's own documented finding — subagents *"performed the exact same searches as other agents... without an effective division of labor."* A real repro with 3 real subagents given identical, unscoped instructions produced **60% redundant document retrieval** and left 2 of 6 real documents completely uncovered.
+    - **Anthropic's own prescribed fix, applied literally, worked**: *"Each subagent needs an objective, an output format, guidance on the tools and sources to use, and clear task boundaries."* The same real repro, with explicit per-subagent scopes instead, cut redundant retrieval to **14.3%** and covered the entire real document corpus.
+    - **STORM's real mechanism generates better structure by simulating disagreement, not by asking once**: *"discovering diverse perspectives,"* then *"simulating conversations where writers carrying different perspectives pose questions to a topic expert,"* producing real, measured gains — *"more of STORM's articles are deemed to be organized (by a 25% absolute increase) and broad in coverage (by 10%)"* versus a single-pass outline-then-write baseline.
+    - **BrowseComp is deliberately built to be easy to grade and hard to pass.** Real, verified numbers: GPT-4o scored **0.6%**, OpenAI o1 scored **9.9%**, and OpenAI's own Deep Research model scored **51.5%** — on a benchmark where, of 1,255 attempted questions, human researchers gave up on **70.8%** of them within two hours.
+
     ## Production
 
     ### [Evaluating Agents](evaluating-agents.md)
@@ -251,7 +259,7 @@ Every page's TL;DR in one place, every page's Scenario Check merged into one com
 
 === "Combined Scenario Check"
 
-    120 questions from every page on this site, one combined pass instead of opening each page separately. Every question shows which page it's from — go re-read that page for anything you get wrong.
+    124 questions from every page on this site, one combined pass instead of opening each page separately. Every question shows which page it's from — go re-read that page for anything you get wrong.
 
     <div class="quiz-widget" data-title="Combined Scenario Check — All Pages">
     <script type="application/json">
@@ -1702,6 +1710,82 @@ Every page's TL;DR in one place, every page's Scenario Check merged into one com
           "sourceUrl": "coding-agent-config.md"
         },
         {
+          "scenario": "Anthropic's own engineering write-up states that for their multi-agent research system, 'token usage by itself explains 80% of the variance' in performance, alongside a separately reported 90.2% improvement over a single agent on their internal eval.",
+          "question": "What is the most precise interpretation of what the 80%-of-variance finding implies about that 90.2% improvement?",
+          "options": [
+            "The 90.2% improvement is invalid, since it can be explained away entirely by a confounding variable",
+            "Multi-agent coordination logic contributed nothing at all to the measured performance difference",
+            "The two findings are unrelated and describe completely separate evaluations with no shared explanation",
+            "Most of the measured improvement is attributable to spending more compute, not smarter coordination"
+          ],
+          "correct": 3,
+          "explanations": [
+            "Overstates it -- 'explains 80% of the variance' is a real, substantial statistical relationship, not a claim the entire effect is spurious or invalid; the improvement itself is a real, separately reported result on their internal eval.",
+            "Too strong -- 80% of variance leaves real room for other factors (Anthropic names tool-call count and model choice as the other two), so coordination/design isn't reduced to zero contribution, just shown to be secondary to raw spend.",
+            "Not accurate -- both findings come from the same real research system and the same real evaluation context; the variance-explanation finding is precisely what helps explain WHY the 90.2% figure exists, not an unrelated fact.",
+            "Correct. This is the precise, real reading: token usage being the dominant explanatory factor means most of the measured gain tracks with how much real compute was spent, not primarily with cleverer division of labor or coordination logic -- which directly motivates why redundant, unscoped spending (this page's own repro) is a real, costly problem, not just an aesthetic one."
+          ],
+          "source": "Deep Research Agents",
+          "sourceUrl": "deep-research-agents.md"
+        },
+        {
+          "scenario": "A real repro gave 3 subagents access to an identical, generic research instruction with no assigned scope, and separately gave 3 different subagents explicit, distinct objectives and boundaries covering different parts of the same topic.",
+          "question": "What was the most precise real, measured difference between the two conditions?",
+          "options": [
+            "The scoped condition made fewer total retrievals while covering more of the corpus, with far less overlap",
+            "The vague condition covered more of the real document corpus overall, just with some inefficiency",
+            "Both conditions covered the identical set of real documents, differing only in how the summaries were worded",
+            "The scoped condition failed to retrieve any documents at all due to its narrower per-subagent scope"
+          ],
+          "correct": 0,
+          "explanations": [
+            "Correct. The real, measured numbers: scoped made 7 total retrievals covering all 6 of 6 documents (14.3% redundant); vague made 10 total retrievals but covered only 4 of 6 documents (60% redundant) -- fewer total calls, MORE real coverage, far less waste.",
+            "Backwards from the real result -- vague covered only 4 of 6 real documents, LESS than scoped's full 6 of 6 coverage; the vague condition wasn't just inefficient, it left real ground completely unresearched.",
+            "Not what happened -- the real document sets covered by each condition were meaningfully different (4/6 vs. 6/6), not identical; this was a real difference in WHAT was researched, not just in phrasing.",
+            "Contradicted directly by the real numbers -- the scoped condition made 7 real retrievals and achieved full corpus coverage; narrower scope per subagent did not mean fewer retrievals overall or failed retrieval, since scope specifically directed each search rather than blocking it."
+          ],
+          "source": "Deep Research Agents",
+          "sourceUrl": "deep-research-agents.md"
+        },
+        {
+          "scenario": "STORM's real, three-stage mechanism involves discovering diverse perspectives, simulating multi-perspective conversations with a topic expert, and then curating an outline -- reporting a 25% absolute increase in articles judged well-organized and a 10% increase in breadth of coverage versus a baseline.",
+          "question": "What does this real, measured gain most precisely suggest about WHY simulating multiple perspectives improves article structure?",
+          "options": [
+            "The improvement is due entirely to using a larger or more capable underlying language model in the STORM condition",
+            "Asking the same question from several different simulated angles surfaces different real information than asking once",
+            "The gain is purely stylistic, affecting how organized the writing sounds without changing what information is included",
+            "Simulating perspectives works by having the model fact-check its own previous answers repeatedly before writing"
+          ],
+          "correct": 1,
+          "explanations": [
+            "Not indicated -- the comparison described is STORM's own multi-perspective PROCESS against a single-pass baseline, not a model-capability comparison; nothing in the real, reported numbers attributes the gain to model size or capability differences.",
+            "Correct. STORM's own real mechanism is specifically about DIFFERENT perspectives posing DIFFERENT questions to a topic expert -- the real gain in both organization AND breadth of coverage is consistent with each simulated perspective surfacing real information a single, undifferentiated pass would be less likely to ask about at all.",
+            "Contradicted directly -- the real, reported gain includes a 10% increase in BREADTH OF COVERAGE, not just organizational quality; breadth of coverage is a substantive, information-level outcome, not a purely stylistic one.",
+            "Not the described mechanism -- STORM's process is about generating NEW questions from different simulated perspectives directed at a topic expert, not about the model repeatedly verifying or fact-checking its own prior answers."
+          ],
+          "source": "Deep Research Agents",
+          "sourceUrl": "deep-research-agents.md"
+        },
+        {
+          "scenario": "BrowseComp is explicitly designed around the principle 'easy to verify, but hard to solve,' with real, verified accuracy numbers: GPT-4o scored 0.6%, OpenAI o1 scored 9.9%, and OpenAI's own Deep Research model scored 51.5%.",
+          "question": "What does the specific design principle 'easy to verify, but hard to solve' most precisely explain about how BrowseComp's questions were constructed?",
+          "options": [
+            "Questions were selected so that grading requires the same amount of research effort as answering them originally did",
+            "Questions were deliberately made ambiguous so that multiple different answers could be scored as equally correct",
+            "Questions have a short, checkable ground-truth answer, but actually reaching it requires genuinely persistent search",
+            "Questions were designed to be unsolvable by any current model, including the ones the benchmark was built to measure"
+          ],
+          "correct": 2,
+          "explanations": [
+            "Backwards from the actual design goal -- 'easy to verify' specifically means grading is CHEAP and fast (a short, checkable answer), explicitly NOT requiring the same effort as the original search; that asymmetry between solving and verifying is the entire point of the principle.",
+            "Contradicts the 'easy to verify' half directly -- ambiguous, multiple-valid-answer questions would make verification HARDER, not easier; the design principle requires a single, checkable ground truth, not an ambiguous one.",
+            "Correct. This is the precise, real meaning behind the quoted principle: the ANSWER is short and verifiable at a glance, while actually FINDING that answer demands real, persistent search across hard-to-find, entangled information -- exactly the asymmetry the real accuracy numbers (near-zero for most models, 51.5% for the best) are designed to expose.",
+            "Contradicted by the real numbers themselves -- OpenAI's Deep Research model scored 51.5%, meaning the benchmark is hard but not unsolvable; the design goal was calibrated difficulty (screening out what contemporary models COULD already solve), not literal unsolvability by every model including future ones."
+          ],
+          "source": "Deep Research Agents",
+          "sourceUrl": "deep-research-agents.md"
+        },
+        {
           "scenario": "A real repro gave a model the option to call a verification tool or answer directly, on both a well-known fact and an unguessable fictional fact. In both cases the model called the tool and got the correct outcome -- no divergence between outcome and trajectory was observed.",
           "question": "What's the most accurate takeaway from this specific result?",
           "options": [
@@ -2544,7 +2628,7 @@ Every page's TL;DR in one place, every page's Scenario Check merged into one com
 
 === "Flashcards"
 
-    238 flashcards from every page with a deck so far — click a card to flip it, shuffle for random order.
+    246 flashcards from every page with a deck so far — click a card to flip it, shuffle for random order.
 
     <div class="flashcard-widget" data-title="Flashcards — All Pages">
     <script type="application/json">
@@ -3299,6 +3383,46 @@ Every page's TL;DR in one place, every page's Scenario Check merged into one com
           "front": "What real, product-level design choice does Cline make as its stated core differentiator?",
           "back": "'Every file edit and terminal command requires your approval, so you stay in control of what actually changes' -- approval-gated execution by default, with an opt-in toggle for autonomous mode. A direct, product-level instance of the human-in-the-loop theme.",
           "source": "Coding Agent Products and Configuration"
+        },
+        {
+          "front": "What are Anthropic's real, verified numbers on their multi-agent Research system's performance vs. cost?",
+          "back": "90.2% improvement over single-agent Opus 4 (Opus 4 lead + Sonnet 4 subagents) on their internal eval. But 'token usage by itself explains 80% of the variance' in that performance, and agents use ~4x more tokens than chat; multi-agent systems use ~15x more. Parallelization separately 'cut research time by up to 90% for complex queries.'",
+          "source": "Deep Research Agents"
+        },
+        {
+          "front": "What real, named failure mode does Anthropic document for multi-agent research systems, and their exact prescribed fix?",
+          "back": "Failure: subagents 'performed the exact same searches as other agents... without an effective division of labor,' plus continuing when 'they already had sufficient results.' Fix (exact quote): 'Each subagent needs an objective, an output format, guidance on the tools and sources to use, and clear task boundaries.'",
+          "source": "Deep Research Agents"
+        },
+        {
+          "front": "In this topic's own real repro, what were the measured results of vague vs. scoped subagent instructions?",
+          "back": "vague (identical, unscoped prompt to 3 subagents): 10 total retrievals, only 4/6 unique docs covered, 60% redundant retrieval. scoped (explicit objective+boundary per subagent): 7 total retrievals, ALL 6/6 docs covered, only 14.3% redundant -- Anthropic's own fix, applied literally, confirmed working on a real test.",
+          "source": "Deep Research Agents"
+        },
+        {
+          "front": "What is STORM's real, three-stage mechanism for generating long-form articles, and its measured gain vs. a single-pass baseline?",
+          "back": "(1) Discover diverse perspectives on the topic. (2) Simulate conversations where each perspective 'poses questions to a topic expert grounded on trusted Internet sources.' (3) Curate into an outline. Real gain: '25% absolute increase' in articles judged well-organized, '10%' increase in breadth of coverage vs. a single-pass outline-then-write baseline.",
+          "source": "Deep Research Agents"
+        },
+        {
+          "front": "What is BrowseComp's real, stated design philosophy, and what does it reveal about model capability?",
+          "back": "'Easy to verify, but hard to solve' -- 1,266 questions with a short, checkable answer but requiring genuinely persistent search to find. Real accuracy: GPT-4o 0.6%, GPT-4o+browsing 1.9%, o1 9.9%, OpenAI's own Deep Research model 51.5% ('solving around half the problems' where others were 'near-zero'). Humans gave up on 70.8% of 1,255 attempted questions within 2 hours.",
+          "source": "Deep Research Agents"
+        },
+        {
+          "front": "What real, open-source model reports a competitive BrowseComp score, and what's its architecture?",
+          "back": "Alibaba's Tongyi DeepResearch: 30.5B total params, 3.3B active per token (MoE), trained with a customized GRPO-based RL approach. Reports 43.4% on BrowseComp -- real, substantial progress from an open model, though still behind the 51.5% frontier (OpenAI Deep Research) number.",
+          "source": "Deep Research Agents"
+        },
+        {
+          "front": "Why does this topic's repro use a curated per-document KEYWORD INDEX rather than raw prose token-overlap for its search tool?",
+          "back": "A real bug was caught during dry-testing: raw substring matching produced false positives (e.g. the word 'in' matched inside 'endpoints'), and even after fixing to whole-word matching, generic connector words (e.g. 'employee', 'team') caused unrelated documents to match. An explicit, curated keyword set per document eliminated this noise, giving a clean, honest measurement of REAL subagent search behavior rather than search-tool artifacts.",
+          "source": "Deep Research Agents"
+        },
+        {
+          "front": "How does this topic connect to and differ from the existing Multi-Agent Systems topic?",
+          "back": "Same orchestrator-worker architecture and same real Anthropic source. Multi-Agent Systems covers the TOKEN-COST multiplier (real 3.21x measured) and Cognition's inter-agent CONSISTENCY risk (honest negative result). Deep Research Agents covers a different, complementary failure mode: DIVISION OF LABOR (redundant search coverage) and its real fix -- plus STORM and BrowseComp, which Multi-Agent Systems doesn't touch at all.",
+          "source": "Deep Research Agents"
         },
         {
           "front": "What's the real difference between outcome grading and trajectory grading, and what documented risk does relying on outcome-only grading create?",
