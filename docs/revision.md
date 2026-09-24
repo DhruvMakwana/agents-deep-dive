@@ -131,6 +131,14 @@ Every page's TL;DR in one place, every page's Scenario Check merged into one com
     - **"Compaction isn't sufficient" on its own, per Anthropic's own real finding** — and a real bug in this page's own recipe demonstrated exactly the adjacent risk: treating "the response stopped" as "the agent finished" without checking *why* it stopped silently corrupted a state-tracking loop, mishandling a genuine token-budget truncation as if the agent had genuinely completed its turn.
     - **A real self-verification test — instructed discipline vs. none — was a clean, honest negative.** Anthropic's cited practice: *"Self-verify all features. Only mark features as 'passing' after careful testing."* Tested directly against a deliberately unhelpful real tool result, both the plain and the explicitly-instructed condition correctly declined to mark it "passing" — Sonnet 5's baseline judgment was already sufficient here.
 
+    ### [Coding Agents: Mechanisms](coding-agents-mechanisms.md)
+
+    - **Coding agents need their own interface, not a human one, repurposed** — SWE-agent's real framing: *"LM agents represent a new category of end users with their own needs and abilities, and would benefit from specially-built interfaces."* Their design principles are concrete, not vague: actions should be *"compact and efficient,"* feedback should be *"informative but concise,"* and *"guardrails mitigate error propagation and hasten recovery."*
+    - **A real, cited number shows how load-bearing one specific guardrail was in 2024**: removing SWE-agent's linting guardrail (a syntax check fed back to the model after every edit) dropped its SWE-bench Lite score from 18.0% to 10.3% — a real 7.7 percentage point loss from removing one interface feature.
+    - **A real repro of the same mechanism against Sonnet 5, across two independently redesigned task variants, found no measurable gap** — 100% valid syntax whether or not the guardrail was present, on both a flat elif edit and a genuinely harder nested-restructuring edit. A dated, honest finding, not a claim the guardrail is now universally unnecessary.
+    - **A second real repro tested the review-loop / verifiable-task pattern directly**: a genuinely subtle binary-search off-by-one bug (confirmed to actually diverge via a 2,000-case random search, since hand-picked test cases initially missed it), fixed with and without a real, independently-run test suite available to check the fix. Another clean, honest tie — Sonnet 5 fixed the bug correctly on the first attempt, every time, with or without the ability to verify its own work.
+    - **METR's real, cited trend gives the scale this all sits inside**: model *"time horizon"* — the length of task a model completes with 50% reliability — has grown with *"a doubling time of around 7 months"* over six years; Claude 3.7 Sonnet's measured horizon was *"approximately one hour."* This page's own repros are a small, current, honest data point on a specific slice of that trend: two ACI safety nets that mattered a lot in 2024 didn't move the needle for a 2026 model on small, illustrative tasks.
+
     ## Production
 
     ### [Evaluating Agents](evaluating-agents.md)
@@ -179,7 +187,7 @@ Every page's TL;DR in one place, every page's Scenario Check merged into one com
 
 === "Combined Scenario Check"
 
-    80 questions from every page on this site, one combined pass instead of opening each page separately. Every question shows which page it's from — go re-read that page for anything you get wrong.
+    84 questions from every page on this site, one combined pass instead of opening each page separately. Every question shows which page it's from — go re-read that page for anything you get wrong.
 
     <div class="quiz-widget" data-title="Combined Scenario Check — All Pages">
     <script type="application/json">
@@ -1326,6 +1334,82 @@ Every page's TL;DR in one place, every page's Scenario Check merged into one com
           "sourceUrl": "harness-engineering.md"
         },
         {
+          "scenario": "SWE-agent's own real ablation found removing its linting guardrail dropped SWE-bench Lite performance from 18.0% to 10.3%. A real repro testing the identical mechanism against Sonnet 5, across two independently redesigned edit tasks, found a 100%-vs-100% tie with no guardrail benefit at all.",
+          "question": "What is the most accurate way to interpret the gap between these two results?",
+          "options": [
+            "The two results reflect different models and task scales, not a contradiction",
+            "SWE-agent's original 2024 measurement must have been flawed or fabricated",
+            "Linting guardrails are proven to be universally unnecessary for any coding agent",
+            "The newer repro's tie means it failed to properly test the guardrail's effect"
+          ],
+          "correct": 0,
+          "explanations": [
+            "Correct. The two results measure genuinely different things: SWE-agent's ablation used 2024-era models on the full SWE-bench Lite benchmark; this page's repro used Sonnet 5 (2026) on small, illustrative tasks. Both can be real and honestly reported without contradicting each other -- they're simply different, non-comparable measurements.",
+            "Unsupported and dismissive of a real, cited, peer-reviewed measurement -- there's no basis to call SWE-agent's own ablation flawed; it's a real number from a specific model generation and benchmark.",
+            "Wildly overgeneralizes a small, illustrative repro (5-line functions, one current model) into a sweeping universal claim the repro never makes or could support.",
+            "Backwards -- the repro deliberately redesigned both demos into harder variants specifically to give the guardrail a real chance to matter, and still found a tie; a null result from a genuinely fair, repeated test is real data, not evidence of a failed test."
+          ],
+          "source": "Coding Agents: Mechanisms",
+          "sourceUrl": "coding-agents-mechanisms.md"
+        },
+        {
+          "scenario": "A real repro's binary-search bug (hi = mid - 1 instead of hi = mid) initially passed the recipe's first hand-picked test cases even though the bug was real. A 2,000-case random search against a known-correct reference implementation found the bug actually diverges on roughly 20% of random inputs.",
+          "question": "What is the most important methodological lesson this specific step illustrates?",
+          "options": [
+            "Binary search bugs are impossible to catch with any automated testing approach",
+            "Hand-picked test cases can miss a real bug -- verify against divergent inputs",
+            "The bug wasn't actually real, since it passed several initial test cases",
+            "Random testing is unnecessary once a bug has been manually identified in code"
+          ],
+          "correct": 1,
+          "explanations": [
+            "Contradicts what actually happened -- the bug WAS caught by automated testing, just not by the first hand-picked cases; a systematic random search using a reference implementation found real inputs that trigger it.",
+            "Correct. This is exactly what the repro's own methodology demonstrated: a bug can be real and present in the code while still passing hand-picked tests that don't happen to hit the specific inputs where it manifests -- verifying against actually-divergent inputs (found via random search against a reference implementation) is what made the test suite trustworthy.",
+            "Directly contradicted by the real 2,000-case search, which confirmed the bug genuinely diverges from correct behavior on about 20% of random inputs -- passing a few specific test cases didn't mean the bug wasn't real, it meant those particular cases didn't happen to trigger it.",
+            "Backwards -- manually spotting a bug in code doesn't guarantee you've picked test inputs that actually trigger it, which is precisely the gap the random search was needed to close in this repro."
+          ],
+          "source": "Coding Agents: Mechanisms",
+          "sourceUrl": "coding-agents-mechanisms.md"
+        },
+        {
+          "scenario": "Both of this page's real repros were run twice each: once with an initial, simpler task design, and again with a deliberately harder, independently redesigned task, after the first attempt came back as a tie. Both harder attempts also came back as ties.",
+          "question": "What does trying a harder task variant, rather than accepting the first tie immediately, most directly demonstrate about the project's methodology?",
+          "options": [
+            "That the researchers kept retrying indefinitely until they found the result they wanted",
+            "That the first attempt's tie must have been due to a bug in the test setup",
+            "That a single easy-task tie doesn't rule out a real effect showing up on harder tasks",
+            "That harder tasks always produce different, more differentiated results than easy ones"
+          ],
+          "correct": 2,
+          "explanations": [
+            "Mischaracterizes what happened -- the redesigns stopped after one well-motivated harder attempt each, and the final result (another tie) was reported honestly rather than chased further; this is bounded, disciplined re-testing, not indefinite retrying for a preferred outcome.",
+            "Not what was concluded or claimed -- the first task's tie was treated as a real result on an easy task, not evidence of a broken test; the harder redesign was a genuine attempt to test the SAME mechanism under more demanding conditions, not a bug fix.",
+            "Correct. A tie on an easy task leaves open the possibility that the task simply wasn't hard enough to reveal a real gap -- trying one genuinely harder, independently designed variant is the correct way to check that possibility before accepting the tie as a meaningful finding, which is exactly what both repros did.",
+            "Overstates the pattern -- in this specific case, the harder tasks ALSO came back as ties, directly contradicting the idea that harder tasks always differentiate; that's precisely why this page reports the result as an honest tie rather than assuming harder must mean different."
+          ],
+          "source": "Coding Agents: Mechanisms",
+          "sourceUrl": "coding-agents-mechanisms.md"
+        },
+        {
+          "scenario": "METR's real research reports model 'time horizon' -- task length completable with 50% reliability -- growing with 'a doubling time of around 7 months' over six years, with Claude 3.7 Sonnet measured at approximately one hour.",
+          "question": "What is the most accurate relationship between METR's trend and this page's own two small repros?",
+          "options": [
+            "This page's repros directly measured and confirmed METR's specific doubling-time trend",
+            "METR's trend and this page's repros are unrelated and measure completely different things",
+            "This page's repros prove METR's projected doubling trend will definitely continue",
+            "This page is a small, current, illustrative data point on that same capability shift"
+          ],
+          "correct": 3,
+          "explanations": [
+            "Overstates the connection -- this page's repros never measured task duration, time horizon, or anything resembling METR's actual methodology; they tested a completely different, much narrower question (guardrail/review-loop effect on small edits).",
+            "Understates a real, acknowledged connection -- the page explicitly frames its own repros as sitting inside the same general trend METR describes, even while being careful not to claim they measure the same thing.",
+            "Overreaches -- a small pair of illustrative repros on 5-line functions provides no evidence about whether METR's specific projected trend continues into the future; the page explicitly declines to make that claim.",
+            "Correct. The page's own framing is precise: its repros are a small, current, specific illustration of models needing less structural scaffolding over time (SWE-agent's 2024 guardrail vs. Sonnet 5's baseline reliability) -- directionally related to METR's broader capability-growth trend, without claiming to measure or validate that trend directly."
+          ],
+          "source": "Coding Agents: Mechanisms",
+          "sourceUrl": "coding-agents-mechanisms.md"
+        },
+        {
           "scenario": "A real repro gave a model the option to call a verification tool or answer directly, on both a well-known fact and an unguessable fictional fact. In both cases the model called the tool and got the correct outcome -- no divergence between outcome and trajectory was observed.",
           "question": "What's the most accurate takeaway from this specific result?",
           "options": [
@@ -1712,7 +1796,7 @@ Every page's TL;DR in one place, every page's Scenario Check merged into one com
 
 === "Flashcards"
 
-    158 flashcards from every page with a deck so far — click a card to flip it, shuffle for random order.
+    166 flashcards from every page with a deck so far — click a card to flip it, shuffle for random order.
 
     <div class="flashcard-widget" data-title="Flashcards — All Pages">
     <script type="application/json">
@@ -2307,6 +2391,46 @@ Every page's TL;DR in one place, every page's Scenario Check merged into one com
           "front": "Why is 'a session loop's own bug' worth documenting as a real harness-engineering lesson, not just an incidental coding error?",
           "back": "The bug (conflating max_tokens truncation with genuine completion) is itself exactly the class of failure a harness is meant to guard against: a harness that can't tell 'the agent decided it's done' apart from 'the agent got cut off mid-sentence' will silently corrupt the state it's supposed to protect -- precisely on-topic for what harness engineering is about.",
           "source": "Harness Engineering"
+        },
+        {
+          "front": "What is SWE-agent's core argument for building a dedicated Agent-Computer Interface (ACI) rather than giving a model human developer tools?",
+          "back": "'LM agents represent a new category of end users with their own needs and abilities, and would benefit from specially-built interfaces.' Design principles: actions should be 'compact and efficient,' feedback should be 'informative but concise,' and 'guardrails mitigate error propagation and hasten recovery.'",
+          "source": "Coding Agents: Mechanisms"
+        },
+        {
+          "front": "What was SWE-agent's real, measured cost of removing its linting guardrail?",
+          "back": "SWE-bench Lite score dropped from 18.0% to 10.3% -- a real 7.7 percentage point loss from removing one interface feature (a code linter integrated into the edit function that alerts the agent to syntax mistakes it introduced).",
+          "source": "Coding Agents: Mechanisms"
+        },
+        {
+          "front": "A real repro tested the same linting-guardrail mechanism against Sonnet 5, across two independently redesigned edit tasks (a flat elif edit, then a genuinely harder nested-restructuring edit). What happened?",
+          "back": "A clean tie both times: 100% valid syntax whether or not the guardrail was present. A dated, honest finding -- not a claim the guardrail is now universally unnecessary, but real evidence that current-model baseline reliability on small tasks may have shifted since SWE-agent's 2024 measurement.",
+          "source": "Coding Agents: Mechanisms"
+        },
+        {
+          "front": "A real repro's binary-search bug (hi = mid - 1 instead of hi = mid) initially passed hand-picked test cases even though it was real. How was this caught, and what's the lesson?",
+          "back": "A 2,000-case random search against a known-correct reference implementation found the bug genuinely diverges on ~20% of random inputs. Lesson: a bug can be real and still pass test cases that don't happen to hit the inputs where it manifests -- verify against actually-divergent inputs, don't assume hand-picked cases are sufficient.",
+          "source": "Coding Agents: Mechanisms"
+        },
+        {
+          "front": "A real review-loop repro gave Sonnet 5 a subtle, verified-divergent binary-search bug to fix, with and without a real run_tests tool available. What was the real, independently-checked result?",
+          "back": "Another clean tie: both conditions fixed the bug correctly on the first attempt, 5/5 trials each -- with zero ability to verify its own work in the no-review-loop condition. Every result was checked independently via a fresh subprocess, never from the model's own self-report.",
+          "source": "Coding Agents: Mechanisms"
+        },
+        {
+          "front": "What is METR's 'time horizon' metric, and what's the real reported doubling trend?",
+          "back": "The length (for humans) of a task a model can complete with a given success rate (typically 50%). Real trend: 'a doubling time of around 7 months' over roughly six years of frontier models. Claude 3.7 Sonnet's measured horizon: 'approximately one hour.'",
+          "source": "Coding Agents: Mechanisms"
+        },
+        {
+          "front": "Why does this page treat four consecutive honest ties (two demos x two task variants each) as a real finding rather than a failed experiment?",
+          "back": "Each tie was tested twice -- once on an easier task, once on a deliberately harder, independently redesigned variant -- specifically to check whether the mechanism just needed a harder task to reveal a gap. Both harder attempts also tied. A disciplined, bounded re-test (not indefinite retrying) that still comes back negative is real, honestly-reportable data.",
+          "source": "Coding Agents: Mechanisms"
+        },
+        {
+          "front": "Why is it methodologically wrong to conclude 'linting guardrails and review loops are now universally unnecessary' from this page's repros?",
+          "back": "The repros tested small, illustrative tasks (5-line functions) against one current model (Sonnet 5) -- a narrow, scoped result. METR's own trend describes tasks stretching toward hours, days, and weeks; a guardrail with zero measured value on a tiny edit could easily matter again at a much larger, messier scale this page never tested.",
+          "source": "Coding Agents: Mechanisms"
         },
         {
           "front": "What's the real difference between outcome grading and trajectory grading, and what documented risk does relying on outcome-only grading create?",
