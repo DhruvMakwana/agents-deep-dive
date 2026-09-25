@@ -43,7 +43,7 @@ Every page's TL;DR in one place, every page's Scenario Check merged into one com
 
     ### [Choosing a Framework](choosing-a-framework.md)
 
-    - **A real, identical task solved three ways shows the actual trade-off, not a feature checklist.** The same tool-calling question, same model, same correct answer, same real call count (2) across the raw Anthropic client, LangChain/LangGraph's `create_agent`, and Pydantic AI's `Agent` — but real, measured orchestration code of 15, 8, and 5 lines respectively. The gap is what each approach makes you write by hand versus adopt as-is.
+    - **A real, identical task solved four ways shows the actual trade-off, not a feature checklist.** The same tool-calling question, same model, same correct answer, same real call count (2) across the raw Anthropic client, LangChain/LangGraph's `create_agent`, Pydantic AI's `Agent`, and CrewAI's `Agent.kickoff` — but real, measured orchestration code of 15, 8, 5, and 9 lines respectively. The gap is what each approach makes you write by hand versus adopt as-is — and CrewAI's own real jump back up to 9 lines is itself informative: two of those lines are `role=`/`goal=`/`backstory=`, a real, deliberate design choice the other three don't make.
     - **"Own the loop" is a real, named position, not just a vibe.** 12-Factor Agents' framing: most products calling themselves agentic "aren't that agentic" — real production reliability, in this view, comes from owning your own control flow rather than delegating it to a framework's abstraction.
     - **AutoGen is in maintenance mode, by its own README's words**: "It will not receive new features or enhancements and is community managed going forward. New users should start with Microsoft Agent Framework." Building on it today means building on something the vendor itself says to migrate away from.
     - **A real dependency conflict surfaced and got fixed for real, not glossed over**: the full `pydantic-ai` package pulls in `fastmcp-slim`, which requires `python-dotenv>=1.1.0` — directly conflicting with this cookbook's shared `python-dotenv==1.0.1` pin. `pydantic-ai-slim[anthropic]` (skipping the unneeded `mcp` extra) resolves it cleanly, since this recipe never uses MCP.
@@ -616,20 +616,20 @@ Every page's TL;DR in one place, every page's Scenario Check merged into one com
           "sourceUrl": "reasoning-paradigms.md"
         },
         {
-          "scenario": "A real run solved the identical tool-calling task with the raw Anthropic client (15 lines, 2 calls), LangChain/LangGraph's create_agent (8 lines, 2 calls), and Pydantic AI's Agent (5 lines, 2 calls) -- all three produced the correct answer.",
-          "question": "What is the most accurate interpretation of the line-count difference?",
+          "scenario": "A real run solved the identical tool-calling task with the raw Anthropic client (15 lines, 2 calls), LangChain/LangGraph's create_agent (8 lines, 2 calls), Pydantic AI's Agent (5 lines, 2 calls), and CrewAI's Agent.kickoff (9 lines, 2 calls) -- all four produced the correct answer, with CrewAI's line count climbing back up above LangGraph's and Pydantic AI's.",
+          "question": "What is the most accurate interpretation of the line-count differences, including CrewAI's real increase?",
           "options": [
-            "It measures loop code written by hand vs adopted as-is, not code quality",
+            "It measures code written by hand vs. adopted as-is, not a quality ranking",
             "It proves Pydantic AI is the objectively best choice for any agent task",
-            "The comparison is meaningless, since real agents never resemble a simple demo task",
-            "It shows the raw client is poorly written and should be shortened to match the frameworks"
+            "It shows the raw client is poorly written and should be shortened to match the frameworks",
+            "The comparison is meaningless, since real agents never resemble a simple demo task"
           ],
           "correct": 0,
           "explanations": [
-            "Correct. The real measured gap tracks exactly what each layer is for -- how much of the send/check/execute/append loop you write yourself versus hand to a framework's own conventions -- a real, honest, non-evaluative fact, not a verdict on which is 'better.'",
+            "Correct. The real measured gap tracks exactly what each layer is for -- how much of the send/check/execute/append loop you write yourself versus hand to a framework's own conventions -- and CrewAI's own real increase specifically comes from its role/goal/backstory persona model, a genuine design choice for role-based multi-agent orchestration, not a sign of worse code.",
             "Overreaches from one narrow, simple task to a universal quality claim -- fewer lines on this specific task says nothing about how well any framework's assumptions fit a different, harder problem.",
-            "Overcorrects into dismissing a real, controlled measurement -- a simple task with a checkable ground truth is exactly what makes a fair comparison possible; it doesn't claim to generalize to every production scenario.",
-            "Misreads the finding -- the raw client's length isn't a flaw, it's the actual content of the loop other approaches abstract away; shortening it would mean hiding logic, not writing it better."
+            "Misreads the finding -- the raw client's length isn't a flaw, it's the actual content of the loop other approaches abstract away; shortening it would mean hiding logic, not writing it better.",
+            "Overcorrects into dismissing a real, controlled measurement -- a simple task with a checkable ground truth is exactly what makes a fair comparison possible; it doesn't claim to generalize to every production scenario."
           ],
           "source": "Choosing a Framework",
           "sourceUrl": "choosing-a-framework.md"
@@ -3130,7 +3130,7 @@ Every page's TL;DR in one place, every page's Scenario Check merged into one com
 
 === "Flashcards"
 
-    288 flashcards from every page with a deck so far — click a card to flip it, shuffle for random order.
+    290 flashcards from every page with a deck so far — click a card to flip it, shuffle for random order.
 
     <div class="flashcard-widget" data-title="Flashcards — All Pages">
     <script type="application/json">
@@ -3297,8 +3297,18 @@ Every page's TL;DR in one place, every page's Scenario Check merged into one com
           "source": "Reasoning Paradigms"
         },
         {
-          "front": "A real identical tool-calling task was solved with the raw Anthropic client, LangChain/LangGraph's create_agent, and Pydantic AI's Agent. What were the real measured lines of orchestration code and call counts?",
-          "back": "15 lines / 2 calls (raw), 8 lines / 2 calls (LangGraph), 5 lines / 2 calls (Pydantic AI). All three got the correct answer on the first real run -- the line-count gap tracks how much of the loop each approach makes you write by hand vs adopt as-is, not code quality.",
+          "front": "A real identical tool-calling task was solved with the raw Anthropic client, LangChain/LangGraph's create_agent, Pydantic AI's Agent, and CrewAI's Agent.kickoff. What were the real measured lines of orchestration code and call counts?",
+          "back": "15 lines / 2 calls (raw), 8 lines / 2 calls (LangGraph), 5 lines / 2 calls (Pydantic AI), 9 lines / 2 calls (CrewAI). All four got the correct answer on the first real run -- the line-count gap tracks how much of the loop each approach makes you write by hand vs adopt as-is, not code quality.",
+          "source": "Choosing a Framework"
+        },
+        {
+          "front": "CrewAI's real line count (9) climbed back up above LangGraph's (8) and Pydantic AI's (5). What's the real, specific reason, verified in this topic's own repro?",
+          "back": "Two of CrewAI's 9 lines are role=/goal=/backstory= -- CrewAI's own design asks you to describe an agent as a persona, because its real target use case is role-based MULTI-agent orchestration, not a minimal single-tool task. Not worse code -- a different design assumption that doesn't pay off on this simple task.",
+          "source": "Choosing a Framework"
+        },
+        {
+          "front": "What real, disclosed, out-of-the-box logging behavior did CrewAI show, even after passing verbose=False to the Agent?",
+          "back": "verbose=False (set in this topic's own recipe code) reduces some output, but real, live runs still show CrewAI's own 'LiteAgent Started'/'LiteAgent Completed' boxed console banners regardless -- this specific lifecycle logging doesn't appear to be fully gated by the per-agent verbose flag. A real, tested finding, not a documented guarantee.",
           "source": "Choosing a Framework"
         },
         {

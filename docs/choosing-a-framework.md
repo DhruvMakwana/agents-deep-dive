@@ -1,16 +1,16 @@
 # Choosing a Framework
 
 !!! example "Hands-on"
-    Full runnable recipe: [`choosing-a-framework/`](https://github.com/DhruvMakwana/agents-cookbook/tree/main/choosing-a-framework) in the companion cookbook — the deliberate exception to this whole site's "no framework by default" rule. The identical tool-calling task, solved on the same Claude model three real ways, with real lines of code and real call counts compared.
+    Full runnable recipe: [`choosing-a-framework/`](https://github.com/DhruvMakwana/agents-cookbook/tree/main/choosing-a-framework) in the companion cookbook — the deliberate exception to this whole site's "no framework by default" rule. The identical tool-calling task, solved on the same Claude model four real ways, with real lines of code and real call counts compared.
 
 ??? abstract "TL;DR — quick revision"
-    - **A real, identical task solved three ways shows the actual trade-off, not a feature checklist.** The same tool-calling question, same model, same correct answer, same real call count (2) across the raw Anthropic client, LangChain/LangGraph's `create_agent`, and Pydantic AI's `Agent` — but real, measured orchestration code of 15, 8, and 5 lines respectively. The gap is what each approach makes you write by hand versus adopt as-is.
+    - **A real, identical task solved four ways shows the actual trade-off, not a feature checklist.** The same tool-calling question, same model, same correct answer, same real call count (2) across the raw Anthropic client, LangChain/LangGraph's `create_agent`, Pydantic AI's `Agent`, and CrewAI's `Agent.kickoff` — but real, measured orchestration code of 15, 8, 5, and 9 lines respectively. The gap is what each approach makes you write by hand versus adopt as-is — and CrewAI's own real jump back up to 9 lines is itself informative: two of those lines are `role=`/`goal=`/`backstory=`, a real, deliberate design choice the other three don't make.
     - **"Own the loop" is a real, named position, not just a vibe.** 12-Factor Agents' framing: most products calling themselves agentic "aren't that agentic" — real production reliability, in this view, comes from owning your own control flow rather than delegating it to a framework's abstraction.
     - **AutoGen is in maintenance mode, by its own README's words**: "It will not receive new features or enhancements and is community managed going forward. New users should start with Microsoft Agent Framework." Building on it today means building on something the vendor itself says to migrate away from.
     - **A real dependency conflict surfaced and got fixed for real, not glossed over**: the full `pydantic-ai` package pulls in `fastmcp-slim`, which requires `python-dotenv>=1.1.0` — directly conflicting with this cookbook's shared `python-dotenv==1.0.1` pin. `pydantic-ai-slim[anthropic]` (skipping the unneeded `mcp` extra) resolves it cleanly, since this recipe never uses MCP.
     - **Framework adoption in real job descriptions is smaller than the discourse suggests.** Across 1,978 genuinely AI-technical job postings, LangChain appears in 8.1% (28 companies) and LangGraph in 5.0% (19 companies) — real, current numbers, not zero, but a small fraction of postings even in a corpus specifically filtered for AI-technical roles.
 
-## The real trade-off, run three ways
+## The real trade-off, run four ways
 
 ```python
 --8<-- "https://raw.githubusercontent.com/DhruvMakwana/agents-cookbook/main/choosing-a-framework/framework_shootout_docs.py:shared_tool"
@@ -34,20 +34,27 @@
 --8<-- "https://raw.githubusercontent.com/DhruvMakwana/agents-cookbook/main/choosing-a-framework/framework_shootout_docs.py:pydantic_ai"
 ```
 
-!!! success "A real run — the identical question, three implementations, real numbers"
-    **Input**, identical for all three: *"What is 15% of 240, plus 30?"* Ground truth (computed independently): 66.0.
+**CrewAI** — a role-based `Agent`, run directly via `kickoff` (no `Task`/`Crew` wrapper):
+
+```python
+--8<-- "https://raw.githubusercontent.com/DhruvMakwana/agents-cookbook/main/choosing-a-framework/framework_shootout_docs.py:crewai"
+```
+
+!!! success "A real run — the identical question, four implementations, real numbers"
+    **Input**, identical for all four: *"What is 15% of 240, plus 30?"* Ground truth (computed independently): 66.0.
 
     | Implementation | Real lines of orchestration code | Real calls | Real answer |
     |---|---|---|---|
     | Raw Anthropic client | 15 | 2 | *"15% of 240 plus 30 is **66**... 15% of 240 = 0.15 × 240 = 36. 36 + 30 = 66"* |
     | LangChain / LangGraph `create_agent` | 8 | 2 | *"15% of 240 is 36, and when you add 30 to that, you get **66**."* |
     | Pydantic AI `Agent` | 5 | 2 | *"15% of 240 is 36, and when you add 30 to that, you get **66**."* |
+    | CrewAI `Agent.kickoff` | 9 | 2 | *"The answer is **66**. Here's the breakdown: 15% of 240 = 36. 36 + 30 = 66."* |
 
-    All three got the correct answer, in the identical number of real calls, on the first real run — no framework needed a retry or produced a wrong result on this task. LangGraph's and Pydantic AI's final answers came back character-for-character identical, most likely coincidental convergence on the same natural phrasing for a simple, well-defined question, not evidence of a shared code path — their internal message handling and tool-calling wiring are genuinely different underneath.
+    All four got the correct answer, in the identical number of real calls, on the first real run — no framework needed a retry or produced a wrong result on this task. LangGraph's and Pydantic AI's final answers came back character-for-character identical, most likely coincidental convergence on the same natural phrasing for a simple, well-defined question, not evidence of a shared code path — their internal message handling and tool-calling wiring are genuinely different underneath.
 
-    The line-count gap tracks exactly what each approach is actually for. The raw client's 15 lines are the tool-calling loop itself, in full: send, check `stop_reason`, execute the tool, append the result, repeat — visible and directly modifiable, at the cost of writing it every time. LangGraph's 8 lines hand that loop to a compiled graph, in exchange for adopting its message and state conventions. Pydantic AI's 5 lines go further in the same direction. None of this is a quality ranking — it's a real measurement of how much of the mechanism you write by hand versus accept as-is, which is the honest, concrete version of the trade-off "own the loop" debates are actually about.
+    The line-count gap tracks exactly what each approach is actually for. The raw client's 15 lines are the tool-calling loop itself, in full: send, check `stop_reason`, execute the tool, append the result, repeat — visible and directly modifiable, at the cost of writing it every time. LangGraph's 8 lines hand that loop to a compiled graph, in exchange for adopting its message and state conventions. Pydantic AI's 5 lines go further in the same direction. **CrewAI's 9 lines climb back up, and the real reason why is itself informative**: two of those lines are `role=`, `goal=`, and `backstory=` — CrewAI's own real design asks you to describe an agent as a persona, not just wire a model to a tool list, because its actual target use case is role-based multi-agent orchestration, not a minimal single-tool task. None of this is a quality ranking — it's a real measurement of how much of the mechanism you write by hand versus accept as-is, which is the honest, concrete version of the trade-off "own the loop" debates are actually about.
 
-    **A real, disclosed side effect worth knowing before it surprises you**: Pydantic AI prints a startup banner to stdout by default — framework version, model, tool count, a nudge toward its paid observability product — unless `PYDANTIC_AI_NO_BANNER=1` is set. Not a bug, just real default behavior that shows up the first time you run it.
+    **Two real, disclosed side effects worth knowing before they surprise you**: Pydantic AI prints a startup banner to stdout by default — framework version, model, tool count, a nudge toward its paid observability product — unless `PYDANTIC_AI_NO_BANNER=1` is set. CrewAI prints its own real, rich, boxed console output for every agent lifecycle event (`LiteAgent Started`, tool execution, `LiteAgent Completed`) — and a real, tested finding here: passing `verbose=False` to the `Agent` constructor (already done in this recipe) reduces some of it, but real, live runs still show CrewAI's own start/complete banners regardless, suggesting this particular logging isn't fully gated by the per-agent flag. Neither is a bug — both are real default behavior worth knowing about before it shows up unexpectedly in a log stream.
 
 ## Own the loop, or don't: a real named position
 
@@ -57,16 +64,17 @@ The honest version of "when do you pick a framework" follows directly from this 
 
 ## The rest of the landscape
 
-The frameworks below weren't run in this page's real comparison, but each has a real, current, verified fact worth knowing:
+The frameworks below weren't run in this page's real comparison (CrewAI, above, now is), but each has a real, current, verified fact worth knowing:
 
 - **OpenAI Agents SDK** — `Agent(name="Assistant", instructions=...)` with `Runner.run_sync(agent, ...)`; built around Agents, Handoffs, Guardrails, Sessions, and Tracing as named primitives. The most stable of the vendor-specific SDKs' public API surface, though still a 0.x version as of this writing.
 - **Claude Agent SDK** — `query(prompt=..., options=ClaudeAgentOptions(...))`; explicitly Claude Code's own harness exposed as a library, not a general multi-provider framework.
 - **Google ADK** — `Agent(name=, model=, instruction=, tools=[...])`; reached a 2.0.0 GA release adding a Workflow Runtime and Task API, with the 1.x line still maintained in parallel.
 - **Microsoft Agent Framework (MAF)** — the stated successor to both AutoGen and Semantic Kernel: "Microsoft Agent Framework is now available at version 1.0 as a production-ready release: stable APIs, and a commitment to long-term support."
-- **CrewAI** — role-based `Agent`/`Task`/`Crew` primitives plus event-driven `Flow`s; the quickstart is now Flow-first. A real, practical cost worth knowing before adopting it: its own install pulls in over 130 packages, and it caps supported Python below 3.14.
 - **smolagents** — "agents that think in code": the model writes and executes real Python as its action, rather than emitting structured tool-call JSON — the only actively-maintained framework built specifically around that design, though its release cadence has slowed to roughly one every couple of months.
 - **AutoGen** — in maintenance mode, by its own README: "It will not receive new features or enhancements and is community managed going forward. New users should start with Microsoft Agent Framework." A real, current fact worth internalizing before choosing it for new work.
 - **No-code builders** — visual, drag-and-drop agent builders exist and serve a genuinely different audience (non-engineers assembling simple automations); they trade away exactly the code-level control this page's own real comparison measures, which is the right trade for that audience and the wrong one for the production-engineering questions this site is otherwise about.
+
+**CrewAI's own real, separate practical cost, beyond its line count above**: its own install pulls in over 130 packages, and it caps supported Python below 3.14 — a real, practical dependency-footprint cost this page's own line-count table doesn't capture, worth weighing alongside the code-length comparison, not instead of it.
 
 ## What real job descriptions say
 
@@ -76,7 +84,7 @@ Across a same-day snapshot of 1,978 genuinely AI-technical job postings (filtere
 
 **Weak answer** to "which agent framework do you use, and why": *"I use [framework], because it's the most popular / has the best documentation."* This answers a marketing question, not an engineering one, and it can't explain this page's own real measurement — popularity and line-count savings are different axes, and neither one alone tells you whether a framework's specific abstractions fit your actual problem.
 
-**Strong answer**: name the real trade-off directly. A framework like LangGraph or Pydantic AI measurably reduces the orchestration code you write — this page's own real numbers show roughly a 2-3x reduction versus a raw client on a simple task — in exchange for your code now depending on that framework's conventions for state, messages, and tool wiring. That's worth it when you're building many similar agents and the framework's assumptions genuinely fit your use case; it's a real cost when your task needs something the framework doesn't anticipate, at which point you're debugging both your logic and the framework's abstraction over it. The 12-Factor Agents position — own your control flow — is the strongest version of the case for starting raw, and it's worth being able to state precisely, not just cite as a name.
+**Strong answer**: name the real trade-off directly. A framework like LangGraph or Pydantic AI measurably reduces the orchestration code you write — this page's own real numbers show roughly a 2-3x reduction versus a raw client on a simple task — in exchange for your code now depending on that framework's conventions for state, messages, and tool wiring. That's worth it when you're building many similar agents and the framework's assumptions genuinely fit your use case; it's a real cost when your task needs something the framework doesn't anticipate, at which point you're debugging both your logic and the framework's abstraction over it. This page's own real CrewAI number sharpens the point further: its 9 lines *don't* show the same reduction, not because the framework is worse, but because its actual assumption — you're modeling a role-based persona, likely one of several collaborating agents — doesn't pay off on a single-tool task; the "does this framework's assumption fit my problem" question matters more than a generic line-count comparison. The 12-Factor Agents position — own your control flow — is the strongest version of the case for starting raw, and it's worth being able to state precisely, not just cite as a name.
 
 **Follow-up to expect**: "wouldn't it be faster to just always use a framework and only go raw if you hit a wall?" That's a defensible default, but it inverts a real cost this page's own repro exposed for free: a framework dependency conflict (the `fastmcp-slim`/`python-dotenv` clash) that a raw-client-only project would never have hit at all. Frameworks add real surface area — their own dependencies, their own breaking changes, their own version compatibility matrix — that a raw client doesn't carry. The honest trade isn't "framework always wins until it doesn't" — it's that both directions have a real, measurable cost, and this page's job was to make both costs visible with numbers instead of assuming one of them away.
 
@@ -94,20 +102,20 @@ Across a same-day snapshot of 1,978 genuinely AI-technical job postings (filtere
 {
   "questions": [
     {
-      "scenario": "A real run solved the identical tool-calling task with the raw Anthropic client (15 lines, 2 calls), LangChain/LangGraph's create_agent (8 lines, 2 calls), and Pydantic AI's Agent (5 lines, 2 calls) -- all three produced the correct answer.",
-      "question": "What is the most accurate interpretation of the line-count difference?",
+      "scenario": "A real run solved the identical tool-calling task with the raw Anthropic client (15 lines, 2 calls), LangChain/LangGraph's create_agent (8 lines, 2 calls), Pydantic AI's Agent (5 lines, 2 calls), and CrewAI's Agent.kickoff (9 lines, 2 calls) -- all four produced the correct answer, with CrewAI's line count climbing back up above LangGraph's and Pydantic AI's.",
+      "question": "What is the most accurate interpretation of the line-count differences, including CrewAI's real increase?",
       "options": [
-        "It measures loop code written by hand vs adopted as-is, not code quality",
+        "It measures code written by hand vs. adopted as-is, not a quality ranking",
         "It proves Pydantic AI is the objectively best choice for any agent task",
-        "The comparison is meaningless, since real agents never resemble a simple demo task",
-        "It shows the raw client is poorly written and should be shortened to match the frameworks"
+        "It shows the raw client is poorly written and should be shortened to match the frameworks",
+        "The comparison is meaningless, since real agents never resemble a simple demo task"
       ],
       "correct": 0,
       "explanations": [
-        "Correct. The real measured gap tracks exactly what each layer is for -- how much of the send/check/execute/append loop you write yourself versus hand to a framework's own conventions -- a real, honest, non-evaluative fact, not a verdict on which is 'better.'",
+        "Correct. The real measured gap tracks exactly what each layer is for -- how much of the send/check/execute/append loop you write yourself versus hand to a framework's own conventions -- and CrewAI's own real increase specifically comes from its role/goal/backstory persona model, a genuine design choice for role-based multi-agent orchestration, not a sign of worse code.",
         "Overreaches from one narrow, simple task to a universal quality claim -- fewer lines on this specific task says nothing about how well any framework's assumptions fit a different, harder problem.",
-        "Overcorrects into dismissing a real, controlled measurement -- a simple task with a checkable ground truth is exactly what makes a fair comparison possible; it doesn't claim to generalize to every production scenario.",
-        "Misreads the finding -- the raw client's length isn't a flaw, it's the actual content of the loop other approaches abstract away; shortening it would mean hiding logic, not writing it better."
+        "Misreads the finding -- the raw client's length isn't a flaw, it's the actual content of the loop other approaches abstract away; shortening it would mean hiding logic, not writing it better.",
+        "Overcorrects into dismissing a real, controlled measurement -- a simple task with a checkable ground truth is exactly what makes a fair comparison possible; it doesn't claim to generalize to every production scenario."
       ]
     },
     {
