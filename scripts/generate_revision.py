@@ -57,6 +57,7 @@ SECTIONS = [
         ("Evaluating Agents", "evaluating-agents.md"),
         ("Benchmark Atlas", "benchmark-atlas.md"),
         ("Observability and Debugging", "observability-debugging.md"),
+        ("Observability Ecosystem", "observability-ecosystem.md"),
         ("Agent Security", "agent-security.md"),
         ("Guardrails and Human-in-the-Loop", "guardrails-human-in-the-loop.md"),
         ("Identity, Governance and Compliance", "identity-governance-compliance.md"),

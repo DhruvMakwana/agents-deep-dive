@@ -208,6 +208,14 @@ Every page's TL;DR in one place, every page's Scenario Check merged into one com
     - **A real repro built exactly this: real spec-shaped spans around an agent call to a subtly buggy tool.** The tool silently returned *cumulative all-time* users instead of yesterday's daily figure. The call completed with zero errors — `stop_reason: "end_turn"` — while the real final answer confidently claimed the number was *"very healthy... roughly 46.8x the goal."*
     - **An independent, trace-only diagnosis — no access to the final answer, no re-running the agent — found the real root cause immediately**: inspecting only the real `gen_ai.output.messages` attribute on the tool-execution span, the check correctly flagged the exact value as *"implausibly large for a single day, likely a cumulative/all-time figure mislabeled as daily."* This is the concrete, working version of the "3 a.m. question": can you tell what actually went wrong from the trace alone, at 3 a.m., without waking anyone else up to help re-run it?
 
+    ### [Observability Ecosystem](observability-ecosystem.md)
+
+    - **[Observability and Debugging](observability-debugging.md) covers the OpenTelemetry GenAI *standard* — this page covers the real *products* built around it.** Real, verified: **Langfuse** is the strongest OTel-GenAI-native platform, with a dedicated OTLP endpoint (`/api/public/otel`) that auto-maps `gen_ai.*` attributes, and — as of June 2025 — *"all product capabilities—tracing, evaluations, prompt management, experiments, annotation, the playground, and more—are MIT licensed without any usage limits."* Only enterprise compliance features (SCIM, audit logs, retention policies) require a paid license for self-hosting.
+    - **A real, live repro confirms the architectural split directly.** POSTing a real OTel GenAI-shaped trace to Langfuse's real endpoint with no credentials returned a real, live `401`: `{"message": "No authorization header"}` — confirming it's a genuine, spec-compliant ingestion endpoint, not marketing copy. POSTing to Helicone's real gateway with no routing info returned a real `400: "Missing target base url"` — then, with a real target header, the request was genuinely forwarded live to OpenAI's real API, whose own real error came back through the proxy.
+    - **These are two structurally different real mechanisms, not two brands of the same thing.** Langfuse (and Arize's open-source Phoenix, similarly OTel-native) are *ingestion endpoints* — your agent's own instrumentation pushes spec-shaped traces to them after the fact. Helicone is a *request-path proxy* — it sits directly in front of every real API call, forwarding live, which lets it also do caching, fallback routing, and rate limiting the same request touches.
+    - **Datadog's real differentiator is integration, not a separate product category**: real, verified — *"the same tracing technology trusted by 60% of the Fortune 500,"* correlating *"LLM spans with APM services, infra signals, and RUM sessions"* in one platform SRE and DevOps teams already use, rather than a bolt-on tool living in its own silo.
+    - **Braintrust and W&B Weave both pair observability with evaluation as a first-class feature, not an add-on** — Braintrust's own framing names *"Traces + Evals + Annotation"* as three pillars together; Weave brings *"sessions, turns, steps, tools, and sub-agents as first-class concepts,"* not generic code-level spans, plus pre-built scorers for toxicity, bias, PII, and hallucination detection.
+
     ### [Agent Security](agent-security.md)
 
     - **The lethal trifecta names the actual precondition for data exfiltration**, not a vague "be careful with untrusted content" warning: private-data access, exposure to untrusted content, and the ability to externally communicate, all live in the same session. Remove any one leg and the specific exfiltration risk this describes goes away, regardless of what the untrusted content says.
@@ -297,7 +305,7 @@ Every page's TL;DR in one place, every page's Scenario Check merged into one com
 
 === "Combined Scenario Check"
 
-    144 questions from every page on this site, one combined pass instead of opening each page separately. Every question shows which page it's from — go re-read that page for anything you get wrong.
+    148 questions from every page on this site, one combined pass instead of opening each page separately. Every question shows which page it's from — go re-read that page for anything you get wrong.
 
     <div class="quiz-widget" data-title="Combined Scenario Check — All Pages">
     <script type="application/json">
@@ -2204,6 +2212,82 @@ Every page's TL;DR in one place, every page's Scenario Check merged into one com
           "sourceUrl": "observability-debugging.md"
         },
         {
+          "scenario": "A real repro sent a well-formed OTel GenAI-shaped trace to Langfuse's real OTLP endpoint with no credentials, and received a real, live 401 response: 'No authorization header.' The trace was not rejected for being malformed.",
+          "question": "What does this specific result most precisely confirm about Langfuse's real ingestion endpoint?",
+          "options": [
+            "The endpoint genuinely parses this trace shape and only rejected the request for missing auth",
+            "The endpoint is currently broken and unable to process any real OTLP trace data",
+            "OpenTelemetry compliance claims from vendors are generally unverifiable without a paid account",
+            "Langfuse requires a completely different, undocumented trace format not covered by this page"
+          ],
+          "correct": 0,
+          "explanations": [
+            "Correct. The real, live response rejected the request specifically for missing authorization, not for a malformed payload -- direct, concrete evidence the endpoint successfully parsed the real OTel GenAI trace structure and got far enough to check credentials, confirming genuine spec-compliant ingestion.",
+            "Not supported -- a 401 specifically for missing authorization is a sign the endpoint IS processing the request far enough to check credentials, not that it's broken; a broken endpoint would more likely produce a different error or no response at all.",
+            "Contradicted directly -- this page's own repro is precisely a real, live, no-account verification of an OTel compliance claim, and it succeeded in confirming the claim without needing paid access.",
+            "Not indicated -- the real trace sent used the documented OTel GenAI shape and format, and the real error returned was specifically about authorization, not about the payload's format being wrong or unrecognized."
+          ],
+          "source": "Observability Ecosystem",
+          "sourceUrl": "observability-ecosystem.md"
+        },
+        {
+          "scenario": "A real repro sent a request to Helicone's real gateway endpoint with no routing information and got a real 400 'Missing target base url' response. With a real target header added, the identical request returned OpenAI's own real, live error message, forwarded back through the gateway.",
+          "question": "What does this two-step result most precisely demonstrate about Helicone's real architecture?",
+          "options": [
+            "Helicone is fundamentally broken and cannot successfully route any real request to any provider",
+            "Helicone is an ingestion endpoint like Langfuse, just with a different real error message format",
+            "OpenAI's API was actually down at the time this real test was run, which explains the response",
+            "Helicone operates as a request-path proxy that must know its forwarding target before it can act"
+          ],
+          "correct": 3,
+          "explanations": [
+            "Contradicted directly -- with a real target header provided, the request WAS successfully routed, and a real, live response came back from OpenAI's own API through the proxy, demonstrating working forwarding, not brokenness.",
+            "Backwards -- Langfuse is the ingestion-endpoint architecture; this page explicitly contrasts it with Helicone's different, proxy-based architecture, which requires routing information an ingestion endpoint wouldn't need.",
+            "Not supported -- the real response returned was OpenAI's own standard, well-formed 'no API key provided' error, which is the real, expected response for a request missing valid credentials, not evidence of an outage.",
+            "Correct. The real, two-part result demonstrates exactly this: without knowing where to forward, the real gateway can't act at all ('missing target'); given a real target, it successfully forwards live and passes the real upstream response back -- the defining behavior of a request-path proxy, not a passive log sink."
+          ],
+          "source": "Observability Ecosystem",
+          "sourceUrl": "observability-ecosystem.md"
+        },
+        {
+          "scenario": "Langfuse's own real, verified licensing statement: 'all product capabilities\u2014tracing, evaluations, prompt management, experiments, annotation, the playground, and more\u2014are MIT licensed without any usage limits,' with only enterprise compliance modules requiring a paid license for self-hosting.",
+          "question": "Given this real licensing split, what is the most accurate answer to 'why would a team pay for hosted observability at all'?",
+          "options": [
+            "The free, self-hosted MIT license is a limited trial version that stops working after some real usage threshold",
+            "Teams pay specifically for operational and compliance capabilities the free, self-hosted core doesn't include",
+            "Paying customers get meaningfully better core tracing and evaluation quality than free self-hosted users",
+            "There is no real reason to pay, since the free tier includes every capability the paid tiers offer"
+          ],
+          "correct": 1,
+          "explanations": [
+            "Contradicted directly -- the real quote states these capabilities are MIT licensed 'without any usage limits,' explicitly ruling out a usage-capped trial interpretation.",
+            "Correct. The real, quoted license split is precise: core product capabilities are unrestricted under MIT, while specifically enterprise/compliance features (SCIM, audit logs, retention policies) require payment -- teams pay for the operational and compliance burden, not for a better version of the core observability functionality itself.",
+            "Not supported -- the real quote lists tracing, evals, prompts, and playground as equally MIT-licensed regardless of payment; nothing indicates a quality tier distinction in the core product capabilities themselves.",
+            "Overstates it -- while the core product IS unrestricted, real enterprise compliance features (SCIM, audit logging, retention policies) genuinely do require a paid license for self-hosting, so there IS a real reason some teams pay."
+          ],
+          "source": "Observability Ecosystem",
+          "sourceUrl": "observability-ecosystem.md"
+        },
+        {
+          "scenario": "Datadog's real, verified positioning for LLM Observability emphasizes correlating 'LLM spans with APM services, infra signals, and RUM sessions' using 'the same tracing technology trusted by 60% of the Fortune 500,' rather than emphasizing a standalone feature list.",
+          "question": "What does this specific framing indicate is Datadog's real, primary competitive differentiator in this space?",
+          "options": [
+            "Datadog offers substantially more LLM-specific tracing features than any other platform covered here",
+            "Datadog is the only platform in this space that supports OpenTelemetry-based data ingestion at all",
+            "Datadog's differentiator is data correlation with existing infrastructure signals a team already monitors",
+            "Datadog's LLM Observability product operates as a completely separate platform from its existing APM tools"
+          ],
+          "correct": 2,
+          "explanations": [
+            "Not the claim made -- the page's own framing is specifically about WHERE the data lives and what it connects to (APM, infra, RUM), not a claim that Datadog's LLM-specific feature list is larger than competitors' feature lists.",
+            "Not supported and not exclusive -- multiple platforms covered on this page (Langfuse, Phoenix) are described as OTel-native or OTel-compatible; the page doesn't claim Datadog is unique in supporting OpenTelemetry-based ingestion.",
+            "Correct. The real, quoted framing is specifically about correlating LLM spans with APM services, infrastructure signals, and RUM sessions using the SAME tracing technology already trusted at scale -- the differentiator is unified data and shared tooling with existing observability, not a longer LLM-specific feature list.",
+            "Directly contradicted -- the whole point of the real, quoted framing is that LLM spans share the SAME trace/span data model, dashboards, and alerting as the rest of a team's existing Datadog instrumentation, explicitly not a separate, siloed platform."
+          ],
+          "source": "Observability Ecosystem",
+          "sourceUrl": "observability-ecosystem.md"
+        },
+        {
           "scenario": "A real repro gave an agent all three lethal-trifecta legs (untrusted email, private-record access, unrestricted send) plus a structurally-fixed version (send restricted to the on-file address). In both conditions, the model declined the injected forwarding request -- no exfiltration occurred either way.",
           "question": "What's the most accurate conclusion to draw from this specific result?",
           "options": [
@@ -3046,7 +3130,7 @@ Every page's TL;DR in one place, every page's Scenario Check merged into one com
 
 === "Flashcards"
 
-    281 flashcards from every page with a deck so far — click a card to flip it, shuffle for random order.
+    288 flashcards from every page with a deck so far — click a card to flip it, shuffle for random order.
 
     <div class="flashcard-widget" data-title="Flashcards — All Pages">
     <script type="application/json">
@@ -4031,6 +4115,41 @@ Every page's TL;DR in one place, every page's Scenario Check merged into one com
           "front": "How should the real privacy tension in gen_ai.input.messages/output.messages (sensitive data vs. real debugging value) be resolved, per this topic's framing?",
           "back": "Filtering and truncation should be a deliberate design choice made for each real case -- not a blanket default either way (log everything forever, or log nothing to stay safe). The same discipline context editing and compaction already require elsewhere in this project.",
           "source": "Observability and Debugging"
+        },
+        {
+          "front": "What's the real, verified distinction between what Observability and Debugging covers vs. what Observability Ecosystem covers?",
+          "back": "Observability and Debugging = the OpenTelemetry GenAI STANDARD (span names, gen_ai.input.messages/gen_ai.output.messages attributes). Observability Ecosystem = the real PRODUCTS built around that standard (Langfuse, Helicone, Datadog, etc.) -- mirroring the MCP Deep Dive (protocol) -> MCP and Tool Ecosystem (products) pattern already used elsewhere on this site.",
+          "source": "Observability Ecosystem"
+        },
+        {
+          "front": "What is Langfuse's real, verified OTel-GenAI-native mechanism and its real licensing split?",
+          "back": "Dedicated OTLP endpoint (/api/public/otel, HTTP only, no gRPC) that auto-maps standard gen_ai.* attributes -- 'Langfuse aims to be compliant with the OpenTelemetry GenAI semantic conventions.' Licensing (as of June 2025): 'all product capabilities -- tracing, evaluations, prompt management, experiments, annotation, the playground, and more -- are MIT licensed without any usage limits.' Only enterprise compliance features (SCIM, audit logs, retention) require payment for self-hosting.",
+          "source": "Observability Ecosystem"
+        },
+        {
+          "front": "In this topic's own real, live repro, what exact response did Langfuse's real OTLP endpoint return to an unauthenticated, well-formed OTel GenAI trace?",
+          "back": "Real, live 401: {\"message\": \"No authorization header\", \"error\": \"UnauthorizedError\"}. Real significance: rejected for MISSING AUTH, not malformed payload -- direct, concrete proof the endpoint genuinely parses this exact trace shape per its own documentation, not just a marketing claim.",
+          "source": "Observability Ecosystem"
+        },
+        {
+          "front": "What is Helicone's real, verified architecture, and what did this topic's live repro confirm about it?",
+          "back": "A request-path AI GATEWAY/PROXY, not an ingestion endpoint -- integration is pointing your app's base URL at gateway.helicone.ai with a Helicone-Target-Url header. Real repro: no target header -> real 400 'Missing target base url' (nothing to log without knowing where to forward). WITH a real target header -> request genuinely forwarded live to OpenAI's real API, whose real 'no API key' error came back through the proxy unmodified.",
+          "source": "Observability Ecosystem"
+        },
+        {
+          "front": "What is Arize Phoenix's real relationship to Arize AI, and its real license?",
+          "back": "Phoenix = the free, open-source project (Elastic License 2.0 -- source-available, not OSI-open, but free/unrestricted for self-hosting). Arize AX = Arize's SEPARATE commercial/managed SaaS built on top, adding managed hosting, alerting, online evals, longer retention. Phoenix markets 'Native OpenTelemetry support... No proprietary lock-in.'",
+          "source": "Observability Ecosystem"
+        },
+        {
+          "front": "What is Datadog LLM Observability's real, stated differentiator, and its real billing unit?",
+          "back": "Not a longer feature list -- DATA CORRELATION: 'the same tracing technology trusted by 60% of the Fortune 500' lets teams 'correlate LLM spans with APM services, infra signals, and RUM sessions' in one existing platform, not a separate siloed tool. Real billing: charges per LLM-provider-call span specifically; tool/embedding/agent spans are NOT billed separately.",
+          "source": "Observability Ecosystem"
+        },
+        {
+          "front": "How do Braintrust and W&B Weave both pair observability with evaluation as a first-class feature?",
+          "back": "Braintrust's own framing names three pillars together: 'Traces + Evals + Annotation' (their Nov 2025 post 'The three pillars of AI observability'). Weave 'brings sessions, turns, steps, tools, and sub-agents as first-class concepts' (not generic code spans) plus pre-built scorers for toxicity, bias, PII, and hallucination detection -- both treat 'is this good' as equally important to 'what happened.'",
+          "source": "Observability Ecosystem"
         },
         {
           "front": "What are the three properties of Willison's 'lethal trifecta,' in his own words?",
