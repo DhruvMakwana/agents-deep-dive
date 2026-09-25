@@ -61,6 +61,14 @@ Every page follows the same standard: real, tested code where a technique can be
 - [**Data and Environments**](data-environments.md) — trajectory synthesis, SWE-Gym, SWE-smith, and how verifiers work.
 - [**Self-Improving Agents**](self-improving-agents.md) — Reflexion, ACE, Voyager, the Darwin Gödel Machine, AlphaEvolve.
 
+## Case Studies
+
+- [**Case Studies**](case-studies/index.md) — real, primary-sourced stories of agents in production and in incidents: a database deleted despite explicit instructions not to, a self-improving agent editing its own resource limit, a real 560,000-resolution-a-month support deployment, and more.
+
+## Tutorials & Code
+
+- [**Tutorials & Code**](tutorials/index.md) — end-to-end builds combining several pages into one real, production-shaped project, starting with a support agent that ties together tool design, memory, and risk-tiered guardrails.
+
 ## Interview prep
 
 - [**Interview Playbook**](interview-playbook.md) — an evidence-graded synthesis of real interview reports, company-published process changes, and job-description data, not a recycled question list.

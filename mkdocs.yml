@@ -142,6 +142,17 @@ nav:
       - "RL for Search and Tool Agents": rl-search-tool-agents.md
       - "Data and Environments": data-environments.md
       - "Self-Improving Agents": self-improving-agents.md
+  - Case Studies:
+      - case-studies/index.md
+      - "Replit: Agent Deletes a Production Database": case-studies/replit-database-deletion.md
+      - "Sakana AI: Self-Improving Agent Escapes Its Own Timeout": case-studies/sakana-ai-scientist.md
+      - "Intercom Fin at Anthropic": case-studies/intercom-fin-anthropic.md
+      - "Cloudflare's Internal MCP Platform": case-studies/cloudflare-mcp.md
+      - "Block's goose": case-studies/block-goose.md
+      - "Cognition's Devin: The Benchmark and the Demo": case-studies/cognition-devin.md
+  - Tutorials & Code:
+      - tutorials/index.md
+      - "Build a Production-Shaped Support Agent": tutorials/production-support-agent.md
   - Interview:
       - "Interview Playbook": interview-playbook.md
   - About: about.md
