@@ -4,7 +4,7 @@ title: Home
 
 # Agents, Deep Dive
 
-A complete, working reference on LLM agents — 36 pages from the workflow-vs-agent distinction up through tool use, context and memory, multi-agent systems, production engineering, security and governance, and training agents with reinforcement learning. A companion to [RAG, Deep Dive](https://dhruvmakwana.github.io/rag-deep-dive/).
+A complete, working reference on LLM agents — from the workflow-vs-agent distinction up through tool use, context and memory, multi-agent systems, production engineering, security and governance, and training agents with reinforcement learning — plus real case studies and end-to-end tutorials. A companion to [RAG, Deep Dive](https://dhruvmakwana.github.io/rag-deep-dive/).
 
 Every page follows the same standard: real, tested code where a technique can be demoed (not pseudocode), current research rather than recycled tutorial content, and an honest report of what actually happened when the code ran — including the times it surfaced something genuinely surprising, or didn't work at all. Where a claim is measured, the numbers on the page are from a real run, not an estimate. Fast-moving claims (a library version, a protocol spec, a benchmark score) are stamped with the date they were checked, because this field moves within months.
 
@@ -47,6 +47,7 @@ Every page follows the same standard: real, tested code where a technique can be
 - [**Evaluating Agents**](evaluating-agents.md) — outcome versus trajectory, pass@k versus pass^k, infrastructure noise.
 - [**Benchmark Atlas**](benchmark-atlas.md) — what SWE-bench, tau-bench, GAIA, OSWorld and more actually measure.
 - [**Observability and Debugging**](observability-debugging.md) — traces, OpenTelemetry GenAI conventions, the 3 a.m. debugging question.
+- [**Observability Ecosystem**](observability-ecosystem.md) — LangSmith, Langfuse, Arize, Datadog, Helicone, Braintrust, and how they actually differ.
 - [**Agent Security**](agent-security.md) — the lethal trifecta, indirect injection, CaMeL, the Rule of Two.
 - [**Guardrails and Human-in-the-Loop**](guardrails-human-in-the-loop.md) — layered guardrails, risk-tiered approval gates.
 - [**Identity, Governance and Compliance**](identity-governance-compliance.md) — agent identity, OWASP's agentic list, NIST, the EU AI Act, MITRE ATLAS.
