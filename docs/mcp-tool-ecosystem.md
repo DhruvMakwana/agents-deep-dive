@@ -11,7 +11,7 @@
 
 ## The registry: real, live, and honestly incomplete
 
-[MCP Deep Dive](mcp-deep-dive.md) covered the protocol itself — the 2026-07-28 spec, transports, auth, servers and clients. This page covers the layer built *around* that protocol: how an agent actually finds, reaches, and manages access to the servers implementing it, once there are thousands of them.
+[MCP Deep Dive](mcp-deep-dive.md) covers the protocol itself — what MCP is, its Host/Client/Server architecture, a hands-on server-and-client demo, and the current spec's statelessness and security model. This page covers the layer built *around* that protocol: how an agent actually finds, reaches, and manages access to the servers implementing it, once there are thousands of them.
 
 The most direct answer to "how does discovery work" is the real, official MCP registry — `registry.modelcontextprotocol.io`, in preview since 2025-09-08, its own description calling it "an open catalog and API for publicly available MCP servers." Reads are unauthenticated: `GET /v0/servers?search=<query>&limit=<n>` returns real, currently-listed servers with their name, description, and remote endpoint URLs.
 

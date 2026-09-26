@@ -77,10 +77,11 @@ Every page's TL;DR in one place, every page's Scenario Check merged into one com
 
     ### [MCP Deep Dive](mcp-deep-dive.md)
 
-    - **MCP's 2026-07-28 revision makes the protocol stateless at the wire level**: the `initialize`/`notifications/initialized` handshake and the `Mcp-Session-Id` header are removed from Streamable HTTP; every request carries its own protocol version and capabilities; list endpoints no longer vary per connection. A real, dated finding: `mcp==2.2.0` (the SDK that explicitly targets this spec) still uses `Mcp-Session-Id` **by default** — spec-compliant statelessness is real and working, but is an opt-in flag (`stateless_http=True`), not the default.
-    - **Multi Round-Trip Requests (MRTR) replaced server-initiated requests** (`roots/list`, `sampling/createMessage`, `elicitation/create`) with a request/retry pattern: a server returns `InputRequiredResult`, the client retries the original request carrying the answer plus an opaque `requestState` token the server minted and must re-verify.
+    - **MCP (Model Context Protocol) is an open standard for connecting AI applications to external tools, data, and workflows** — Anthropic's own framing: *"Think of MCP like a USB-C port for AI applications. Just as USB-C provides a standardized way to connect electronic devices, MCP provides a standardized way to connect AI applications to external systems."* One MCP server, built once, works with any MCP-compatible client (Claude, ChatGPT, VS Code, Cursor, and more) — instead of one custom integration per app-times-tool pair.
+    - **Architecture: a Host app runs one MCP Client per MCP Server it talks to**, each client holding a dedicated connection. Servers expose three primitives — **Tools** (actions the AI can invoke), **Resources** (data it can read), **Prompts** (reusable templates) — over **JSON-RPC 2.0**, carried on either **stdio** (a local subprocess) or **Streamable HTTP** (a remote server).
+    - **MCP is stateless today**: every request carries its own protocol version and capabilities in `_meta`, so a server needs nothing remembered from earlier requests to answer the current one. A real, dated finding: `mcp==2.2.0` (the SDK that targets this exact spec) still requires a session ID **by default** — spec-compliant statelessness is real and works correctly, but is an opt-in flag (`stateless_http=True`), not the default.
+    - **Multi Round-Trip Requests (MRTR) is how a server asks the client for more input mid-task** (elicitation): the server returns `InputRequiredResult`, the client retries the original request carrying the answer plus an opaque `requestState` token the server minted and must re-verify.
     - **A real repro of the SDK's own `requestState` security held on every check**: tampering with a sealed token is rejected (AEAD authentication failure), replaying a token against a different tool argument is rejected (request-binding), and — the important one — replaying one user's token as a different user is rejected (principal-binding). That last check is the real, working mitigation for the spec's own named "State Handle Hijacking" vulnerability: *"MCP servers **MUST NOT** treat possession of a state handle as authentication."*
-    - **A real, current list of deprecations matters for anything built today**: HTTP+SSE transport (migrate to Streamable HTTP), Roots/Sampling/Logging features (migrate to tool parameters, direct provider APIs, and OpenTelemetry respectively), and OAuth Dynamic Client Registration (migrate to Client ID Metadata Documents) are all now formally Deprecated under a twelve-month removal window, not just "discouraged."
     - **Token passthrough is explicitly forbidden, not just risky**: *"MCP servers **MUST NOT** accept any tokens that were not explicitly issued for the MCP server"* — a server that blindly forwards a client-supplied token downstream breaks a real OAuth security boundary and reintroduces the confused-deputy problem the rest of the spec's auth model is built to prevent.
 
     ### [MCP and Tool Ecosystem](mcp-tool-ecosystem.md)
@@ -3130,7 +3131,7 @@ Every page's TL;DR in one place, every page's Scenario Check merged into one com
 
 === "Flashcards"
 
-    290 flashcards from every page with a deck so far — click a card to flip it, shuffle for random order.
+    291 flashcards from every page with a deck so far — click a card to flip it, shuffle for random order.
 
     <div class="flashcard-widget" data-title="Flashcards — All Pages">
     <script type="application/json">
@@ -3467,8 +3468,18 @@ Every page's TL;DR in one place, every page's Scenario Check merged into one com
           "source": "Tools at Scale"
         },
         {
-          "front": "What is the single largest architectural change in the MCP 2026-07-28 spec revision?",
-          "back": "Making MCP stateless at the wire level: the initialize/notifications/initialized handshake and the Mcp-Session-Id header are removed from Streamable HTTP. Every request carries its own protocol version and capabilities in _meta, and list endpoints (tools/list, resources/list, prompts/list) no longer vary per-connection. Servers needing cross-call state use explicit, server-minted handles passed as ordinary tool arguments instead.",
+          "front": "What is MCP, and what real problem does it solve, per Anthropic's own official framing?",
+          "back": "\"Think of MCP like a USB-C port for AI applications... MCP provides a standardized way to connect AI applications to external systems.\" It replaces one custom integration per app-times-tool pair with one MCP server that any MCP-compatible client (Claude, ChatGPT, VS Code, Cursor) can use unmodified.",
+          "source": "MCP Deep Dive"
+        },
+        {
+          "front": "What are MCP's three architectural participants, and what are the three core primitives a Server exposes?",
+          "back": "Participants: Host (the AI app, e.g. VS Code), Client (one dedicated connection per Server, created by the Host), Server (the program providing context). Primitives: Tools (executable actions), Resources (contextual data), Prompts (reusable interaction templates) -- all exchanged as JSON-RPC 2.0 messages over stdio (local) or Streamable HTTP (remote).",
+          "source": "MCP Deep Dive"
+        },
+        {
+          "front": "MCP is described as a stateless protocol today. What does that mean concretely, and what's the real consequence for servers?",
+          "back": "Every request carries its own protocol version and capabilities in a _meta field, so a server needs nothing remembered from earlier requests to answer the current one -- no per-connection lookup. Consequence: any real state that must persist across a round trip (like a paused checkout) can't rely on the transport anymore -- it has to become an explicit, cryptographically protected value (requestState) the client carries.",
           "source": "MCP Deep Dive"
         },
         {
@@ -3477,8 +3488,8 @@ Every page's TL;DR in one place, every page's Scenario Check merged into one com
           "source": "MCP Deep Dive"
         },
         {
-          "front": "What replaced server-initiated requests (roots/list, sampling/createMessage, elicitation/create) in the 2026-07-28 spec, and how does it work?",
-          "back": "Multi Round-Trip Requests (MRTR): the server returns an InputRequiredResult carrying inputRequests; the client retries the ORIGINAL request, providing inputResponses plus an opaque requestState token the server minted. The server re-verifies that token on the retry.",
+          "front": "How does MCP let a server ask the client for more information mid-task (elicitation), and what mechanism carries that exchange?",
+          "back": "Multi Round-Trip Requests (MRTR), entirely client-driven: the server returns an InputRequiredResult carrying inputRequests; the client retries the ORIGINAL request, providing inputResponses plus an opaque requestState token the server minted. The server re-verifies that token on the retry -- the server never interrupts the client directly.",
           "source": "MCP Deep Dive"
         },
         {
@@ -3489,11 +3500,6 @@ Every page's TL;DR in one place, every page's Scenario Check merged into one com
         {
           "front": "A real repro replayed Alice's validly-sealed requestState token as a different user ('user:mallory') with the same cart ID. What happened, and why does it matter?",
           "back": "Rejected with 'principal' -- a real, working test of the spec's own named 'State Handle Hijacking' mitigation: 'MCP servers MUST NOT treat possession of a state handle as authentication' and 'SHOULD bind handles server-side to the authenticated user.' The repro confirmed this binding actually holds against the SDK's real crypto, not just as a documented requirement.",
-          "source": "MCP Deep Dive"
-        },
-        {
-          "front": "Which three real, concrete things does the 2026-07-28 spec formally deprecate (12-month removal window), and what's the migration for each?",
-          "back": "HTTP+SSE transport -> migrate to Streamable HTTP. Roots/Sampling/Logging features -> migrate to tool parameters, direct provider API integration, and OpenTelemetry/stderr logging respectively. OAuth Dynamic Client Registration -> migrate to Client ID Metadata Documents (DCR stays available for backward compatibility only).",
           "source": "MCP Deep Dive"
         },
         {
