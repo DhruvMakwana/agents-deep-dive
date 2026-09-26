@@ -77,12 +77,11 @@ Every page's TL;DR in one place, every page's Scenario Check merged into one com
 
     ### [MCP Deep Dive](mcp-deep-dive.md)
 
-    - **MCP (Model Context Protocol) is an open standard for connecting AI applications to external tools, data, and workflows** — Anthropic's own framing: *"Think of MCP like a USB-C port for AI applications. Just as USB-C provides a standardized way to connect electronic devices, MCP provides a standardized way to connect AI applications to external systems."* One MCP server, built once, works with any MCP-compatible client (Claude, ChatGPT, VS Code, Cursor, and more) — instead of one custom integration per app-times-tool pair.
-    - **Architecture: a Host app runs one MCP Client per MCP Server it talks to**, each client holding a dedicated connection. Servers expose three primitives — **Tools** (actions the AI can invoke), **Resources** (data it can read), **Prompts** (reusable templates) — over **JSON-RPC 2.0**, carried on either **stdio** (a local subprocess) or **Streamable HTTP** (a remote server).
-    - **MCP is stateless today**: every request carries its own protocol version and capabilities in `_meta`, so a server needs nothing remembered from earlier requests to answer the current one. A real, dated finding: `mcp==2.2.0` (the SDK that targets this exact spec) still requires a session ID **by default** — spec-compliant statelessness is real and works correctly, but is an opt-in flag (`stateless_http=True`), not the default.
-    - **Multi Round-Trip Requests (MRTR) is how a server asks the client for more input mid-task** (elicitation): the server returns `InputRequiredResult`, the client retries the original request carrying the answer plus an opaque `requestState` token the server minted and must re-verify.
-    - **A real repro of the SDK's own `requestState` security held on every check**: tampering with a sealed token is rejected (AEAD authentication failure), replaying a token against a different tool argument is rejected (request-binding), and — the important one — replaying one user's token as a different user is rejected (principal-binding). That last check is the real, working mitigation for the spec's own named "State Handle Hijacking" vulnerability: *"MCP servers **MUST NOT** treat possession of a state handle as authentication."*
-    - **Token passthrough is explicitly forbidden, not just risky**: *"MCP servers **MUST NOT** accept any tokens that were not explicitly issued for the MCP server"* — a server that blindly forwards a client-supplied token downstream breaks a real OAuth security boundary and reintroduces the confused-deputy problem the rest of the spec's auth model is built to prevent.
+    - **MCP (Model Context Protocol) is an open standard for connecting AI applications to external tools, data, and workflows** — Anthropic's own framing: *"Think of MCP like a USB-C port for AI applications."* One MCP server, built once, works with any MCP-compatible client (Claude, ChatGPT, VS Code, Cursor, and more).
+    - **Three pieces, defined against each other**: a **Host** (the AI application, e.g. your own script, Claude Desktop, VS Code) creates a **Client** for each **Server** it wants to talk to; the Client is a dedicated connection, the Server is the program on the other end that actually owns the tools.
+    - **A Tool's schema is generated automatically from ordinary code**: `@server.tool()` on a typed Python function produces a real JSON Schema (`required` fields, optional fields with defaults) — this is the exact structure a model sees when deciding how to call it.
+    - **MCP has two transports, and this page shows both working**: **stdio** (the server is a local subprocess, talked to over stdin/stdout — no network at all) and **Streamable HTTP** (the server is a remote endpoint, reachable over a URL). Same client code, same tool calls, different wiring underneath.
+    - **Going deeper, for anything built for production**: MCP is stateless today (every request is self-contained via `_meta`) — with a real, dated finding that `mcp==2.2.0`'s default HTTP mode doesn't actually behave statelessly unless you opt in. A `requestState` token (real AES-256-GCM encryption) protects any state that must survive across a multi-step tool call, and a real repro confirms its tamper/request-binding/principal-binding checks all hold.
 
     ### [MCP and Tool Ecosystem](mcp-tool-ecosystem.md)
 
@@ -3131,7 +3130,7 @@ Every page's TL;DR in one place, every page's Scenario Check merged into one com
 
 === "Flashcards"
 
-    291 flashcards from every page with a deck so far — click a card to flip it, shuffle for random order.
+    294 flashcards from every page with a deck so far — click a card to flip it, shuffle for random order.
 
     <div class="flashcard-widget" data-title="Flashcards — All Pages">
     <script type="application/json">
@@ -3473,8 +3472,23 @@ Every page's TL;DR in one place, every page's Scenario Check merged into one com
           "source": "MCP Deep Dive"
         },
         {
-          "front": "What are MCP's three architectural participants, and what are the three core primitives a Server exposes?",
-          "back": "Participants: Host (the AI app, e.g. VS Code), Client (one dedicated connection per Server, created by the Host), Server (the program providing context). Primitives: Tools (executable actions), Resources (contextual data), Prompts (reusable interaction templates) -- all exchanged as JSON-RPC 2.0 messages over stdio (local) or Streamable HTTP (remote).",
+          "front": "Define MCP's three participants in the order they depend on each other: Host, Client, Server.",
+          "back": "Host: the AI application you actually run (a script, Claude Desktop, VS Code) -- decides when to use a tool. Client: for each Server the Host wants to talk to, it creates one dedicated Client (like a private phone line -- one per Server). Server: the program on the other end of that line, which actually owns the tools/data/prompts and answers what the Client asks.",
+          "source": "MCP Deep Dive"
+        },
+        {
+          "front": "What are the three core primitives an MCP Server exposes, and which one does a typical tutorial focus on first?",
+          "back": "Tools (executable actions the AI can invoke), Resources (contextual data it can read), Prompts (reusable interaction templates) -- all exchanged as JSON-RPC 2.0 messages. Tools are the most commonly used and the natural starting point: define one with @server.tool(), list it, call it.",
+          "source": "MCP Deep Dive"
+        },
+        {
+          "front": "A server has two tools: add(a: int, b: int) and greet(name: str, formal: bool = False). What's the real, concrete difference in their auto-generated JSON schemas?",
+          "back": "add's schema lists both a and b in \"required\" (no defaults in the signature). greet's schema lists only \"name\" in \"required\" -- formal appears in properties with \"default\": false and is absent from required, because the Python default made it optional. The schema a model sees is derived automatically from the function signature, not hand-authored.",
+          "source": "MCP Deep Dive"
+        },
+        {
+          "front": "MCP has two transports: stdio and Streamable HTTP. What's the real difference, and when do you use each?",
+          "back": "stdio: the server is a local subprocess launched by the Host, talked to over stdin/stdout -- no network, typically serves one client (most local dev tools, e.g. a filesystem server). Streamable HTTP: the server is a remote endpoint reachable over a URL, typically serving many clients at once (e.g. GitHub's or Stripe's own hosted MCP servers). Same client code (list_tools/call_tool) works against both -- only how the Client reaches the Server changes.",
           "source": "MCP Deep Dive"
         },
         {
