@@ -1,0 +1,3036 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="A deep-dive reference on LLM agents — architectures, tools, context and memory, multi-agent systems, evaluation, security, durable execution, and training agents with RL.">
+      
+      
+        <meta name="author" content="Dhruv Makwana">
+      
+      
+        <link rel="canonical" href="https://dhruvmakwana.github.io/agents-deep-dive/models-for-agents/">
+      
+      
+        <link rel="prev" href="../memory-architectures/">
+      
+      
+        <link rel="next" href="../planning-and-decomposition/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../assets/favicon.svg">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
+    
+    
+      
+        <title>Models for Agents - Agents, Deep Dive</title>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/main.ec1eaa64.min.css">
+      
+        
+        <link rel="stylesheet" href="../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Inter:300,300i,400,400i,700,700i%7CJetBrains+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Inter";--md-code-font:"JetBrains Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../stylesheets/extra.css">
+    
+      <link rel="stylesheet" href="../stylesheets/quiz.css">
+    
+      <link rel="stylesheet" href="../stylesheets/flashcards.css">
+    
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="slate" data-md-color-primary="black" data-md-color-accent="deep-purple">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#models-for-agents" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow md-header--lifted" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href=".." title="Agents, Deep Dive" class="md-header__button md-logo" aria-label="Agents, Deep Dive" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Agents, Deep Dive
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Models for Agents
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="slate" data-md-color-primary="black" data-md-color-accent="deep-purple"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 7a5 5 0 0 1 5 5 5 5 0 0 1-5 5 5 5 0 0 1-5-5 5 5 0 0 1 5-5m0 2a3 3 0 0 0-3 3 3 3 0 0 0 3 3 3 3 0 0 0 3-3 3 3 0 0 0-3-3m0-7 2.39 3.42C13.65 5.15 12.84 5 12 5s-1.65.15-2.39.42zM3.34 7l4.16-.35A7.2 7.2 0 0 0 5.94 8.5c-.44.74-.69 1.5-.83 2.29zm.02 10 1.76-3.77a7.131 7.131 0 0 0 2.38 4.14zM20.65 7l-1.77 3.79a7.02 7.02 0 0 0-2.38-4.15zm-.01 10-4.14.36c.59-.51 1.12-1.14 1.54-1.86.42-.73.69-1.5.83-2.29zM12 22l-2.41-3.44c.74.27 1.55.44 2.41.44.82 0 1.63-.17 2.37-.44z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="default" data-md-color-primary="white" data-md-color-accent="deep-purple"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="m17.75 4.09-2.53 1.94.91 3.06-2.63-1.81-2.63 1.81.91-3.06-2.53-1.94L12.44 4l1.06-3 1.06 3zm3.5 6.91-1.64 1.25.59 1.98-1.7-1.17-1.7 1.17.59-1.98L15.75 11l2.06-.05L18.5 9l.69 1.95zm-2.28 4.95c.83-.08 1.72 1.1 1.19 1.85-.32.45-.66.87-1.08 1.27C15.17 23 8.84 23 4.94 19.07c-3.91-3.9-3.91-10.24 0-14.14.4-.4.82-.76 1.27-1.08.75-.53 1.93.36 1.85 1.19-.27 2.86.69 5.83 2.89 8.02a9.96 9.96 0 0 0 8.02 2.89m-1.64 2.02a12.08 12.08 0 0 1-7.8-3.47c-2.17-2.19-3.33-5-3.49-7.82-2.81 3.14-2.7 7.96.31 10.98 3.02 3.01 7.84 3.12 10.98.31"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/dhruvmakwana/agents-deep-dive" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    dhruvmakwana/agents-deep-dive
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+    
+      
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href=".." class="md-tabs__link">
+        
+  
+  
+    
+  
+  Home
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../revision/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Revision
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../what-is-an-agent/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Foundations
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+    
+  
+  
+    
+    
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../tool-design/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Tools and Context
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../planning-and-decomposition/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Systems
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../evaluating-agents/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Production
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../training-agents/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Training
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../case-studies/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Case Studies
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../tutorials/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Tutorials & Code
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../interview-playbook/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Interview
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../about/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  About
+
+      </a>
+    </li>
+  
+
+      
+    </ul>
+  </div>
+</nav>
+    
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href=".." title="Agents, Deep Dive" class="md-nav__button md-logo" aria-label="Agents, Deep Dive" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    Agents, Deep Dive
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/dhruvmakwana/agents-deep-dive" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    dhruvmakwana/agents-deep-dive
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href=".." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../revision/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Revision
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Foundations
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Foundations
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../what-is-an-agent/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    What Is an Agent?
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../agent-loop-from-scratch/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    The Agent Loop From Scratch
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../workflow-patterns/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Workflow Patterns
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../reasoning-paradigms/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Reasoning Paradigms
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../choosing-a-framework/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Choosing a Framework
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+        
+        
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Tools and Context
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Tools and Context
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../tool-design/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Tool Design
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../context-engineering/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Context Engineering
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../tools-at-scale/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Tools at Scale
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../mcp-deep-dive/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MCP Deep Dive
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../mcp-tool-ecosystem/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MCP and Tool Ecosystem
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../skills-a2a-protocols/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Skills, A2A and Other Protocols
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../kv-cache-economics/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    KV-Cache Economics
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../memory-architectures/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Memory Architectures
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Models for Agents
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Models for Agents
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+  
+
+<nav class="md-nav md-nav--secondary" aria-label="On this page">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      On this page
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#the-real-question-isnt-which-model-is-best-its-which-model-is-adequate-for-this-call" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The real question isn't "which model is best" — it's "which model is adequate for this call"
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#repro-1-tool-calling-reliability-under-a-deliberately-ambiguous-request" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Repro 1: tool-calling reliability under a deliberately ambiguous request
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#what-a-major-open-weight-models-real-leaderboard-position-says" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What a major open-weight model's real leaderboard position says
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#repro-2-routing-the-real-payoff-even-when-accuracy-doesnt-differ" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Repro 2: routing — the real payoff even when accuracy doesn't differ
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#what-this-means-in-practice" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What this means in practice
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#interview-angle" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Interview angle
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#build-it-yourself-30-minutes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Build it yourself — 30 minutes
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#scenario-check" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Scenario Check
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#sources-further-reading" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Sources &amp; further reading
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Systems
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Systems
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../planning-and-decomposition/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Planning and Decomposition
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../multi-agent-systems/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Multi-Agent Systems
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../harness-engineering/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Harness Engineering
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../coding-agents-mechanisms/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Coding Agents: Mechanisms
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../coding-agent-config/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Coding Agent Products and Configuration
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../deep-research-agents/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Deep Research Agents
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../computer-use-browser-agents/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Computer-Use and Browser Agents
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../personal-always-on-agents/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Personal and Always-On Agents
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6" >
+        
+          
+          <label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Production
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Production
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../evaluating-agents/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Evaluating Agents
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../benchmark-atlas/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Benchmark Atlas
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../observability-debugging/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Observability and Debugging
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../observability-ecosystem/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Observability Ecosystem
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../agent-security/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Agent Security
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../guardrails-human-in-the-loop/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Guardrails and Human-in-the-Loop
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../identity-governance-compliance/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Identity, Governance and Compliance
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../sandboxes-permissions/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Sandboxes and Permissions
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../durable-execution/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Durable Execution
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../cost-latency/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Cost and Latency
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7" >
+        
+          
+          <label class="md-nav__link" for="__nav_7" id="__nav_7_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Training
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_7_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_7">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Training
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../training-agents/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Training Agents: Reward and Credit
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../rl-search-tool-agents/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    RL for Search and Tool Agents
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../data-environments/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Data and Environments
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../self-improving-agents/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Self-Improving Agents
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_8" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../case-studies/" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Case Studies
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_8" id="__nav_8_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_8_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_8">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Case Studies
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../case-studies/replit-database-deletion/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Replit: Agent Deletes a Production Database
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../case-studies/sakana-ai-scientist/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Sakana AI: Self-Improving Agent Escapes Its Own Timeout
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../case-studies/intercom-fin-anthropic/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Intercom Fin at Anthropic
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../case-studies/cloudflare-mcp/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Cloudflare's Internal MCP Platform
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../case-studies/block-goose/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Block's goose
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../case-studies/cognition-devin/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Cognition's Devin: The Benchmark and the Demo
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_9" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../tutorials/" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Tutorials & Code
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_9" id="__nav_9_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_9_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_9">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Tutorials & Code
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../tutorials/production-support-agent/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Build a Production-Shaped Support Agent
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_10" >
+        
+          
+          <label class="md-nav__link" for="__nav_10" id="__nav_10_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Interview
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_10_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_10">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Interview
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../interview-playbook/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Interview Playbook
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../about/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    About
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+  
+
+<nav class="md-nav md-nav--secondary" aria-label="On this page">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      On this page
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#the-real-question-isnt-which-model-is-best-its-which-model-is-adequate-for-this-call" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The real question isn't "which model is best" — it's "which model is adequate for this call"
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#repro-1-tool-calling-reliability-under-a-deliberately-ambiguous-request" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Repro 1: tool-calling reliability under a deliberately ambiguous request
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#what-a-major-open-weight-models-real-leaderboard-position-says" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What a major open-weight model's real leaderboard position says
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#repro-2-routing-the-real-payoff-even-when-accuracy-doesnt-differ" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Repro 2: routing — the real payoff even when accuracy doesn't differ
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#what-this-means-in-practice" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What this means in practice
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#interview-angle" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Interview angle
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#build-it-yourself-30-minutes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Build it yourself — 30 minutes
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#scenario-check" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Scenario Check
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#sources-further-reading" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Sources &amp; further reading
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+
+<h1 id="models-for-agents">Models for Agents<a class="headerlink" href="#models-for-agents" title="Permanent link">&para;</a></h1>
+<div class="admonition example">
+<p class="admonition-title">Hands-on</p>
+<p>Full runnable recipe: <a href="https://github.com/DhruvMakwana/agents-cookbook/tree/main/models-for-agents"><code>models-for-agents/</code></a> in the companion cookbook — real Haiku 4.5 vs. Sonnet 5 tool-calling reliability, and a real routing repro across three dispatch strategies with real token counts and real correctness checks.</p>
+</div>
+<details class="abstract">
+<summary>TL;DR — quick revision</summary>
+<ul>
+<li><strong>"Small model = unreliable at reasoning" is a real, but no longer automatic, assumption — it needs checking per task.</strong> A real repro found Claude Haiku 4.5 matched Sonnet 5 at 100% accuracy on a deliberately ambiguous tool-calling request, and separately solved three classic reasoning traps (the widgets/machines lateral-thinking problem, the bat-and-ball cognitive-reflection-test problem, and a chickens-and-cows system-of-equations problem) on the first try, no retries.</li>
+<li><strong>Open-weight models genuinely compete at the top of tool-calling leaderboards now, not just "catch up eventually."</strong> As of a June 2026 snapshot of the Berkeley Function-Calling Leaderboard, GLM 4.5 (open-weight) led at 76.7% overall accuracy, ahead of Claude Opus 4.7 (76.6%) and Gemini 3.1 Flash Lite Preview (76.5%) — a real, current instance of an open-weight model at the top of a major agentic benchmark, not a footnote below it.</li>
+<li><strong>RouteLLM's real, cited numbers show what model routing buys when accuracy differs between tiers</strong>: over 2x cost reduction while holding response quality, with per-benchmark reductions reported around 85% on MT Bench, 45% on MMLU, and 35% on GSM8K at 95% of GPT-4's own performance level.</li>
+<li><strong>A real repro found routing still pays off even when the cheap model would have gotten every answer right anyway</strong> — a genuinely different, and arguably more useful, finding than "routing saves money by avoiding mistakes." Real numbers: always-Sonnet cost 216 tokens for 4/4 correct; routed cost 199 tokens for the same 4/4 — the router itself has real overhead, but escalating only the queries flagged as complex still beat blanket escalation on cost without giving up any accuracy.</li>
+</ul>
+</details>
+<h2 id="the-real-question-isnt-which-model-is-best-its-which-model-is-adequate-for-this-call">The real question isn't "which model is best" — it's "which model is adequate for this call"<a class="headerlink" href="#the-real-question-isnt-which-model-is-best-its-which-model-is-adequate-for-this-call" title="Permanent link">&para;</a></h2>
+<p>Every agent loop makes the same decision repeatedly, whether or not it's explicit: which model handles this specific step. Treating that as a single, fixed choice — pick the best available model, use it everywhere — is simple but wastes money on every call that didn't need the extra capability. The house rule this whole project follows (Claude only, task-scaled: Haiku for simple judgments, Sonnet for anything needing real reasoning) is itself a manual version of the same idea this page tests directly: does the "needs real reasoning" line actually fall where intuition says it does, and does routing between tiers pay off even when it doesn't?</p>
+<h2 id="repro-1-tool-calling-reliability-under-a-deliberately-ambiguous-request">Repro 1: tool-calling reliability under a deliberately ambiguous request<a class="headerlink" href="#repro-1-tool-calling-reliability-under-a-deliberately-ambiguous-request" title="Permanent link">&para;</a></h2>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="n">SUBSCRIPTION_TOOLS</span> <span class="o">=</span> <span class="p">[</span>
+</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>    <span class="p">{</span>
+</span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>        <span class="s2">"name"</span><span class="p">:</span> <span class="s2">"cancel_subscription"</span><span class="p">,</span>
+</span><span id="__span-0-4"><a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>        <span class="s2">"description"</span><span class="p">:</span> <span class="s2">"Permanently cancels a user's subscription. Billing stops immediately and does not resume automatically."</span><span class="p">,</span>
+</span><span id="__span-0-5"><a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>        <span class="s2">"input_schema"</span><span class="p">:</span> <span class="p">{</span><span class="s2">"type"</span><span class="p">:</span> <span class="s2">"object"</span><span class="p">,</span> <span class="s2">"properties"</span><span class="p">:</span> <span class="p">{</span><span class="s2">"user_id"</span><span class="p">:</span> <span class="p">{</span><span class="s2">"type"</span><span class="p">:</span> <span class="s2">"string"</span><span class="p">}},</span> <span class="s2">"required"</span><span class="p">:</span> <span class="p">[</span><span class="s2">"user_id"</span><span class="p">]},</span>
+</span><span id="__span-0-6"><a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>    <span class="p">},</span>
+</span><span id="__span-0-7"><a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>    <span class="p">{</span>
+</span><span id="__span-0-8"><a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>        <span class="s2">"name"</span><span class="p">:</span> <span class="s2">"pause_subscription"</span><span class="p">,</span>
+</span><span id="__span-0-9"><a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>        <span class="s2">"description"</span><span class="p">:</span> <span class="s2">"Temporarily pauses a user's subscription until a given resume date. Billing stops during the pause and resumes automatically on that date."</span><span class="p">,</span>
+</span><span id="__span-0-10"><a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>        <span class="s2">"input_schema"</span><span class="p">:</span> <span class="p">{</span>
+</span><span id="__span-0-11"><a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a>            <span class="s2">"type"</span><span class="p">:</span> <span class="s2">"object"</span><span class="p">,</span>
+</span><span id="__span-0-12"><a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a>            <span class="s2">"properties"</span><span class="p">:</span> <span class="p">{</span><span class="s2">"user_id"</span><span class="p">:</span> <span class="p">{</span><span class="s2">"type"</span><span class="p">:</span> <span class="s2">"string"</span><span class="p">},</span> <span class="s2">"resume_date"</span><span class="p">:</span> <span class="p">{</span><span class="s2">"type"</span><span class="p">:</span> <span class="s2">"string"</span><span class="p">,</span> <span class="s2">"description"</span><span class="p">:</span> <span class="s2">"ISO date to resume billing"</span><span class="p">}},</span>
+</span><span id="__span-0-13"><a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a>            <span class="s2">"required"</span><span class="p">:</span> <span class="p">[</span><span class="s2">"user_id"</span><span class="p">,</span> <span class="s2">"resume_date"</span><span class="p">],</span>
+</span><span id="__span-0-14"><a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a>        <span class="p">},</span>
+</span><span id="__span-0-15"><a id="__codelineno-0-15" name="__codelineno-0-15" href="#__codelineno-0-15"></a>    <span class="p">},</span>
+</span><span id="__span-0-16"><a id="__codelineno-0-16" name="__codelineno-0-16" href="#__codelineno-0-16"></a><span class="p">]</span>
+</span><span id="__span-0-17"><a id="__codelineno-0-17" name="__codelineno-0-17" href="#__codelineno-0-17"></a>
+</span><span id="__span-0-18"><a id="__codelineno-0-18" name="__codelineno-0-18" href="#__codelineno-0-18"></a><span class="n">AMBIGUOUS_REQUEST</span> <span class="o">=</span> <span class="p">(</span>
+</span><span id="__span-0-19"><a id="__codelineno-0-19" name="__codelineno-0-19" href="#__codelineno-0-19"></a>    <span class="s2">"User ID U-8842 here. I'm traveling for the next couple of months and want to stop being "</span>
+</span><span id="__span-0-20"><a id="__codelineno-0-20" name="__codelineno-0-20" href="#__codelineno-0-20"></a>    <span class="s2">"charged while I'm away -- can you sort that out? I'll be back and want it picked back up "</span>
+</span><span id="__span-0-21"><a id="__codelineno-0-21" name="__codelineno-0-21" href="#__codelineno-0-21"></a>    <span class="s2">"starting March 1st."</span>
+</span><span id="__span-0-22"><a id="__codelineno-0-22" name="__codelineno-0-22" href="#__codelineno-0-22"></a><span class="p">)</span>
+</span><span id="__span-0-23"><a id="__codelineno-0-23" name="__codelineno-0-23" href="#__codelineno-0-23"></a>
+</span><span id="__span-0-24"><a id="__codelineno-0-24" name="__codelineno-0-24" href="#__codelineno-0-24"></a>
+</span><span id="__span-0-25"><a id="__codelineno-0-25" name="__codelineno-0-25" href="#__codelineno-0-25"></a><span class="k">def</span><span class="w"> </span><span class="nf">tool_call_trial</span><span class="p">(</span><span class="n">client</span><span class="p">,</span> <span class="n">model</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">user_message</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="__span-0-26"><a id="__codelineno-0-26" name="__codelineno-0-26" href="#__codelineno-0-26"></a><span class="w">    </span><span class="sd">"""Returns the name of the first tool called, or None if no tool was called."""</span>
+</span><span id="__span-0-27"><a id="__codelineno-0-27" name="__codelineno-0-27" href="#__codelineno-0-27"></a>    <span class="n">response</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">messages</span><span class="o">.</span><span class="n">create</span><span class="p">(</span>
+</span><span id="__span-0-28"><a id="__codelineno-0-28" name="__codelineno-0-28" href="#__codelineno-0-28"></a>        <span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">,</span> <span class="n">max_tokens</span><span class="o">=</span><span class="mi">500</span><span class="p">,</span> <span class="n">tools</span><span class="o">=</span><span class="n">SUBSCRIPTION_TOOLS</span><span class="p">,</span>
+</span><span id="__span-0-29"><a id="__codelineno-0-29" name="__codelineno-0-29" href="#__codelineno-0-29"></a>        <span class="n">messages</span><span class="o">=</span><span class="p">[{</span><span class="s2">"role"</span><span class="p">:</span> <span class="s2">"user"</span><span class="p">,</span> <span class="s2">"content"</span><span class="p">:</span> <span class="n">user_message</span><span class="p">}],</span>
+</span><span id="__span-0-30"><a id="__codelineno-0-30" name="__codelineno-0-30" href="#__codelineno-0-30"></a>    <span class="p">)</span>
+</span><span id="__span-0-31"><a id="__codelineno-0-31" name="__codelineno-0-31" href="#__codelineno-0-31"></a>    <span class="k">for</span> <span class="n">block</span> <span class="ow">in</span> <span class="n">response</span><span class="o">.</span><span class="n">content</span><span class="p">:</span>
+</span><span id="__span-0-32"><a id="__codelineno-0-32" name="__codelineno-0-32" href="#__codelineno-0-32"></a>        <span class="k">if</span> <span class="n">block</span><span class="o">.</span><span class="n">type</span> <span class="o">==</span> <span class="s2">"tool_use"</span><span class="p">:</span>
+</span><span id="__span-0-33"><a id="__codelineno-0-33" name="__codelineno-0-33" href="#__codelineno-0-33"></a>            <span class="k">return</span> <span class="n">block</span><span class="o">.</span><span class="n">name</span>
+</span><span id="__span-0-34"><a id="__codelineno-0-34" name="__codelineno-0-34" href="#__codelineno-0-34"></a>    <span class="k">return</span> <span class="kc">None</span>
+</span></code></pre></div>
+<div class="admonition success">
+<p class="admonition-title">A real run — 5 trials each, Haiku 4.5 vs. Sonnet 5, on a request built to tempt the wrong tool</p>
+<p><strong>Input</strong>: <em>"User ID U-8842 here. I'm traveling for the next couple of months and want to stop being charged while I'm away — can you sort that out? I'll be back and want it picked back up starting March 1st."</em> Two tools available: <code>cancel_subscription</code> (permanent, no auto-resume) and <code>pause_subscription</code> (temporary, auto-resumes on a given date). The phrase <em>"stop being charged"</em> is exactly the kind of wording that could tempt a hasty read toward <code>cancel_subscription</code>, even though the full request — pausing with an explicit resume date — is unambiguously a pause.</p>
+<p><strong>Real result</strong>: Haiku 4.5 called <code>pause_subscription</code> correctly on <strong>5/5 trials</strong>. Sonnet 5 called <code>pause_subscription</code> correctly on <strong>5/5 trials</strong>. An unambiguous control case (<em>"cancel it for good, I won't be coming back"</em>) also hit 5/5 on both tiers for <code>cancel_subscription</code>.</p>
+<p>This is a clean, honest negative result, reported as it actually happened rather than adjusted to fit a predicted gap: whatever real tool-calling reliability differences exist between Haiku 4.5 and Sonnet 5, this specific ambiguity — a plausible temporal misreading of "stop being charged" — isn't one of them. The assumption that a cheaper model would slip here simply didn't hold up against a real run.</p>
+</div>
+<h2 id="what-a-major-open-weight-models-real-leaderboard-position-says">What a major open-weight model's real leaderboard position says<a class="headerlink" href="#what-a-major-open-weight-models-real-leaderboard-position-says" title="Permanent link">&para;</a></h2>
+<p>The Berkeley Function-Calling Leaderboard (BFCL) exists specifically to measure the property repro 1 tested informally: how reliably a model picks the right tool call, across 1,000 real test cases spanning vehicle control, trading bots, travel booking, and file-system management, using state-based evaluation that checks both the resulting system state and the execution path taken to get there. As of a June 2026 snapshot: <strong>GLM 4.5 — an open-weight model — led the leaderboard at 76.7% overall accuracy</strong>, ahead of <strong>Claude Opus 4.7 at 76.6%</strong> and <strong>Gemini 3.1 Flash Lite Preview at 76.5%</strong>. Twenty-three models were evaluated at that snapshot.</p>
+<p>The real significance isn't that open-weight models are "getting closer" — it's that, on this specific, widely-cited agentic benchmark, an open-weight model was <em>already at the top</em>, ahead of a frontier proprietary model from the same family as this project's own default. "Open-weight tool-calling reliability" isn't a caveat-laden footnote anymore; it's a real, current, measured fact worth checking before assuming a frontier proprietary model is the only reliable choice for a tool-heavy workload.</p>
+<h2 id="repro-2-routing-the-real-payoff-even-when-accuracy-doesnt-differ">Repro 2: routing — the real payoff even when accuracy doesn't differ<a class="headerlink" href="#repro-2-routing-the-real-payoff-even-when-accuracy-doesnt-differ" title="Permanent link">&para;</a></h2>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="k">def</span><span class="w"> </span><span class="nf">route</span><span class="p">(</span><span class="n">client</span><span class="p">,</span> <span class="n">haiku_model</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">query_prompt</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+</span><span id="__span-1-2"><a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="w">    </span><span class="sd">"""A cheap router call: classifies a query as simple (route to a cheap model) or</span>
+</span><span id="__span-1-3"><a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="sd">    complex (route to a more capable model)."""</span>
+</span><span id="__span-1-4"><a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>    <span class="n">response</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">messages</span><span class="o">.</span><span class="n">create</span><span class="p">(</span>
+</span><span id="__span-1-5"><a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>        <span class="n">model</span><span class="o">=</span><span class="n">haiku_model</span><span class="p">,</span> <span class="n">max_tokens</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span>
+</span><span id="__span-1-6"><a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>        <span class="n">system</span><span class="o">=</span><span class="p">(</span>
+</span><span id="__span-1-7"><a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>            <span class="s2">"Classify the following user query as either SIMPLE (a basic factual lookup or "</span>
+</span><span id="__span-1-8"><a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>            <span class="s2">"mechanical text transformation, no real reasoning needed) or COMPLEX (requires "</span>
+</span><span id="__span-1-9"><a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a>            <span class="s2">"multi-step reasoning, arithmetic, or logic, especially anything with a tempting "</span>
+</span><span id="__span-1-10"><a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a>            <span class="s2">"but wrong shortcut answer). Reply with exactly one word: SIMPLE or COMPLEX."</span>
+</span><span id="__span-1-11"><a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a>        <span class="p">),</span>
+</span><span id="__span-1-12"><a id="__codelineno-1-12" name="__codelineno-1-12" href="#__codelineno-1-12"></a>        <span class="n">messages</span><span class="o">=</span><span class="p">[{</span><span class="s2">"role"</span><span class="p">:</span> <span class="s2">"user"</span><span class="p">,</span> <span class="s2">"content"</span><span class="p">:</span> <span class="n">query_prompt</span><span class="p">}],</span>
+</span><span id="__span-1-13"><a id="__codelineno-1-13" name="__codelineno-1-13" href="#__codelineno-1-13"></a>    <span class="p">)</span>
+</span><span id="__span-1-14"><a id="__codelineno-1-14" name="__codelineno-1-14" href="#__codelineno-1-14"></a>    <span class="n">text</span> <span class="o">=</span> <span class="s2">""</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">b</span><span class="o">.</span><span class="n">text</span> <span class="k">for</span> <span class="n">b</span> <span class="ow">in</span> <span class="n">response</span><span class="o">.</span><span class="n">content</span> <span class="k">if</span> <span class="n">b</span><span class="o">.</span><span class="n">type</span> <span class="o">==</span> <span class="s2">"text"</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span>
+</span><span id="__span-1-15"><a id="__codelineno-1-15" name="__codelineno-1-15" href="#__codelineno-1-15"></a>    <span class="k">return</span> <span class="s2">"complex"</span> <span class="k">if</span> <span class="s2">"COMPLEX"</span> <span class="ow">in</span> <span class="n">text</span> <span class="k">else</span> <span class="s2">"simple"</span>
+</span></code></pre></div>
+<p>RouteLLM's real, published result frames the classic case for routing: <em>"our approach significantly reduces costs — by over 2 times in certain cases — without compromising the quality of responses."</em> Reported per-benchmark reductions run around 85% on MT Bench, 45% on MMLU, and 35% on GSM8K, each while holding to 95% of GPT-4's own performance level — the value proposition is specifically routing <em>easy</em> queries to a cheap model and reserving the expensive model for queries that actually need it.</p>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="n">QUERIES</span> <span class="o">=</span> <span class="p">[</span>
+</span><span id="__span-2-2"><a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>    <span class="p">{</span>
+</span><span id="__span-2-3"><a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>        <span class="s2">"id"</span><span class="p">:</span> <span class="s2">"capital"</span><span class="p">,</span>
+</span><span id="__span-2-4"><a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a>        <span class="s2">"difficulty"</span><span class="p">:</span> <span class="s2">"simple"</span><span class="p">,</span>
+</span><span id="__span-2-5"><a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a>        <span class="s2">"prompt"</span><span class="p">:</span> <span class="s2">"What is the capital of France? Answer with just the city name, nothing else."</span><span class="p">,</span>
+</span><span id="__span-2-6"><a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a>        <span class="s2">"correct"</span><span class="p">:</span> <span class="s2">"paris"</span><span class="p">,</span>
+</span><span id="__span-2-7"><a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a>    <span class="p">},</span>
+</span><span id="__span-2-8"><a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a>    <span class="p">{</span>
+</span><span id="__span-2-9"><a id="__codelineno-2-9" name="__codelineno-2-9" href="#__codelineno-2-9"></a>        <span class="s2">"id"</span><span class="p">:</span> <span class="s2">"widgets"</span><span class="p">,</span>
+</span><span id="__span-2-10"><a id="__codelineno-2-10" name="__codelineno-2-10" href="#__codelineno-2-10"></a>        <span class="s2">"difficulty"</span><span class="p">:</span> <span class="s2">"complex"</span><span class="p">,</span>
+</span><span id="__span-2-11"><a id="__codelineno-2-11" name="__codelineno-2-11" href="#__codelineno-2-11"></a>        <span class="s2">"prompt"</span><span class="p">:</span> <span class="s2">"If 5 machines take 5 minutes to make 5 widgets, how long would 100 machines take to make 100 widgets? Answer with just a number and unit, nothing else."</span><span class="p">,</span>
+</span><span id="__span-2-12"><a id="__codelineno-2-12" name="__codelineno-2-12" href="#__codelineno-2-12"></a>        <span class="s2">"correct"</span><span class="p">:</span> <span class="s2">"5 minutes"</span><span class="p">,</span>
+</span><span id="__span-2-13"><a id="__codelineno-2-13" name="__codelineno-2-13" href="#__codelineno-2-13"></a>    <span class="p">},</span>
+</span><span id="__span-2-14"><a id="__codelineno-2-14" name="__codelineno-2-14" href="#__codelineno-2-14"></a>    <span class="p">{</span>
+</span><span id="__span-2-15"><a id="__codelineno-2-15" name="__codelineno-2-15" href="#__codelineno-2-15"></a>        <span class="s2">"id"</span><span class="p">:</span> <span class="s2">"bat_and_ball"</span><span class="p">,</span>
+</span><span id="__span-2-16"><a id="__codelineno-2-16" name="__codelineno-2-16" href="#__codelineno-2-16"></a>        <span class="s2">"difficulty"</span><span class="p">:</span> <span class="s2">"complex"</span><span class="p">,</span>
+</span><span id="__span-2-17"><a id="__codelineno-2-17" name="__codelineno-2-17" href="#__codelineno-2-17"></a>        <span class="s2">"prompt"</span><span class="p">:</span> <span class="s2">"A bat and a ball cost $1.10 in total. The bat costs $1.00 more than the ball. How much does the ball cost? Answer with just the dollar amount, nothing else."</span><span class="p">,</span>
+</span><span id="__span-2-18"><a id="__codelineno-2-18" name="__codelineno-2-18" href="#__codelineno-2-18"></a>        <span class="s2">"correct"</span><span class="p">:</span> <span class="s2">"$0.05"</span><span class="p">,</span>
+</span><span id="__span-2-19"><a id="__codelineno-2-19" name="__codelineno-2-19" href="#__codelineno-2-19"></a>    <span class="p">},</span>
+</span><span id="__span-2-20"><a id="__codelineno-2-20" name="__codelineno-2-20" href="#__codelineno-2-20"></a><span class="p">]</span>
+</span></code></pre></div>
+<div class="admonition success">
+<p class="admonition-title">A real run — three dispatch strategies, real tokens, real correctness, against reasoning-trap queries</p>
+<p>Four queries: two simple (a factual lookup, a text transformation) and two classic reasoning traps — <em>"If 5 machines take 5 minutes to make 5 widgets, how long would 100 machines take to make 100 widgets?"</em> (the tempting wrong answer is 100 minutes; correct is <strong>5 minutes</strong>, since each machine works in parallel at the same rate) and <em>"A bat and a ball cost $1.10 in total. The bat costs $1.00 more than the ball. How much does the ball cost?"</em> (the tempting wrong answer is $0.10; correct is <strong>$0.05</strong>).</p>
+<table>
+<thead>
+<tr>
+<th>Strategy</th>
+<th>Total tokens</th>
+<th>Correct</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Always Haiku</td>
+<td>174</td>
+<td>4/4</td>
+</tr>
+<tr>
+<td>Always Sonnet</td>
+<td>216</td>
+<td>4/4</td>
+</tr>
+<tr>
+<td>Routed (Haiku classifies each query, dispatches accordingly)</td>
+<td>199</td>
+<td>4/4</td>
+</tr>
+</tbody>
+</table>
+<p>The router correctly classified both simple queries as <code>simple</code> and both reasoning-trap queries as <code>complex</code> — and Haiku 4.5, asked the reasoning-trap queries directly, got both right anyway (5 minutes; $0.05), confirmed on a third, harder query outside this table (a chickens-and-cows system-of-equations problem, correct answer 23, which Haiku also solved correctly on the first try).</p>
+<p>The real finding worth sitting with: <strong>routing still cost less than always-Sonnet (199 vs. 216 tokens) while matching its accuracy, even though the cheap model alone would have scored identically for free.</strong> The router's own classification calls are real overhead — routing didn't beat always-Haiku here, and couldn't have, since always-Haiku already got everything right. But that's not evidence against routing; it's evidence that this specific batch happened to fall entirely within Haiku's real capability, and routing paid its own overhead cost back by not needlessly escalating the two queries that didn't need escalation, while still being positioned to correctly escalate a harder query if one had actually appeared in the batch.</p>
+</div>
+<h2 id="what-this-means-in-practice">What this means in practice<a class="headerlink" href="#what-this-means-in-practice" title="Permanent link">&para;</a></h2>
+<p>The honest results across both repros point at the same operational lesson from different angles: the line between "needs the expensive model" and "the cheap model handles this fine" isn't fixed, and it isn't safely assumable from a query's surface difficulty — this page's own three solved reasoning traps are the kind of question that would have differentiated model tiers cleanly a couple of generations ago, and don't anymore, for this particular pair of models on this particular benchmark. Treating that gap as fixed either wastes money (defaulting everything to the expensive tier "to be safe," when the cheap tier would have matched it) or risks real errors (defaulting everything cheap without ever checking whether that specific class of task still holds up). RouteLLM's real numbers and this page's own repro converge on the actual discipline: measure the real accuracy delta for your specific task distribution, on your specific model pair, before assuming either "you need the big model" or "the small model is fine" — and route based on what that measurement shows, not on an assumption about what queries generally look hard.</p>
+<h2 id="interview-angle">Interview angle<a class="headerlink" href="#interview-angle" title="Permanent link">&para;</a></h2>
+<p><strong>Weak answer</strong> to "how do you decide which model to use for each step of an agent?": <em>"Use the smallest model that gets the job done, and the biggest model when accuracy really matters."</em> True in spirit, but it doesn't say how you'd actually know where that line falls for a specific pair of models and a specific task — and this page's own repro shows that line moves: reasoning traps that would plausibly have separated tiers a generation ago didn't separate Haiku 4.5 from Sonnet 5 at all.</p>
+<p><strong>Strong answer</strong>: model selection for agent steps should be an empirical decision, re-checked per task and per model generation, not a fixed rule of thumb applied forever. This page's own real routing repro demonstrates the actual discipline: run the real candidate queries against both the cheap and capable tier, measure real accuracy and real token cost for each, and only then decide whether routing (or blanket cheap, or blanket capable) is the right call for that specific workload — because the "obvious" assumption (reasoning traps need the expensive model) turned out to be wrong for this pair of models, and an assumption-based router would have escalated unnecessarily on queries the cheap model already handled correctly.</p>
+<p><strong>Follow-up to expect</strong>: "if the cheap model got everything right, wasn't the routing demo pointless?" No — it demonstrated something more useful than "routing catches the cheap model's mistakes": it showed routing's cost discipline holds up even in the case where there's no mistake to catch. The router still classified correctly, still escalated only the queries it judged genuinely complex, and still came in under the always-capable baseline on cost — meaning the same routing logic would have caught a genuinely hard query in this batch if one had appeared, without needing to know in advance which queries would turn out to be reasoning traps the cheap model could actually handle.</p>
+<h2 id="build-it-yourself-30-minutes">Build it yourself — 30 minutes<a class="headerlink" href="#build-it-yourself-30-minutes" title="Permanent link">&para;</a></h2>
+<ol>
+<li>Pick two model tiers you have access to, and design one request with genuine surface ambiguity between two plausible tool calls — the way this page's pause-vs-cancel request does. Run 5 trials on each tier and compare real accuracy, rather than assuming the cheaper tier will slip.</li>
+<li>Pick two or three classic reasoning-trap questions (the widgets/machines and bat-and-ball problems this page used, or find others) and run them against your cheapest available model. Don't assume it'll fail — check.</li>
+<li>Build a minimal router: one cheap-model call that classifies a query as simple or complex, then dispatches accordingly. Run a small batch of mixed queries through always-cheap, always-capable, and routed, and compare real token totals and real correctness across all three — this page's own repro is exactly this comparison, run once, honestly reported.</li>
+<li>If your routed condition ties an always-cheap baseline on accuracy, don't discard the result — check whether it still beat the always-capable baseline on cost. That's the finding this page's own repro surfaced: routing's value doesn't disappear just because the cheap model turned out to be good enough.</li>
+</ol>
+<h2 id="scenario-check">Scenario Check<a class="headerlink" href="#scenario-check" title="Permanent link">&para;</a></h2>
+<div class="quiz-widget" data-title="Scenario Check: Models for Agents">
+<script type="application/json">
+{
+  "questions": [
+    {
+      "scenario": "A real repro ran the same ambiguous tool-calling request (a subscription pause phrased as 'stop being charged') against Haiku 4.5 and Sonnet 5, 5 trials each. Both tiers picked the correct tool on all 5 trials.",
+      "question": "What is the most accurate way to interpret this specific result?",
+      "options": [
+        "It shows this specific ambiguity does not separate these two model tiers",
+        "It means tool-calling ambiguity is never a real risk for any model pair",
+        "The test was flawed since a real experiment should always find some difference",
+        "It proves Haiku 4.5 and Sonnet 5 are identical in every tool-calling scenario"
+      ],
+      "correct": 0,
+      "explanations": [
+        "Correct. The result is scoped to exactly what was tested: this specific ambiguity, these two specific model versions, this specific tool pair. It's real, honest evidence that THIS gap doesn't exist here -- not a general claim about tool-calling reliability everywhere.",
+        "Overstates a narrow negative result into a universal claim -- this repro tested one ambiguity against one model pair; it says nothing about tool-calling ambiguity risk in general, across other models, tools, or phrasings.",
+        "Backwards reasoning -- a real experiment can validly produce a null result; treating 'no difference found' as evidence of a flawed test would bias future work toward only reporting differences that confirm a hypothesis, rather than reporting what was actually observed.",
+        "Overgeneralizes far beyond what one test showed -- a single ambiguous-request scenario tying doesn't establish identical behavior across every possible tool-calling situation these two models might face."
+      ]
+    },
+    {
+      "scenario": "As of a June 2026 leaderboard snapshot, GLM 4.5 -- an open-weight model -- led the Berkeley Function-Calling Leaderboard at 76.7%, ahead of Claude Opus 4.7 (76.6%) and Gemini 3.1 Flash Lite Preview (76.5%).",
+      "question": "What does this specific ranking most accurately establish?",
+      "options": [
+        "That every open-weight model now outperforms every proprietary model at tool calling",
+        "That an open-weight model genuinely held the leaderboard top spot at that snapshot",
+        "That this leaderboard no longer measures a meaningful capability gap between models",
+        "That GLM 4.5's lead is permanent and will not change in future leaderboard updates"
+      ],
+      "correct": 1,
+      "explanations": [
+        "A large overgeneralization from one model's result -- this ranking establishes GLM 4.5's specific standing at that snapshot; it says nothing about EVERY open-weight model versus EVERY proprietary model.",
+        "Correct. The precise, defensible claim is exactly this: at that specific snapshot, an open-weight model (GLM 4.5) held the top spot on a major, widely-cited agentic tool-calling benchmark -- a real, current fact, not a general or permanent one.",
+        "Not what the numbers show -- the top three scores (76.7%, 76.6%, 76.5%) are close but real, distinct rankings on a benchmark still actively differentiating 23 evaluated models; closeness at the top doesn't mean the benchmark stopped measuring anything.",
+        "Unsupported speculation about the future -- leaderboard rankings change as new models are evaluated; nothing about a single snapshot implies permanence, and the page doesn't claim otherwise."
+      ]
+    },
+    {
+      "scenario": "A real routing repro found all three dispatch strategies (always-Haiku, always-Sonnet, routed) achieved identical 4/4 accuracy on a batch of queries including two classic reasoning traps, with routed costing 199 tokens versus 216 for always-Sonnet and 174 for always-Haiku.",
+      "question": "Given that accuracy was identical across all three strategies, what is the most accurate characterization of what routing actually demonstrated here?",
+      "options": [
+        "Routing was pointless in this run since the cheap model alone matched everyone's accuracy",
+        "The identical accuracy across strategies suggests a bug in the recipe's grading logic",
+        "Routing matched the capable tier's accuracy while costing less than blanket escalation",
+        "Routing beat always-Haiku on cost, proving it's the superior strategy in every case"
+      ],
+      "correct": 2,
+      "explanations": [
+        "Misses the real, distinct value demonstrated -- routing didn't need to catch a mistake to be worth measuring; it showed the classification and dispatch mechanism works correctly and pays for its own overhead even in a batch where escalation wasn't strictly necessary.",
+        "Unsupported -- the repro's per-query correctness was checked against independently known correct answers (Paris, 5 minutes, $0.05), not against each other; identical accuracy reflects three separate real evaluations reaching the same real correct answers, not a shared or buggy grading path.",
+        "Correct. The real, useful comparison is routed vs. always-Sonnet, not routed vs. always-Haiku: routing matched always-Sonnet's accuracy (4/4) while costing less (199 vs. 216 tokens) -- a genuine, if modest, benefit that holds even though the cheap model alone would also have scored 4/4 for less.",
+        "Contradicts the real numbers directly -- routing (199 tokens) cost MORE than always-Haiku (174 tokens), not less; the router's own classification calls are real overhead that a pure cheap-only strategy doesn't pay."
+      ]
+    },
+    {
+      "scenario": "RouteLLM's real published result states routing 'significantly reduces costs -- by over 2 times in certain cases -- without compromising the quality of responses,' evaluated against GPT-4 as the capable-tier baseline.",
+      "question": "What is the most precise way to relate this cited result to the recipe's own 4-query routing repro, which showed a smaller, single-digit-percentage cost reduction rather than a 2x reduction?",
+      "options": [
+        "The two results contradict each other, so at least one of them must be wrong",
+        "RouteLLM's number is outdated and no longer applies to current-generation models",
+        "The recipe's repro proves RouteLLM's reported cost reduction was never real",
+        "The small batch here is not positioned to reproduce a benchmark-scale reduction"
+      ],
+      "correct": 3,
+      "explanations": [
+        "False dichotomy -- the two results measure different things at different scales (a large, diverse benchmark distribution vs. a small, illustrative 4-query batch); neither being 'wrong' is required to explain the size difference.",
+        "Unsupported and not the actual explanation -- nothing about model generation invalidates a routing mechanism's cost math; the real difference is scale and query-mix, not model recency.",
+        "Overstates the comparison -- a small illustrative repro not reproducing a large benchmark's exact magnitude doesn't invalidate the cited study's own real, independently reported result; the two are complementary evidence at different scales, not competing claims.",
+        "Correct. RouteLLM's reported multiple-times cost reduction comes from routing across a large, varied benchmark distribution where many queries are genuinely simple enough to route cheaply; a small, illustrative 4-query batch -- half of which were deliberately hard reasoning traps -- isn't the right scale or mix to reproduce that same magnitude, even though the same underlying mechanism is genuinely at work in both."
+      ]
+    }
+  ]
+}
+</script>
+</div>
+
+<h2 id="sources-further-reading">Sources &amp; further reading<a class="headerlink" href="#sources-further-reading" title="Permanent link">&para;</a></h2>
+<ul>
+<li>Yu, Zhang, Shin, et al., <a href="https://arxiv.org/abs/2406.18665">"RouteLLM: Learning to Route LLMs with Preference Data"</a> (arXiv:2406.18665, ICLR 2025) — the real cost-reduction numbers this page's repro 2 draws its framing from.</li>
+<li>Berkeley, <a href="https://gorilla.cs.berkeley.edu/leaderboard.html">"Berkeley Function-Calling Leaderboard (BFCL)"</a> — the real, current tool-calling benchmark this page cites GLM 4.5's leading position on.</li>
+<li><a href="../tools-at-scale/">Tools at Scale</a> — the real Anthropic numbers for tool-search and programmatic tool calling, a complementary technique for managing large tool libraries regardless of which model tier is calling them.</li>
+<li><a href="../kv-cache-economics/">KV-Cache Economics</a> — cache-stable prompts and cost discipline from a different angle (context structure rather than model choice).</li>
+</ul>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+        
+<div class="md-social">
+  
+    
+    
+    
+    
+      
+      
+    
+    <a href="https://github.com/dhruvmakwana" target="_blank" rel="noopener" title="github.com" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": ["navigation.instant", "navigation.tracking", "navigation.tabs", "navigation.tabs.sticky", "navigation.sections", "navigation.top", "navigation.indexes", "toc.follow", "search.suggest", "search.highlight", "content.code.copy", "content.code.annotate"], "search": "../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../assets/javascripts/bundle.d7400e89.min.js"></script>
+      
+        <script src="../javascripts/quiz.js"></script>
+      
+        <script src="../javascripts/flashcards.js"></script>
+      
+    
+  </body>
+</html>

@@ -1,0 +1,3043 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="A deep-dive reference on LLM agents — architectures, tools, context and memory, multi-agent systems, evaluation, security, durable execution, and training agents with RL.">
+      
+      
+        <meta name="author" content="Dhruv Makwana">
+      
+      
+        <link rel="canonical" href="https://dhruvmakwana.github.io/agents-deep-dive/evaluating-agents/">
+      
+      
+        <link rel="prev" href="../personal-always-on-agents/">
+      
+      
+        <link rel="next" href="../benchmark-atlas/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../assets/favicon.svg">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
+    
+    
+      
+        <title>Evaluating Agents - Agents, Deep Dive</title>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/main.ec1eaa64.min.css">
+      
+        
+        <link rel="stylesheet" href="../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Inter:300,300i,400,400i,700,700i%7CJetBrains+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Inter";--md-code-font:"JetBrains Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../stylesheets/extra.css">
+    
+      <link rel="stylesheet" href="../stylesheets/quiz.css">
+    
+      <link rel="stylesheet" href="../stylesheets/flashcards.css">
+    
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="slate" data-md-color-primary="black" data-md-color-accent="deep-purple">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#evaluating-agents" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow md-header--lifted" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href=".." title="Agents, Deep Dive" class="md-header__button md-logo" aria-label="Agents, Deep Dive" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Agents, Deep Dive
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Evaluating Agents
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="slate" data-md-color-primary="black" data-md-color-accent="deep-purple"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 7a5 5 0 0 1 5 5 5 5 0 0 1-5 5 5 5 0 0 1-5-5 5 5 0 0 1 5-5m0 2a3 3 0 0 0-3 3 3 3 0 0 0 3 3 3 3 0 0 0 3-3 3 3 0 0 0-3-3m0-7 2.39 3.42C13.65 5.15 12.84 5 12 5s-1.65.15-2.39.42zM3.34 7l4.16-.35A7.2 7.2 0 0 0 5.94 8.5c-.44.74-.69 1.5-.83 2.29zm.02 10 1.76-3.77a7.131 7.131 0 0 0 2.38 4.14zM20.65 7l-1.77 3.79a7.02 7.02 0 0 0-2.38-4.15zm-.01 10-4.14.36c.59-.51 1.12-1.14 1.54-1.86.42-.73.69-1.5.83-2.29zM12 22l-2.41-3.44c.74.27 1.55.44 2.41.44.82 0 1.63-.17 2.37-.44z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="default" data-md-color-primary="white" data-md-color-accent="deep-purple"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="m17.75 4.09-2.53 1.94.91 3.06-2.63-1.81-2.63 1.81.91-3.06-2.53-1.94L12.44 4l1.06-3 1.06 3zm3.5 6.91-1.64 1.25.59 1.98-1.7-1.17-1.7 1.17.59-1.98L15.75 11l2.06-.05L18.5 9l.69 1.95zm-2.28 4.95c.83-.08 1.72 1.1 1.19 1.85-.32.45-.66.87-1.08 1.27C15.17 23 8.84 23 4.94 19.07c-3.91-3.9-3.91-10.24 0-14.14.4-.4.82-.76 1.27-1.08.75-.53 1.93.36 1.85 1.19-.27 2.86.69 5.83 2.89 8.02a9.96 9.96 0 0 0 8.02 2.89m-1.64 2.02a12.08 12.08 0 0 1-7.8-3.47c-2.17-2.19-3.33-5-3.49-7.82-2.81 3.14-2.7 7.96.31 10.98 3.02 3.01 7.84 3.12 10.98.31"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/dhruvmakwana/agents-deep-dive" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    dhruvmakwana/agents-deep-dive
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+    
+      
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href=".." class="md-tabs__link">
+        
+  
+  
+    
+  
+  Home
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../revision/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Revision
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../what-is-an-agent/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Foundations
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../tool-design/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Tools and Context
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../planning-and-decomposition/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Systems
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+    
+  
+  
+    
+    
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="./" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Production
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../training-agents/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Training
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../case-studies/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Case Studies
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../tutorials/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Tutorials & Code
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../interview-playbook/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Interview
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../about/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  About
+
+      </a>
+    </li>
+  
+
+      
+    </ul>
+  </div>
+</nav>
+    
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href=".." title="Agents, Deep Dive" class="md-nav__button md-logo" aria-label="Agents, Deep Dive" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    Agents, Deep Dive
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/dhruvmakwana/agents-deep-dive" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    dhruvmakwana/agents-deep-dive
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href=".." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../revision/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Revision
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Foundations
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Foundations
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../what-is-an-agent/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    What Is an Agent?
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../agent-loop-from-scratch/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    The Agent Loop From Scratch
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../workflow-patterns/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Workflow Patterns
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../reasoning-paradigms/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Reasoning Paradigms
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../choosing-a-framework/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Choosing a Framework
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Tools and Context
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Tools and Context
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../tool-design/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Tool Design
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../context-engineering/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Context Engineering
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../tools-at-scale/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Tools at Scale
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../mcp-deep-dive/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MCP Deep Dive
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../mcp-tool-ecosystem/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MCP and Tool Ecosystem
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../skills-a2a-protocols/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Skills, A2A and Other Protocols
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../kv-cache-economics/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    KV-Cache Economics
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../memory-architectures/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Memory Architectures
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../models-for-agents/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Models for Agents
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Systems
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Systems
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../planning-and-decomposition/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Planning and Decomposition
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../multi-agent-systems/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Multi-Agent Systems
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../harness-engineering/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Harness Engineering
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../coding-agents-mechanisms/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Coding Agents: Mechanisms
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../coding-agent-config/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Coding Agent Products and Configuration
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../deep-research-agents/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Deep Research Agents
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../computer-use-browser-agents/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Computer-Use and Browser Agents
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../personal-always-on-agents/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Personal and Always-On Agents
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+        
+        
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Production
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_6">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Production
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Evaluating Agents
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Evaluating Agents
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+  
+
+<nav class="md-nav md-nav--secondary" aria-label="On this page">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      On this page
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#outcome-vs-trajectory" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Outcome vs. trajectory
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#passk-vs-passk" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        pass@k vs. pass^k
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#capability-vs-regression-suites" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Capability vs. regression suites
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#infrastructure-noise" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Infrastructure noise
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#interview-angle" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Interview angle
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#build-it-yourself-30-minutes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Build it yourself — 30 minutes
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#scenario-check" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Scenario Check
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#sources-further-reading" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Sources &amp; further reading
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../benchmark-atlas/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Benchmark Atlas
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../observability-debugging/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Observability and Debugging
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../observability-ecosystem/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Observability Ecosystem
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../agent-security/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Agent Security
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../guardrails-human-in-the-loop/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Guardrails and Human-in-the-Loop
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../identity-governance-compliance/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Identity, Governance and Compliance
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../sandboxes-permissions/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Sandboxes and Permissions
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../durable-execution/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Durable Execution
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../cost-latency/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Cost and Latency
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7" >
+        
+          
+          <label class="md-nav__link" for="__nav_7" id="__nav_7_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Training
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_7_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_7">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Training
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../training-agents/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Training Agents: Reward and Credit
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../rl-search-tool-agents/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    RL for Search and Tool Agents
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../data-environments/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Data and Environments
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../self-improving-agents/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Self-Improving Agents
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_8" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../case-studies/" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Case Studies
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_8" id="__nav_8_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_8_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_8">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Case Studies
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../case-studies/replit-database-deletion/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Replit: Agent Deletes a Production Database
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../case-studies/sakana-ai-scientist/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Sakana AI: Self-Improving Agent Escapes Its Own Timeout
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../case-studies/intercom-fin-anthropic/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Intercom Fin at Anthropic
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../case-studies/cloudflare-mcp/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Cloudflare's Internal MCP Platform
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../case-studies/block-goose/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Block's goose
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../case-studies/cognition-devin/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Cognition's Devin: The Benchmark and the Demo
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_9" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../tutorials/" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Tutorials & Code
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_9" id="__nav_9_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_9_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_9">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Tutorials & Code
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../tutorials/production-support-agent/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Build a Production-Shaped Support Agent
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_10" >
+        
+          
+          <label class="md-nav__link" for="__nav_10" id="__nav_10_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Interview
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_10_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_10">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Interview
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../interview-playbook/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Interview Playbook
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../about/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    About
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+  
+
+<nav class="md-nav md-nav--secondary" aria-label="On this page">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      On this page
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#outcome-vs-trajectory" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Outcome vs. trajectory
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#passk-vs-passk" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        pass@k vs. pass^k
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#capability-vs-regression-suites" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Capability vs. regression suites
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#infrastructure-noise" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Infrastructure noise
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#interview-angle" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Interview angle
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#build-it-yourself-30-minutes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Build it yourself — 30 minutes
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#scenario-check" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Scenario Check
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#sources-further-reading" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Sources &amp; further reading
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+
+<h1 id="evaluating-agents">Evaluating Agents<a class="headerlink" href="#evaluating-agents" title="Permanent link">&para;</a></h1>
+<div class="admonition example">
+<p class="admonition-title">Hands-on</p>
+<p>Full runnable recipe: <a href="https://github.com/DhruvMakwana/agents-cookbook/tree/main/evaluating-agents"><code>evaluating-agents/</code></a> in the companion cookbook — outcome vs. trajectory grading, pass@k vs. pass^k on 5 real trials, and a capability-motivated prompt change that caught a real regression in its own grader.</p>
+</div>
+<details class="abstract">
+<summary>TL;DR — quick revision</summary>
+<ul>
+<li><strong>Outcome grading and trajectory grading answer different questions, and can disagree.</strong> Outcome asks "was the final answer right?" Trajectory asks "did it get there the intended way?" The Holistic Agent Leaderboard's own log audits caught agents "searching for the benchmark on HuggingFace instead of solving a task" — a case an outcome-only grader would have scored as a pass.</li>
+<li><strong>pass@k and pass^k measure opposite things.</strong> pass@k asks whether at least one of k tries succeeded (generous — useful for capability ceilings). pass^k asks whether <em>every one</em> of k tries succeeded (strict — the real reliability question, since a production agent gets one real try per request, not k with a human picking the best). τ-bench's own numbers show why the gap matters: GPT-4o's retail success rate falls from under 50% at pass@1 to under 25% at pass^8.</li>
+<li><strong>A real capability-motivated prompt change caught a genuine, clean regression</strong> — not in the model's reasoning, in the <em>grader</em>. Told to spell out numbers in words for a plausible accessibility reason, the model's arithmetic stayed completely correct ("one hundred divided by four equals twenty-five") — every task in a digit-matching regression suite still failed, because the grader, not the model, broke.</li>
+<li><strong>Infrastructure is a real, measurable confound in agent benchmarks.</strong> Running the identical model and benchmark across container configurations from strict to uncapped produced a 6-percentage-point swing (p &lt; 0.01) on Terminal-Bench 2.0 — bigger than many reported leaderboard gaps — purely from resource allocation, with nothing about the model changing at all.</li>
+<li><strong>Capability evals and regression evals serve different jobs and shouldn't be conflated.</strong> A capability eval asks how good the agent could be — expensive, exploratory, run rarely. A regression eval asks whether a specific change broke something that used to work — cheap, narrow, run on every change. This page's own regression-suite experiment is exactly that second job, and it worked precisely because the suite was simple enough to run constantly.</li>
+</ul>
+</details>
+<h2 id="outcome-vs-trajectory">Outcome vs. trajectory<a class="headerlink" href="#outcome-vs-trajectory" title="Permanent link">&para;</a></h2>
+<p>Outcome grading checks the final result: did the agent produce the right answer, the right file diff, the right database state. It's cheap, unambiguous, and automatable — and it has a documented blind spot: an agent can reach the right outcome through a process nobody actually wanted. The Holistic Agent Leaderboard's own log-level audits found exactly this in the wild: agents "searching for the benchmark on HuggingFace instead of solving a task," or, in a different case, "misusing credit cards in flight booking tasks" — outcomes that a grader checking only the final state would have scored as passing, because nothing about <em>how</em> the result was reached was ever inspected. Trajectory grading closes that gap by checking the process itself — which tools got called, in what order, with what arguments — at the cost of being harder to define and more expensive to check than a single final-state comparison.</p>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="k">def</span><span class="w"> </span><span class="nf">_text</span><span class="p">(</span><span class="n">response</span><span class="p">,</span> <span class="n">client</span><span class="p">,</span> <span class="n">model</span><span class="p">):</span>
+</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>    <span class="c1"># client.messages.create(...) -- see agent_loop.py for the full call shape.</span>
+</span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>    <span class="o">...</span>
+</span><span id="__span-0-4"><a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>
+</span><span id="__span-0-5"><a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>
+</span><span id="__span-0-6"><a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="n">_REFERENCE_TOOL</span> <span class="o">=</span> <span class="p">{</span>
+</span><span id="__span-0-7"><a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>    <span class="s2">"name"</span><span class="p">:</span> <span class="s2">"get_reference_fact"</span><span class="p">,</span>
+</span><span id="__span-0-8"><a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>    <span class="s2">"description"</span><span class="p">:</span> <span class="s2">"Look up a verified fact from the reference database, given a short topic string."</span><span class="p">,</span>
+</span><span id="__span-0-9"><a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>    <span class="s2">"input_schema"</span><span class="p">:</span> <span class="p">{</span><span class="s2">"type"</span><span class="p">:</span> <span class="s2">"object"</span><span class="p">,</span> <span class="s2">"properties"</span><span class="p">:</span> <span class="p">{</span><span class="s2">"topic"</span><span class="p">:</span> <span class="p">{</span><span class="s2">"type"</span><span class="p">:</span> <span class="s2">"string"</span><span class="p">}},</span> <span class="s2">"required"</span><span class="p">:</span> <span class="p">[</span><span class="s2">"topic"</span><span class="p">]},</span>
+</span><span id="__span-0-10"><a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a><span class="p">}</span>
+</span><span id="__span-0-11"><a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a>
+</span><span id="__span-0-12"><a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a>
+</span><span id="__span-0-13"><a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a><span class="k">def</span><span class="w"> </span><span class="nf">_run_with_optional_tool</span><span class="p">(</span><span class="n">question</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">fact_for_this_question</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">client</span><span class="p">,</span> <span class="n">model</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+</span><span id="__span-0-14"><a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a><span class="w">    </span><span class="sd">"""One turn: the model may call the reference tool or just answer.</span>
+</span><span id="__span-0-15"><a id="__codelineno-0-15" name="__codelineno-0-15" href="#__codelineno-0-15"></a><span class="sd">    Returns the final answer and whether the tool was actually called --</span>
+</span><span id="__span-0-16"><a id="__codelineno-0-16" name="__codelineno-0-16" href="#__codelineno-0-16"></a><span class="sd">    the trajectory, not just the outcome. The tool always returns the one</span>
+</span><span id="__span-0-17"><a id="__codelineno-0-17" name="__codelineno-0-17" href="#__codelineno-0-17"></a><span class="sd">    fact relevant to this question, regardless of how the model phrases</span>
+</span><span id="__span-0-18"><a id="__codelineno-0-18" name="__codelineno-0-18" href="#__codelineno-0-18"></a><span class="sd">    the lookup topic -- a fragile exact-string match on the model's own</span>
+</span><span id="__span-0-19"><a id="__codelineno-0-19" name="__codelineno-0-19" href="#__codelineno-0-19"></a><span class="sd">    topic wording would test string-matching luck, not the mechanism."""</span>
+</span><span id="__span-0-20"><a id="__codelineno-0-20" name="__codelineno-0-20" href="#__codelineno-0-20"></a>    <span class="n">response</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">messages</span><span class="o">.</span><span class="n">create</span><span class="p">(</span>
+</span><span id="__span-0-21"><a id="__codelineno-0-21" name="__codelineno-0-21" href="#__codelineno-0-21"></a>        <span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">,</span> <span class="n">max_tokens</span><span class="o">=</span><span class="mi">400</span><span class="p">,</span> <span class="n">tools</span><span class="o">=</span><span class="p">[</span><span class="n">_REFERENCE_TOOL</span><span class="p">],</span>
+</span><span id="__span-0-22"><a id="__codelineno-0-22" name="__codelineno-0-22" href="#__codelineno-0-22"></a>        <span class="n">messages</span><span class="o">=</span><span class="p">[{</span><span class="s2">"role"</span><span class="p">:</span> <span class="s2">"user"</span><span class="p">,</span> <span class="s2">"content"</span><span class="p">:</span> <span class="sa">f</span><span class="s2">"Answer this question. You may call get_reference_fact to check the reference database if you need to.</span><span class="se">\n\n</span><span class="si">{</span><span class="n">question</span><span class="si">}</span><span class="s2">"</span><span class="p">}],</span>
+</span><span id="__span-0-23"><a id="__codelineno-0-23" name="__codelineno-0-23" href="#__codelineno-0-23"></a>    <span class="p">)</span>
+</span><span id="__span-0-24"><a id="__codelineno-0-24" name="__codelineno-0-24" href="#__codelineno-0-24"></a>    <span class="n">tool_called</span> <span class="o">=</span> <span class="nb">any</span><span class="p">(</span><span class="n">b</span><span class="o">.</span><span class="n">type</span> <span class="o">==</span> <span class="s2">"tool_use"</span> <span class="k">for</span> <span class="n">b</span> <span class="ow">in</span> <span class="n">response</span><span class="o">.</span><span class="n">content</span><span class="p">)</span>
+</span><span id="__span-0-25"><a id="__codelineno-0-25" name="__codelineno-0-25" href="#__codelineno-0-25"></a>    <span class="k">if</span> <span class="n">tool_called</span><span class="p">:</span>
+</span><span id="__span-0-26"><a id="__codelineno-0-26" name="__codelineno-0-26" href="#__codelineno-0-26"></a>        <span class="n">tool_block</span> <span class="o">=</span> <span class="nb">next</span><span class="p">(</span><span class="n">b</span> <span class="k">for</span> <span class="n">b</span> <span class="ow">in</span> <span class="n">response</span><span class="o">.</span><span class="n">content</span> <span class="k">if</span> <span class="n">b</span><span class="o">.</span><span class="n">type</span> <span class="o">==</span> <span class="s2">"tool_use"</span><span class="p">)</span>
+</span><span id="__span-0-27"><a id="__codelineno-0-27" name="__codelineno-0-27" href="#__codelineno-0-27"></a>        <span class="n">follow_up</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">messages</span><span class="o">.</span><span class="n">create</span><span class="p">(</span>
+</span><span id="__span-0-28"><a id="__codelineno-0-28" name="__codelineno-0-28" href="#__codelineno-0-28"></a>            <span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">,</span> <span class="n">max_tokens</span><span class="o">=</span><span class="mi">200</span><span class="p">,</span> <span class="n">tools</span><span class="o">=</span><span class="p">[</span><span class="n">_REFERENCE_TOOL</span><span class="p">],</span>
+</span><span id="__span-0-29"><a id="__codelineno-0-29" name="__codelineno-0-29" href="#__codelineno-0-29"></a>            <span class="n">messages</span><span class="o">=</span><span class="p">[</span>
+</span><span id="__span-0-30"><a id="__codelineno-0-30" name="__codelineno-0-30" href="#__codelineno-0-30"></a>                <span class="p">{</span><span class="s2">"role"</span><span class="p">:</span> <span class="s2">"user"</span><span class="p">,</span> <span class="s2">"content"</span><span class="p">:</span> <span class="sa">f</span><span class="s2">"Answer this question. You may call get_reference_fact to check the reference database if you need to.</span><span class="se">\n\n</span><span class="si">{</span><span class="n">question</span><span class="si">}</span><span class="s2">"</span><span class="p">},</span>
+</span><span id="__span-0-31"><a id="__codelineno-0-31" name="__codelineno-0-31" href="#__codelineno-0-31"></a>                <span class="p">{</span><span class="s2">"role"</span><span class="p">:</span> <span class="s2">"assistant"</span><span class="p">,</span> <span class="s2">"content"</span><span class="p">:</span> <span class="n">response</span><span class="o">.</span><span class="n">content</span><span class="p">},</span>
+</span><span id="__span-0-32"><a id="__codelineno-0-32" name="__codelineno-0-32" href="#__codelineno-0-32"></a>                <span class="p">{</span><span class="s2">"role"</span><span class="p">:</span> <span class="s2">"user"</span><span class="p">,</span> <span class="s2">"content"</span><span class="p">:</span> <span class="p">[{</span><span class="s2">"type"</span><span class="p">:</span> <span class="s2">"tool_result"</span><span class="p">,</span> <span class="s2">"tool_use_id"</span><span class="p">:</span> <span class="n">tool_block</span><span class="o">.</span><span class="n">id</span><span class="p">,</span> <span class="s2">"content"</span><span class="p">:</span> <span class="n">fact_for_this_question</span><span class="p">}]},</span>
+</span><span id="__span-0-33"><a id="__codelineno-0-33" name="__codelineno-0-33" href="#__codelineno-0-33"></a>            <span class="p">],</span>
+</span><span id="__span-0-34"><a id="__codelineno-0-34" name="__codelineno-0-34" href="#__codelineno-0-34"></a>        <span class="p">)</span>
+</span><span id="__span-0-35"><a id="__codelineno-0-35" name="__codelineno-0-35" href="#__codelineno-0-35"></a>        <span class="n">answer</span> <span class="o">=</span> <span class="n">_text</span><span class="p">(</span><span class="n">follow_up</span><span class="p">,</span> <span class="n">client</span><span class="p">,</span> <span class="n">model</span><span class="p">)</span>
+</span><span id="__span-0-36"><a id="__codelineno-0-36" name="__codelineno-0-36" href="#__codelineno-0-36"></a>    <span class="k">else</span><span class="p">:</span>
+</span><span id="__span-0-37"><a id="__codelineno-0-37" name="__codelineno-0-37" href="#__codelineno-0-37"></a>        <span class="n">answer</span> <span class="o">=</span> <span class="n">_text</span><span class="p">(</span><span class="n">response</span><span class="p">,</span> <span class="n">client</span><span class="p">,</span> <span class="n">model</span><span class="p">)</span>
+</span><span id="__span-0-38"><a id="__codelineno-0-38" name="__codelineno-0-38" href="#__codelineno-0-38"></a>    <span class="k">return</span> <span class="p">{</span><span class="s2">"question"</span><span class="p">:</span> <span class="n">question</span><span class="p">,</span> <span class="s2">"answer"</span><span class="p">:</span> <span class="n">answer</span><span class="p">,</span> <span class="s2">"tool_called"</span><span class="p">:</span> <span class="n">tool_called</span><span class="p">}</span>
+</span><span id="__span-0-39"><a id="__codelineno-0-39" name="__codelineno-0-39" href="#__codelineno-0-39"></a>
+</span><span id="__span-0-40"><a id="__codelineno-0-40" name="__codelineno-0-40" href="#__codelineno-0-40"></a>
+</span><span id="__span-0-41"><a id="__codelineno-0-41" name="__codelineno-0-41" href="#__codelineno-0-41"></a><span class="k">def</span><span class="w"> </span><span class="nf">outcome_vs_trajectory_demo</span><span class="p">(</span><span class="n">client</span><span class="p">,</span> <span class="n">model</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+</span><span id="__span-0-42"><a id="__codelineno-0-42" name="__codelineno-0-42" href="#__codelineno-0-42"></a>    <span class="n">well_known</span> <span class="o">=</span> <span class="n">_run_with_optional_tool</span><span class="p">(</span><span class="s2">"What is the boiling point of water at sea level, in Celsius?"</span><span class="p">,</span> <span class="s2">"100 degrees Celsius"</span><span class="p">,</span> <span class="n">client</span><span class="p">,</span> <span class="n">model</span><span class="p">)</span>
+</span><span id="__span-0-43"><a id="__codelineno-0-43" name="__codelineno-0-43" href="#__codelineno-0-43"></a>    <span class="n">well_known</span><span class="p">[</span><span class="s2">"outcome_correct"</span><span class="p">]</span> <span class="o">=</span> <span class="s2">"100"</span> <span class="ow">in</span> <span class="n">well_known</span><span class="p">[</span><span class="s2">"answer"</span><span class="p">]</span>
+</span><span id="__span-0-44"><a id="__codelineno-0-44" name="__codelineno-0-44" href="#__codelineno-0-44"></a>
+</span><span id="__span-0-45"><a id="__codelineno-0-45" name="__codelineno-0-45" href="#__codelineno-0-45"></a>    <span class="n">unguessable</span> <span class="o">=</span> <span class="n">_run_with_optional_tool</span><span class="p">(</span><span class="s2">"What year was the Halcyon Reach colony founded?"</span><span class="p">,</span> <span class="s2">"2041"</span><span class="p">,</span> <span class="n">client</span><span class="p">,</span> <span class="n">model</span><span class="p">)</span>  <span class="c1"># fictional, unguessable</span>
+</span><span id="__span-0-46"><a id="__codelineno-0-46" name="__codelineno-0-46" href="#__codelineno-0-46"></a>    <span class="n">unguessable</span><span class="p">[</span><span class="s2">"outcome_correct"</span><span class="p">]</span> <span class="o">=</span> <span class="s2">"2041"</span> <span class="ow">in</span> <span class="n">unguessable</span><span class="p">[</span><span class="s2">"answer"</span><span class="p">]</span>
+</span><span id="__span-0-47"><a id="__codelineno-0-47" name="__codelineno-0-47" href="#__codelineno-0-47"></a>
+</span><span id="__span-0-48"><a id="__codelineno-0-48" name="__codelineno-0-48" href="#__codelineno-0-48"></a>    <span class="k">return</span> <span class="p">{</span><span class="s2">"well_known_fact"</span><span class="p">:</span> <span class="n">well_known</span><span class="p">,</span> <span class="s2">"unguessable_fictional_fact"</span><span class="p">:</span> <span class="n">unguessable</span><span class="p">}</span>
+</span></code></pre></div>
+<div class="admonition success">
+<p class="admonition-title">A real run — both outcome and trajectory captured, for both a guessable and an unguessable fact</p>
+<p><strong>Input, well-known fact</strong>: <em>"Answer this question. You may call get_reference_fact to check the reference database if you need to.\n\nWhat is the boiling point of water at sea level, in Celsius?"</em> — a fact the model could plausibly answer correctly without ever calling the tool.</p>
+<p><strong>Output</strong>: the model called <code>get_reference_fact</code> anyway, then answered <em>"The boiling point of water at sea level is </em><em>100 degrees Celsius</em><em>."</em> Outcome: correct. Trajectory: tool called, as intended.</p>
+<p><strong>Input, unguessable fictional fact</strong>: the identical instruction pattern, asking <em>"What year was the Halcyon Reach colony founded?"</em> — a fictional fact with no way to answer correctly except by calling the tool.</p>
+<p><strong>Output</strong>: the model called the tool, received the fact (2041), and answered <em>"The Halcyon Reach colony was founded in </em><em>2041</em><em>."</em> Outcome: correct. Trajectory: tool called — the only way this outcome could have been correct at all.</p>
+<p>No divergence in this real run — the model didn't take the shortcut of skipping verification even when it plausibly could have. That's a genuine, disclosed negative result, not a wasted test: this exact mechanism (checking whether the tool was actually called, not just whether the final answer was right) is precisely what would have caught the Holistic Agent Leaderboard's real documented cases if this model had behaved differently. Knowing the check doesn't fire on well-behaved runs is part of knowing it would fire on badly-behaved ones.</p>
+</div>
+<h2 id="passk-vs-passk">pass@k vs. pass^k<a class="headerlink" href="#passk-vs-passk" title="Permanent link">&para;</a></h2>
+<p>Both metrics run the same task k independent times, and they ask opposite questions of the same data. <strong>pass@k</strong>: did at least one of the k tries succeed? This is the metric behind "best-of-n" framings and capability ceilings — useful for asking "can this model do this at all," generous by construction. <strong>pass^k</strong>, introduced by τ-bench specifically to measure agent reliability, asks the stricter question: did <em>every one</em> of the k tries succeed? That's the metric that actually matches production reality, where an agent handling a real customer request doesn't get k attempts with a human picking the best one — it gets one, and pass^k is the probability that one attempt looks as good as all the others. τ-bench's own reported numbers make the gap concrete: GPT-4o's retail-domain success rate is under 50% at pass@1 (already not great), and — in Sierra's own description — falls to under 25% at pass^8, "a staggering 60% drop" from the single-shot number.</p>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="kn">import</span><span class="w"> </span><span class="nn">re</span>
+</span><span id="__span-1-2"><a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>
+</span><span id="__span-1-3"><a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="n">_PROBABILITY_QUESTION</span> <span class="o">=</span> <span class="p">(</span>
+</span><span id="__span-1-4"><a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>    <span class="s2">"A committee of 3 people is chosen at random from a group of 5 men and 4 women. "</span>
+</span><span id="__span-1-5"><a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>    <span class="s2">"What is the probability that the committee has at least 2 women? Give your final answer "</span>
+</span><span id="__span-1-6"><a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>    <span class="s2">"as a simplified fraction, on its own line, in the form: Final answer: a/b"</span>
+</span><span id="__span-1-7"><a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a><span class="p">)</span>
+</span><span id="__span-1-8"><a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a><span class="n">_CORRECT_FRACTION</span> <span class="o">=</span> <span class="p">(</span><span class="mi">17</span><span class="p">,</span> <span class="mi">42</span><span class="p">)</span>  <span class="c1"># 34/84 simplified</span>
+</span><span id="__span-1-9"><a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a>
+</span><span id="__span-1-10"><a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a>
+</span><span id="__span-1-11"><a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a><span class="k">def</span><span class="w"> </span><span class="nf">_check_probability_answer</span><span class="p">(</span><span class="n">text</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+</span><span id="__span-1-12"><a id="__codelineno-1-12" name="__codelineno-1-12" href="#__codelineno-1-12"></a>    <span class="n">match</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="sa">r</span><span class="s2">"Final answer:\s*(\d+)\s*/\s*(\d+)"</span><span class="p">,</span> <span class="n">text</span><span class="p">)</span>
+</span><span id="__span-1-13"><a id="__codelineno-1-13" name="__codelineno-1-13" href="#__codelineno-1-13"></a>    <span class="k">if</span> <span class="ow">not</span> <span class="n">match</span><span class="p">:</span>
+</span><span id="__span-1-14"><a id="__codelineno-1-14" name="__codelineno-1-14" href="#__codelineno-1-14"></a>        <span class="k">return</span> <span class="kc">False</span>
+</span><span id="__span-1-15"><a id="__codelineno-1-15" name="__codelineno-1-15" href="#__codelineno-1-15"></a>    <span class="n">num</span><span class="p">,</span> <span class="n">den</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">match</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">1</span><span class="p">)),</span> <span class="nb">int</span><span class="p">(</span><span class="n">match</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">2</span><span class="p">))</span>
+</span><span id="__span-1-16"><a id="__codelineno-1-16" name="__codelineno-1-16" href="#__codelineno-1-16"></a>    <span class="k">return</span> <span class="n">num</span> <span class="o">*</span> <span class="n">_CORRECT_FRACTION</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="n">den</span> <span class="o">*</span> <span class="n">_CORRECT_FRACTION</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+</span><span id="__span-1-17"><a id="__codelineno-1-17" name="__codelineno-1-17" href="#__codelineno-1-17"></a>
+</span><span id="__span-1-18"><a id="__codelineno-1-18" name="__codelineno-1-18" href="#__codelineno-1-18"></a>
+</span><span id="__span-1-19"><a id="__codelineno-1-19" name="__codelineno-1-19" href="#__codelineno-1-19"></a><span class="k">def</span><span class="w"> </span><span class="nf">pass_at_k_demo</span><span class="p">(</span><span class="n">client</span><span class="p">,</span> <span class="n">model</span><span class="p">,</span> <span class="n">k</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">5</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+</span><span id="__span-1-20"><a id="__codelineno-1-20" name="__codelineno-1-20" href="#__codelineno-1-20"></a><span class="w">    </span><span class="sd">"""pass@k: did at least one of k independent trials succeed?</span>
+</span><span id="__span-1-21"><a id="__codelineno-1-21" name="__codelineno-1-21" href="#__codelineno-1-21"></a><span class="sd">    pass^k: did EVERY one of k independent trials succeed? -- the real</span>
+</span><span id="__span-1-22"><a id="__codelineno-1-22" name="__codelineno-1-22" href="#__codelineno-1-22"></a><span class="sd">    reliability question, since a production agent runs once per real</span>
+</span><span id="__span-1-23"><a id="__codelineno-1-23" name="__codelineno-1-23" href="#__codelineno-1-23"></a><span class="sd">    request, not k times with a human picking the best try."""</span>
+</span><span id="__span-1-24"><a id="__codelineno-1-24" name="__codelineno-1-24" href="#__codelineno-1-24"></a>    <span class="n">results</span> <span class="o">=</span> <span class="p">[]</span>
+</span><span id="__span-1-25"><a id="__codelineno-1-25" name="__codelineno-1-25" href="#__codelineno-1-25"></a>    <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">k</span><span class="p">):</span>
+</span><span id="__span-1-26"><a id="__codelineno-1-26" name="__codelineno-1-26" href="#__codelineno-1-26"></a>        <span class="n">response</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">messages</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">,</span> <span class="n">max_tokens</span><span class="o">=</span><span class="mi">500</span><span class="p">,</span> <span class="n">messages</span><span class="o">=</span><span class="p">[{</span><span class="s2">"role"</span><span class="p">:</span> <span class="s2">"user"</span><span class="p">,</span> <span class="s2">"content"</span><span class="p">:</span> <span class="n">_PROBABILITY_QUESTION</span><span class="p">}])</span>
+</span><span id="__span-1-27"><a id="__codelineno-1-27" name="__codelineno-1-27" href="#__codelineno-1-27"></a>        <span class="n">text</span> <span class="o">=</span> <span class="n">_text</span><span class="p">(</span><span class="n">response</span><span class="p">,</span> <span class="n">client</span><span class="p">,</span> <span class="n">model</span><span class="p">)</span>
+</span><span id="__span-1-28"><a id="__codelineno-1-28" name="__codelineno-1-28" href="#__codelineno-1-28"></a>        <span class="n">results</span><span class="o">.</span><span class="n">append</span><span class="p">({</span><span class="s2">"answer"</span><span class="p">:</span> <span class="n">text</span><span class="p">,</span> <span class="s2">"correct"</span><span class="p">:</span> <span class="n">_check_probability_answer</span><span class="p">(</span><span class="n">text</span><span class="p">)})</span>
+</span><span id="__span-1-29"><a id="__codelineno-1-29" name="__codelineno-1-29" href="#__codelineno-1-29"></a>
+</span><span id="__span-1-30"><a id="__codelineno-1-30" name="__codelineno-1-30" href="#__codelineno-1-30"></a>    <span class="n">successes</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="mi">1</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">results</span> <span class="k">if</span> <span class="n">r</span><span class="p">[</span><span class="s2">"correct"</span><span class="p">])</span>
+</span><span id="__span-1-31"><a id="__codelineno-1-31" name="__codelineno-1-31" href="#__codelineno-1-31"></a>    <span class="n">pass_at_k</span> <span class="o">=</span> <span class="n">successes</span> <span class="o">&gt;=</span> <span class="mi">1</span>
+</span><span id="__span-1-32"><a id="__codelineno-1-32" name="__codelineno-1-32" href="#__codelineno-1-32"></a>    <span class="n">pass_hat_k</span> <span class="o">=</span> <span class="n">successes</span> <span class="o">==</span> <span class="n">k</span>
+</span><span id="__span-1-33"><a id="__codelineno-1-33" name="__codelineno-1-33" href="#__codelineno-1-33"></a>    <span class="k">return</span> <span class="p">{</span><span class="s2">"k"</span><span class="p">:</span> <span class="n">k</span><span class="p">,</span> <span class="s2">"successes"</span><span class="p">:</span> <span class="n">successes</span><span class="p">,</span> <span class="s2">"pass_at_k"</span><span class="p">:</span> <span class="n">pass_at_k</span><span class="p">,</span> <span class="s2">"pass_hat_k"</span><span class="p">:</span> <span class="n">pass_hat_k</span><span class="p">}</span>
+</span></code></pre></div>
+<div class="admonition success">
+<p class="admonition-title">A real run — 5 independent trials, the same question, every answer shown</p>
+<p><strong>Input</strong>, identical across all 5 trials: <em>"A committee of 3 people is chosen at random from a group of 5 men and 4 women. What is the probability that the committee has at least 2 women? Give your final answer as a simplified fraction, on its own line, in the form: Final answer: a/b"</em> Ground truth (computed independently): 17/42.</p>
+<p><strong>Output — all 5 trials, real final lines</strong>: trial 1 through 5 each worked through the same two cases (exactly 2 women, exactly 3 women) via combinations — $\binom{4}{2}\binom{5}{1} = 30$ and $\binom{4}{3}\binom{5}{0} = 4$, for $34/84$ simplified to $17/42$ — and every trial ended with the identical line: <code>Final answer: 17/42</code>.</p>
+<p><strong>5/5 correct. pass@5 = true. pass^5 = true.</strong> No gap observed on this specific task — an honest result, not a disappointing one: this combinatorics problem, at this difficulty, showed perfect reliability for Claude Haiku 4.5 across 5 real trials. That doesn't contradict τ-bench's reported 50%-to-25% drop; it shows that the gap between pass@k and pass^k is a property of <em>how much genuine variance a specific task has for a specific model</em>, not something inherent to the metrics — τ-bench's tasks (multi-turn, tool-using, policy-constrained customer service) have far more room for a single trial to go sideways than one well-structured probability question does.</p>
+</div>
+<h2 id="capability-vs-regression-suites">Capability vs. regression suites<a class="headerlink" href="#capability-vs-regression-suites" title="Permanent link">&para;</a></h2>
+<p>Anthropic's own framing draws a clean, practical line: a <strong>capability eval</strong> asks how good the agent could be — often exploratory, expensive to run, and used to guide real development decisions. A <strong>regression eval</strong> asks a narrower, cheaper question: did a specific change break something that used to work? It has to be fast and stable enough to run on every change, the same job a unit-test suite does in ordinary software. Conflating the two is a real, common mistake: a capability eval's occasional, expensive, deep-dive numbers aren't a substitute for a small, boring, constantly-run regression suite — and a regression suite that never catches anything isn't necessarily a badly-designed one, since "still passing" is the correct default outcome most of the time it runs.</p>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="n">_REGRESSION_SUITE</span> <span class="o">=</span> <span class="p">[</span>
+</span><span id="__span-2-2"><a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>    <span class="p">(</span><span class="s2">"What is 2 + 2?"</span><span class="p">,</span> <span class="s2">"4"</span><span class="p">),</span>
+</span><span id="__span-2-3"><a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>    <span class="p">(</span><span class="s2">"What is 10 * 5?"</span><span class="p">,</span> <span class="s2">"50"</span><span class="p">),</span>
+</span><span id="__span-2-4"><a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a>    <span class="p">(</span><span class="s2">"What is 100 / 4?"</span><span class="p">,</span> <span class="s2">"25"</span><span class="p">),</span>
+</span><span id="__span-2-5"><a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a>    <span class="p">(</span><span class="s2">"What is 6 squared?"</span><span class="p">,</span> <span class="s2">"36"</span><span class="p">),</span>
+</span><span id="__span-2-6"><a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a><span class="p">]</span>
+</span><span id="__span-2-7"><a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a>
+</span><span id="__span-2-8"><a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a><span class="n">_BASELINE_SYSTEM</span> <span class="o">=</span> <span class="s2">"Answer the arithmetic question directly."</span>
+</span><span id="__span-2-9"><a id="__codelineno-2-9" name="__codelineno-2-9" href="#__codelineno-2-9"></a><span class="c1"># Motivated by a real, common driver of silent regressions: a formatting</span>
+</span><span id="__span-2-10"><a id="__codelineno-2-10" name="__codelineno-2-10" href="#__codelineno-2-10"></a><span class="c1"># change made for a genuinely good reason (here, an accessibility-style</span>
+</span><span id="__span-2-11"><a id="__codelineno-2-11" name="__codelineno-2-11" href="#__codelineno-2-11"></a><span class="c1"># guideline) that a downstream automated grader -- built when answers were</span>
+</span><span id="__span-2-12"><a id="__codelineno-2-12" name="__codelineno-2-12" href="#__codelineno-2-12"></a><span class="c1"># plain digits -- was never updated to handle.</span>
+</span><span id="__span-2-13"><a id="__codelineno-2-13" name="__codelineno-2-13" href="#__codelineno-2-13"></a><span class="n">_CAPABILITY_MOTIVATED_SYSTEM</span> <span class="o">=</span> <span class="p">(</span>
+</span><span id="__span-2-14"><a id="__codelineno-2-14" name="__codelineno-2-14" href="#__codelineno-2-14"></a>    <span class="s2">"Express all numeric answers in words, not digits (e.g. 'forty-two', not '42'), as required "</span>
+</span><span id="__span-2-15"><a id="__codelineno-2-15" name="__codelineno-2-15" href="#__codelineno-2-15"></a>    <span class="s2">"by the new accessibility guideline. This applies to every number in your response, no exceptions."</span>
+</span><span id="__span-2-16"><a id="__codelineno-2-16" name="__codelineno-2-16" href="#__codelineno-2-16"></a><span class="p">)</span>
+</span><span id="__span-2-17"><a id="__codelineno-2-17" name="__codelineno-2-17" href="#__codelineno-2-17"></a>
+</span><span id="__span-2-18"><a id="__codelineno-2-18" name="__codelineno-2-18" href="#__codelineno-2-18"></a>
+</span><span id="__span-2-19"><a id="__codelineno-2-19" name="__codelineno-2-19" href="#__codelineno-2-19"></a><span class="k">def</span><span class="w"> </span><span class="nf">_run_regression_suite</span><span class="p">(</span><span class="n">system</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">client</span><span class="p">,</span> <span class="n">model</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">:</span>
+</span><span id="__span-2-20"><a id="__codelineno-2-20" name="__codelineno-2-20" href="#__codelineno-2-20"></a>    <span class="n">results</span> <span class="o">=</span> <span class="p">[]</span>
+</span><span id="__span-2-21"><a id="__codelineno-2-21" name="__codelineno-2-21" href="#__codelineno-2-21"></a>    <span class="k">for</span> <span class="n">question</span><span class="p">,</span> <span class="n">expected</span> <span class="ow">in</span> <span class="n">_REGRESSION_SUITE</span><span class="p">:</span>
+</span><span id="__span-2-22"><a id="__codelineno-2-22" name="__codelineno-2-22" href="#__codelineno-2-22"></a>        <span class="n">response</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">messages</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">,</span> <span class="n">max_tokens</span><span class="o">=</span><span class="mi">500</span><span class="p">,</span> <span class="n">system</span><span class="o">=</span><span class="n">system</span><span class="p">,</span> <span class="n">messages</span><span class="o">=</span><span class="p">[{</span><span class="s2">"role"</span><span class="p">:</span> <span class="s2">"user"</span><span class="p">,</span> <span class="s2">"content"</span><span class="p">:</span> <span class="n">question</span><span class="p">}])</span>
+</span><span id="__span-2-23"><a id="__codelineno-2-23" name="__codelineno-2-23" href="#__codelineno-2-23"></a>        <span class="n">text</span> <span class="o">=</span> <span class="n">_text</span><span class="p">(</span><span class="n">response</span><span class="p">,</span> <span class="n">client</span><span class="p">,</span> <span class="n">model</span><span class="p">)</span>
+</span><span id="__span-2-24"><a id="__codelineno-2-24" name="__codelineno-2-24" href="#__codelineno-2-24"></a>        <span class="n">passed</span> <span class="o">=</span> <span class="n">expected</span> <span class="ow">in</span> <span class="n">text</span>
+</span><span id="__span-2-25"><a id="__codelineno-2-25" name="__codelineno-2-25" href="#__codelineno-2-25"></a>        <span class="n">results</span><span class="o">.</span><span class="n">append</span><span class="p">({</span><span class="s2">"question"</span><span class="p">:</span> <span class="n">question</span><span class="p">,</span> <span class="s2">"expected"</span><span class="p">:</span> <span class="n">expected</span><span class="p">,</span> <span class="s2">"answer"</span><span class="p">:</span> <span class="n">text</span><span class="p">,</span> <span class="s2">"passed"</span><span class="p">:</span> <span class="n">passed</span><span class="p">})</span>
+</span><span id="__span-2-26"><a id="__codelineno-2-26" name="__codelineno-2-26" href="#__codelineno-2-26"></a>    <span class="k">return</span> <span class="n">results</span>
+</span><span id="__span-2-27"><a id="__codelineno-2-27" name="__codelineno-2-27" href="#__codelineno-2-27"></a>
+</span><span id="__span-2-28"><a id="__codelineno-2-28" name="__codelineno-2-28" href="#__codelineno-2-28"></a>
+</span><span id="__span-2-29"><a id="__codelineno-2-29" name="__codelineno-2-29" href="#__codelineno-2-29"></a><span class="k">def</span><span class="w"> </span><span class="nf">capability_vs_regression_demo</span><span class="p">(</span><span class="n">client</span><span class="p">,</span> <span class="n">model</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+</span><span id="__span-2-30"><a id="__codelineno-2-30" name="__codelineno-2-30" href="#__codelineno-2-30"></a>    <span class="n">baseline_results</span> <span class="o">=</span> <span class="n">_run_regression_suite</span><span class="p">(</span><span class="n">_BASELINE_SYSTEM</span><span class="p">,</span> <span class="n">client</span><span class="p">,</span> <span class="n">model</span><span class="p">)</span>
+</span><span id="__span-2-31"><a id="__codelineno-2-31" name="__codelineno-2-31" href="#__codelineno-2-31"></a>    <span class="n">new_results</span> <span class="o">=</span> <span class="n">_run_regression_suite</span><span class="p">(</span><span class="n">_CAPABILITY_MOTIVATED_SYSTEM</span><span class="p">,</span> <span class="n">client</span><span class="p">,</span> <span class="n">model</span><span class="p">)</span>
+</span><span id="__span-2-32"><a id="__codelineno-2-32" name="__codelineno-2-32" href="#__codelineno-2-32"></a>    <span class="k">return</span> <span class="p">{</span>
+</span><span id="__span-2-33"><a id="__codelineno-2-33" name="__codelineno-2-33" href="#__codelineno-2-33"></a>        <span class="s2">"baseline"</span><span class="p">:</span> <span class="p">{</span><span class="s2">"results"</span><span class="p">:</span> <span class="n">baseline_results</span><span class="p">,</span> <span class="s2">"all_passed"</span><span class="p">:</span> <span class="nb">all</span><span class="p">(</span><span class="n">r</span><span class="p">[</span><span class="s2">"passed"</span><span class="p">]</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">baseline_results</span><span class="p">)},</span>
+</span><span id="__span-2-34"><a id="__codelineno-2-34" name="__codelineno-2-34" href="#__codelineno-2-34"></a>        <span class="s2">"capability_motivated_change"</span><span class="p">:</span> <span class="p">{</span><span class="s2">"results"</span><span class="p">:</span> <span class="n">new_results</span><span class="p">,</span> <span class="s2">"all_passed"</span><span class="p">:</span> <span class="nb">all</span><span class="p">(</span><span class="n">r</span><span class="p">[</span><span class="s2">"passed"</span><span class="p">]</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">new_results</span><span class="p">)},</span>
+</span><span id="__span-2-35"><a id="__codelineno-2-35" name="__codelineno-2-35" href="#__codelineno-2-35"></a>    <span class="p">}</span>
+</span></code></pre></div>
+<div class="admonition success">
+<p class="admonition-title">A real run — a plausible capability-motivated change, and a real, clean regression</p>
+<p><strong>Input, baseline condition</strong>: 4 trivial arithmetic tasks ("What is 2 + 2?", "What is 10 * 5?", "What is 100 / 4?", "What is 6 squared?"), plain system prompt: <em>"Answer the arithmetic question directly."</em> <strong>Output</strong>: all 4 answers contained the correct literal digits (e.g. <em>"100 / 4 = 25"</em>) — <strong>4/4 passed</strong> an automated grader checking for the expected digit string in the reply.</p>
+<p><strong>Input, capability-motivated condition</strong>: the identical 4 tasks, system prompt changed to: <em>"Express all numeric answers in words, not digits (e.g. 'forty-two', not '42'), as required by the new accessibility guideline. This applies to every number in your response, no exceptions."</em> — a plausible, real reason to change a system prompt.</p>
+<p><strong>Output</strong>: <em>"Two plus two equals four."</em> … <em>"Ten multiplied by five equals fifty."</em> … <em>"One hundred divided by four equals twenty-five."</em> … <em>"Six squared is thirty-six."</em> Every answer is <strong>completely correct arithmetic</strong> — and <strong>all 4 tasks failed</strong> the same automated grader, because none of "four," "fifty," "twenty-five," "thirty-six" contains the literal digit string the grader was checking for.</p>
+<p>This is a real, clean regression, and it's worth being precise about what actually regressed: not the model's reasoning — the grader. The accessibility-motivated change was a reasonable thing to want, and it silently broke an automated check that assumed a format nobody thought to re-verify. This is exactly the failure mode a regression suite exists to catch cheaply, before a much more expensive capability eval — or a real user — catches it instead.</p>
+</div>
+<h2 id="infrastructure-noise">Infrastructure noise<a class="headerlink" href="#infrastructure-noise" title="Permanent link">&para;</a></h2>
+<p>One more source of variance in agent evals doesn't come from the model or the task at all: the hardware the eval runs on. Anthropic ran the identical model, harness, and task set (Terminal-Bench 2.0) across six container resource configurations, from strict 1x enforcement to fully uncapped — nothing about the agent changed between runs, only how much CPU and memory it had available. The result: a 6-percentage-point gap (p &lt; 0.01) between the most- and least-resourced configurations — larger than many reported gaps between competing systems on public leaderboards. The mechanism is largely infrastructure-level failures, not reasoning failures: the infra error rate itself fell from 5.8% at 1x headroom to 2.1% at 3x (p &lt; 0.001), down to 0.5% uncapped. A cross-check on SWE-bench, varying RAM up to 5x baseline across 227 problems, found a smaller but still real effect (+1.54 percentage points at 5x versus 1x) — smaller because SWE-bench's tasks are less resource-intensive than Terminal-Bench 2.0's, which is itself a useful finding: the size of the infrastructure confound depends on the task's own resource profile, not just on infrastructure existing. Anthropic's own recommendation follows directly: benchmark maintainers should publish recommended resource specs and enforcement methodology, and treat resource configuration "as a first-class experimental variable, documented and controlled" — the same way a rigorous experiment controls for any other variable that could explain a result. This page didn't reproduce the experiment itself (it needs real container orchestration across multiple resource tiers, not a lightweight script), but the numbers above are real, cited, and worth internalizing before trusting a close leaderboard gap: a 2-point lead could be silicon, not intelligence.</p>
+<h2 id="interview-angle">Interview angle<a class="headerlink" href="#interview-angle" title="Permanent link">&para;</a></h2>
+<p><strong>Weak answer</strong> to "how would you evaluate a new agent before shipping it": <em>"Run it against a benchmark and check the pass rate."</em> This treats evaluation as one number from one run, and it can't explain any of this page's own real findings — not the outcome/trajectory gap (a single pass rate can't tell you whether the agent got there honestly), not pass@k vs. pass^k (a single run can't distinguish "usually works" from "always works"), and not the regression-suite finding (a one-off capability number wouldn't have caught a grader silently breaking on a routine prompt change).</p>
+<p><strong>Strong answer</strong>: evaluation is at least three separate questions, each needing a different setup. What's the agent capable of, at its ceiling — a capability eval, run occasionally, expensive, exploratory. Did a specific change break something that used to work — a regression suite, run constantly, cheap, narrow, and this page's own real trace shows it catching a failure a capability eval wouldn't even have been looking for. And is the agent's success outcome-real or trajectory-real — checked by actually inspecting the process, not just the final state, because the literature has real, documented cases (searching for a benchmark instead of solving the task; misusing a payment tool) where those two disagree. Layered under all three: how many trials is the reported number even based on, and was the hardware held constant — a single pass@1 number on unspecified infrastructure is not evidence, it's a claim.</p>
+<p><strong>Follow-up to expect</strong>: "if your own pass@k and pass^k came out identical, doesn't that mean the distinction doesn't matter in practice?" No — it means this specific task, at this difficulty, for this model, had low variance in this run. τ-bench's own published numbers (a 60% relative drop from pass@1 to pass^8 in a genuinely harder, multi-turn, tool-using domain) are the evidence the distinction matters in general; this page's clean result is evidence that the <em>size</em> of the gap is task-dependent, which is itself the useful, precise version of the claim — not "pass@k and pass^k always diverge," but "check both, because whether they diverge tells you something real about the task."</p>
+<h2 id="build-it-yourself-30-minutes">Build it yourself — 30 minutes<a class="headerlink" href="#build-it-yourself-30-minutes" title="Permanent link">&para;</a></h2>
+<ol>
+<li>Pick a task where the <em>right way to get there</em> is checkable — a tool that must be called, a specific sequence of steps. Run it once, then grade it two ways: outcome only (is the final answer right?) and trajectory (did it take the intended path?). Deliberately try a version of the prompt that makes skipping the intended path plausible, and see if the two graders ever disagree.</li>
+<li>Run one task 5 times with real API calls (not a mock). Compute pass@5 and pass^5 from the real results, not an assumption. If they're identical, that's information about the task's variance, not a failed experiment.</li>
+<li>Build a tiny regression suite — 3 or 4 trivial tasks with an exact-match or digit-match grader. Make one plausible, unrelated system-prompt change (a tone requirement, a formatting rule) and re-run the suite. Check whether it still passes — and if it doesn't, check whether the <em>model</em> regressed or the <em>grader</em> did.</li>
+<li>If you have access to adjustable compute (a container resource limit, a local model's thread count), try running the identical eval at two different resource levels and see whether the score moves at all before trusting a close comparison between two systems.</li>
+</ol>
+<h2 id="scenario-check">Scenario Check<a class="headerlink" href="#scenario-check" title="Permanent link">&para;</a></h2>
+<div class="quiz-widget" data-title="Scenario Check: Evaluating Agents">
+<script type="application/json">
+{
+  "questions": [
+    {
+      "scenario": "A real repro gave a model the option to call a verification tool or answer directly, on both a well-known fact and an unguessable fictional fact. In both cases the model called the tool and got the correct outcome -- no divergence between outcome and trajectory was observed.",
+      "question": "What's the most accurate takeaway from this specific result?",
+      "options": [
+        "The checking mechanism worked correctly; it simply had nothing to catch here",
+        "The distinction isn't useful in practice, since a real test found no disagreement",
+        "The test should be discarded, since it produced no interesting finding",
+        "This model always calls every available tool, regardless of the question"
+      ],
+      "correct": 0,
+      "explanations": [
+        "Correct. The value of checking both outcome and trajectory isn't that it always finds a mismatch -- it's that you can't know whether they agree until you check both, and this run confirms the checking mechanism itself functioned as intended.",
+        "Overgeneralizes from one clean run to a universal claim -- the literature's own documented cases (gaming a benchmark search, misusing a payment tool) show outcome and trajectory genuinely diverging elsewhere; one honest negative result doesn't erase that evidence.",
+        "Treats a disclosed negative result as worthless -- knowing the check doesn't fire on a well-behaved run is real information, and the check still exists and would fire if behavior were different.",
+        "Overstates a general claim from two data points -- nothing here establishes the model calls EVERY tool in every circumstance; only that it didn't skip verification on these two specific questions."
+      ]
+    },
+    {
+      "scenario": "A real experiment measured pass@5 = true and pass^5 = true (5 out of 5 correct) on a probability question, with no observed gap between the two metrics. A team cites tau-bench's published ~60% relative drop from pass@1 to pass^8 and concludes: 'Our result must be wrong, since tau-bench proves these metrics always diverge substantially.'",
+      "question": "What's the strongest problem with that conclusion?",
+      "options": [
+        "Any result without a large gap contradicts tau-bench and signals a measurement error",
+        "The gap's SIZE depends on task variance, not a fixed property of the two metrics",
+        "pass@k and pass^k are mathematically identical, so tau-bench must mean something else",
+        "5 trials is too few to compute either metric, so the result should be discarded"
+      ],
+      "correct": 1,
+      "explanations": [
+        "Treats a single cited benchmark's finding as a universal law rather than a result specific to that benchmark's own tasks -- a different, easier task genuinely can and does show a smaller gap.",
+        "Correct. tau-bench's domain involves multi-turn tool use under policy constraints, which has far more room for a single trial to go wrong than one well-structured probability question -- the real lesson is that the gap's size reflects the task's actual variance, not a fixed property of the definitions themselves.",
+        "Factually wrong -- pass@k (at least one success) and pass^k (all successes) are different quantities by definition, which is exactly why they can diverge when there's real variance across trials.",
+        "An arbitrary, unsupported claim about sample size -- k=5 is a small but valid number of trials for computing both metrics on this specific run; the result is honestly reported as what happened at k=5."
+      ]
+    },
+    {
+      "scenario": "A team changes an agent's system prompt to spell out numbers in words (a plausible accessibility-driven requirement). Afterward, a regression suite that checks for exact digit substrings in responses reports 0/4 passing, even though a human reviewer confirms every answer is mathematically correct.",
+      "question": "What's the most accurate diagnosis of what happened?",
+      "options": [
+        "The model's arithmetic capability regressed because of the accessibility instruction",
+        "The suite was poorly designed from the start and should never have existed",
+        "The grader is broken for the new format -- the model's correctness didn't regress",
+        "This isn't a real regression, since the new prompt was intentional and well-motivated"
+      ],
+      "correct": 2,
+      "explanations": [
+        "Contradicts the evidence directly -- a human reviewer confirmed every answer was mathematically correct; nothing about the model's actual reasoning failed.",
+        "Overreaches -- a suite that correctly caught a real, silent breakage did its job; the fix needed is updating the grader, not concluding the suite was a mistake.",
+        "Correct. The suite's automated check assumed a digit format the new prompt no longer produces -- the model's capability is intact, but the check that verifies it silently stopped working, exactly what an automated suite exists to surface.",
+        "Confuses 'intentional prompt change' with 'no regression occurred' -- the change being deliberate doesn't mean nothing broke; it means the break was an unintended side effect, which regression testing exists to catch regardless of intent."
+      ]
+    },
+    {
+      "scenario": "Anthropic's infrastructure noise study ran the identical model and benchmark across six container resource configurations and found a 6-percentage-point gap between the most- and least-resourced setups. A candidate summarizes this as: 'This proves benchmark leaderboards are meaningless and can never be trusted.'",
+      "question": "What's the most accurate correction to that summary?",
+      "options": [
+        "Correct -- a 6-point infrastructure effect means no leaderboard comparison can ever be truly meaningful",
+        "The finding only applies to Terminal-Bench 2.0 and has no implications for any other benchmark",
+        "The SWE-bench cross-check contradicts the finding, since it found no resource effect at all",
+        "It shows infrastructure is a controllable confound, not proof comparison is impossible in principle"
+      ],
+      "correct": 3,
+      "explanations": [
+        "Overstates the finding into fatalism -- the study's own conclusion is a call for controls (publishing specs, standardizing enforcement), which presumes meaningful comparison IS possible once the confound is controlled for.",
+        "Understates the generalizable lesson -- the SWE-bench cross-check found a smaller but real effect on a different benchmark, showing the confound isn't unique to one benchmark, even though its size varies by task.",
+        "Misstates the cross-check's actual result -- it found a smaller but still real, meaningful effect (+1.54 percentage points at 5x RAM versus 1x), not zero effect.",
+        "Correct. The study's own recommendation is to treat resource configuration as a controlled experimental variable -- the problem is uncontrolled infrastructure variance, not that benchmarking is inherently meaningless; once controlled, comparisons regain their validity."
+      ]
+    }
+  ]
+}
+</script>
+</div>
+
+<h2 id="sources-further-reading">Sources &amp; further reading<a class="headerlink" href="#sources-further-reading" title="Permanent link">&para;</a></h2>
+<ul>
+<li>Anthropic, <a href="https://www.anthropic.com/engineering/demystifying-evals-for-ai-agents">"Demystifying evals for AI agents"</a> (2026-01-09) — graders (code/model/human), capability vs. regression evals, pass@k vs. pass^k, a CORE-Bench harness-bug fix moving a score from 42% to 95%.</li>
+<li>Yao et al., <a href="https://arxiv.org/abs/2406.12045">"τ-bench: A Benchmark for Tool-Agent-User Interaction in Real-World Domains"</a> (arXiv 2406.12045, 2024-06) — the pass^k reliability metric; also see <a href="https://sierra.ai/blog/benchmarking-ai-agents">Sierra's own benchmarking post</a> for the retail pass@1-to-pass^8 numbers.</li>
+<li>Anthropic, <a href="https://www.anthropic.com/engineering/infrastructure-noise">"Quantifying infrastructure noise in agentic coding evals"</a> (2026-02-05) — the 6-percentage-point resource-driven gap on Terminal-Bench 2.0, and the SWE-bench cross-check.</li>
+<li><a href="https://arxiv.org/abs/2510.11977">"A Holistic Agent Leaderboard: The Missing Infrastructure for AI Agent Evaluation"</a> (arXiv 2510.11977) — log-level audits catching outcome-passing, trajectory-failing agent behavior.</li>
+</ul>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+        
+<div class="md-social">
+  
+    
+    
+    
+    
+      
+      
+    
+    <a href="https://github.com/dhruvmakwana" target="_blank" rel="noopener" title="github.com" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": ["navigation.instant", "navigation.tracking", "navigation.tabs", "navigation.tabs.sticky", "navigation.sections", "navigation.top", "navigation.indexes", "toc.follow", "search.suggest", "search.highlight", "content.code.copy", "content.code.annotate"], "search": "../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../assets/javascripts/bundle.d7400e89.min.js"></script>
+      
+        <script src="../javascripts/quiz.js"></script>
+      
+        <script src="../javascripts/flashcards.js"></script>
+      
+    
+  </body>
+</html>

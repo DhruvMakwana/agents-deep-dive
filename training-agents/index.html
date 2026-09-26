@@ -1,0 +1,3043 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="A deep-dive reference on LLM agents — architectures, tools, context and memory, multi-agent systems, evaluation, security, durable execution, and training agents with RL.">
+      
+      
+        <meta name="author" content="Dhruv Makwana">
+      
+      
+        <link rel="canonical" href="https://dhruvmakwana.github.io/agents-deep-dive/training-agents/">
+      
+      
+        <link rel="prev" href="../cost-latency/">
+      
+      
+        <link rel="next" href="../rl-search-tool-agents/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../assets/favicon.svg">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
+    
+    
+      
+        <title>Training Agents: Reward and Credit - Agents, Deep Dive</title>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/main.ec1eaa64.min.css">
+      
+        
+        <link rel="stylesheet" href="../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Inter:300,300i,400,400i,700,700i%7CJetBrains+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Inter";--md-code-font:"JetBrains Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../stylesheets/extra.css">
+    
+      <link rel="stylesheet" href="../stylesheets/quiz.css">
+    
+      <link rel="stylesheet" href="../stylesheets/flashcards.css">
+    
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="slate" data-md-color-primary="black" data-md-color-accent="deep-purple">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#training-agents-reward-and-credit" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow md-header--lifted" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href=".." title="Agents, Deep Dive" class="md-header__button md-logo" aria-label="Agents, Deep Dive" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Agents, Deep Dive
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Training Agents: Reward and Credit
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="slate" data-md-color-primary="black" data-md-color-accent="deep-purple"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 7a5 5 0 0 1 5 5 5 5 0 0 1-5 5 5 5 0 0 1-5-5 5 5 0 0 1 5-5m0 2a3 3 0 0 0-3 3 3 3 0 0 0 3 3 3 3 0 0 0 3-3 3 3 0 0 0-3-3m0-7 2.39 3.42C13.65 5.15 12.84 5 12 5s-1.65.15-2.39.42zM3.34 7l4.16-.35A7.2 7.2 0 0 0 5.94 8.5c-.44.74-.69 1.5-.83 2.29zm.02 10 1.76-3.77a7.131 7.131 0 0 0 2.38 4.14zM20.65 7l-1.77 3.79a7.02 7.02 0 0 0-2.38-4.15zm-.01 10-4.14.36c.59-.51 1.12-1.14 1.54-1.86.42-.73.69-1.5.83-2.29zM12 22l-2.41-3.44c.74.27 1.55.44 2.41.44.82 0 1.63-.17 2.37-.44z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="default" data-md-color-primary="white" data-md-color-accent="deep-purple"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="m17.75 4.09-2.53 1.94.91 3.06-2.63-1.81-2.63 1.81.91-3.06-2.53-1.94L12.44 4l1.06-3 1.06 3zm3.5 6.91-1.64 1.25.59 1.98-1.7-1.17-1.7 1.17.59-1.98L15.75 11l2.06-.05L18.5 9l.69 1.95zm-2.28 4.95c.83-.08 1.72 1.1 1.19 1.85-.32.45-.66.87-1.08 1.27C15.17 23 8.84 23 4.94 19.07c-3.91-3.9-3.91-10.24 0-14.14.4-.4.82-.76 1.27-1.08.75-.53 1.93.36 1.85 1.19-.27 2.86.69 5.83 2.89 8.02a9.96 9.96 0 0 0 8.02 2.89m-1.64 2.02a12.08 12.08 0 0 1-7.8-3.47c-2.17-2.19-3.33-5-3.49-7.82-2.81 3.14-2.7 7.96.31 10.98 3.02 3.01 7.84 3.12 10.98.31"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/dhruvmakwana/agents-deep-dive" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    dhruvmakwana/agents-deep-dive
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+    
+      
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href=".." class="md-tabs__link">
+        
+  
+  
+    
+  
+  Home
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../revision/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Revision
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../what-is-an-agent/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Foundations
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../tool-design/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Tools and Context
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../planning-and-decomposition/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Systems
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../evaluating-agents/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Production
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+    
+  
+  
+    
+    
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="./" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Training
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../case-studies/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Case Studies
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../tutorials/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Tutorials & Code
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../interview-playbook/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Interview
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../about/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  About
+
+      </a>
+    </li>
+  
+
+      
+    </ul>
+  </div>
+</nav>
+    
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href=".." title="Agents, Deep Dive" class="md-nav__button md-logo" aria-label="Agents, Deep Dive" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    Agents, Deep Dive
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/dhruvmakwana/agents-deep-dive" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    dhruvmakwana/agents-deep-dive
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href=".." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../revision/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Revision
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Foundations
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Foundations
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../what-is-an-agent/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    What Is an Agent?
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../agent-loop-from-scratch/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    The Agent Loop From Scratch
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../workflow-patterns/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Workflow Patterns
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../reasoning-paradigms/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Reasoning Paradigms
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../choosing-a-framework/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Choosing a Framework
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Tools and Context
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Tools and Context
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../tool-design/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Tool Design
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../context-engineering/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Context Engineering
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../tools-at-scale/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Tools at Scale
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../mcp-deep-dive/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MCP Deep Dive
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../mcp-tool-ecosystem/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MCP and Tool Ecosystem
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../skills-a2a-protocols/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Skills, A2A and Other Protocols
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../kv-cache-economics/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    KV-Cache Economics
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../memory-architectures/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Memory Architectures
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../models-for-agents/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Models for Agents
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Systems
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Systems
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../planning-and-decomposition/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Planning and Decomposition
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../multi-agent-systems/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Multi-Agent Systems
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../harness-engineering/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Harness Engineering
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../coding-agents-mechanisms/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Coding Agents: Mechanisms
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../coding-agent-config/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Coding Agent Products and Configuration
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../deep-research-agents/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Deep Research Agents
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../computer-use-browser-agents/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Computer-Use and Browser Agents
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../personal-always-on-agents/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Personal and Always-On Agents
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6" >
+        
+          
+          <label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Production
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Production
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../evaluating-agents/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Evaluating Agents
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../benchmark-atlas/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Benchmark Atlas
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../observability-debugging/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Observability and Debugging
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../observability-ecosystem/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Observability Ecosystem
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../agent-security/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Agent Security
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../guardrails-human-in-the-loop/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Guardrails and Human-in-the-Loop
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../identity-governance-compliance/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Identity, Governance and Compliance
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../sandboxes-permissions/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Sandboxes and Permissions
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../durable-execution/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Durable Execution
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../cost-latency/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Cost and Latency
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+        
+        
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_7" id="__nav_7_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Training
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_7_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_7">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Training
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Training Agents: Reward and Credit
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Training Agents: Reward and Credit
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+  
+
+<nav class="md-nav md-nav--secondary" aria-label="On this page">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      On this page
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#grpo-the-group-is-the-baseline" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        GRPO: the group is the baseline
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#dapo-the-gradient-decreasing-problem-and-the-fix" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        DAPO: the gradient-decreasing problem, and the fix
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#outcome-reward-vs-process-reward" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Outcome reward vs. process reward
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#dpo-preference-pairs-no-separate-reward-model" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        DPO: preference pairs, no separate reward model
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#interview-angle" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Interview angle
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#build-it-yourself-30-minutes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Build it yourself — 30 minutes
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#scenario-check" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Scenario Check
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#sources-further-reading" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Sources &amp; further reading
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../rl-search-tool-agents/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    RL for Search and Tool Agents
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../data-environments/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Data and Environments
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../self-improving-agents/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Self-Improving Agents
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_8" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../case-studies/" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Case Studies
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_8" id="__nav_8_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_8_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_8">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Case Studies
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../case-studies/replit-database-deletion/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Replit: Agent Deletes a Production Database
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../case-studies/sakana-ai-scientist/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Sakana AI: Self-Improving Agent Escapes Its Own Timeout
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../case-studies/intercom-fin-anthropic/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Intercom Fin at Anthropic
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../case-studies/cloudflare-mcp/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Cloudflare's Internal MCP Platform
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../case-studies/block-goose/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Block's goose
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../case-studies/cognition-devin/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Cognition's Devin: The Benchmark and the Demo
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_9" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../tutorials/" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Tutorials & Code
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_9" id="__nav_9_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_9_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_9">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Tutorials & Code
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../tutorials/production-support-agent/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Build a Production-Shaped Support Agent
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_10" >
+        
+          
+          <label class="md-nav__link" for="__nav_10" id="__nav_10_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Interview
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_10_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_10">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Interview
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../interview-playbook/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Interview Playbook
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../about/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    About
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+  
+
+<nav class="md-nav md-nav--secondary" aria-label="On this page">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      On this page
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#grpo-the-group-is-the-baseline" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        GRPO: the group is the baseline
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#dapo-the-gradient-decreasing-problem-and-the-fix" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        DAPO: the gradient-decreasing problem, and the fix
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#outcome-reward-vs-process-reward" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Outcome reward vs. process reward
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#dpo-preference-pairs-no-separate-reward-model" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        DPO: preference pairs, no separate reward model
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#interview-angle" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Interview angle
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#build-it-yourself-30-minutes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Build it yourself — 30 minutes
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#scenario-check" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Scenario Check
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#sources-further-reading" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Sources &amp; further reading
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+
+<h1 id="training-agents-reward-and-credit">Training Agents: Reward and Credit<a class="headerlink" href="#training-agents-reward-and-credit" title="Permanent link">&para;</a></h1>
+<div class="admonition example">
+<p class="admonition-title">Hands-on</p>
+<p>Full runnable recipe: <a href="https://github.com/DhruvMakwana/agents-cookbook/tree/main/training-agents"><code>training-agents/</code></a> in the companion cookbook — real DPO preference-pair construction from real completions, plus exact GRPO and DAPO formulas run on toy reward groups so their real documented failure mode and fix are actually visible in the numbers. No GPU, no gradient update — per this site's own standing decision, training content stays conceptual plus a CPU-only toy.</p>
+</div>
+<details class="abstract">
+<summary>TL;DR — quick revision</summary>
+<ul>
+<li><strong>GRPO replaces a critic with the group itself.</strong> DeepSeekMath's own framing: "GRPO foregoes the critic model, instead estimating the baseline from group scores" — rewards for a group of sampled completions to the same prompt are "normalized by subtracting the group average and dividing by the group standard deviation," and that normalized value becomes every token's advantage.</li>
+<li><strong>A real, exact run of that formula reproduces GRPO's own documented failure mode.</strong> A group where every sample got the identical reward produced an advantage of exactly zero for all eight samples — DAPO's own paper names this the "gradient-decreasing problem": "if all outputs of a particular prompt are correct and receive the same reward, the resulting advantage for this group is zero. A zero advantage results in zero policy gradients."</li>
+<li><strong>DAPO's fix, run for real on the same degenerate group, is exactly what the paper describes</strong>: over-sample and filter out any group whose accuracy is exactly 0 or exactly 1, keeping only groups with genuine variance — "leaving all prompts in the batch with effective gradients."</li>
+<li><strong>Outcome reward and process reward answer different questions, with a measured real gap between them.</strong> "Process supervision significantly outperforms outcome supervision for training models to solve problems from the challenging MATH dataset" — a process-supervised model reported solving 78% of a representative MATH subset. A real toy repro shows exactly why: outcome-only credit can't tell a uniformly-bad trajectory from one where only the middle step failed; step-level credit can.</li>
+<li><strong>DPO turns preference pairs directly into a classification loss, no separate reward model or RL loop needed</strong> — "solve the standard RLHF problem with only a simple classification loss," reported to match or exceed PPO-based RLHF while being "stable, performant, and computationally lightweight." A real repro constructed one such pair from two real, independently sampled completions and a real judge call.</li>
+</ul>
+</details>
+<h2 id="grpo-the-group-is-the-baseline">GRPO: the group is the baseline<a class="headerlink" href="#grpo-the-group-is-the-baseline" title="Permanent link">&para;</a></h2>
+<p>Proximal Policy Optimization (PPO), the RLHF-era default, needs a learned critic (value function) to estimate how much better or worse an action was than expected — a second model, trained alongside the policy, adding real memory and instability cost. DeepSeekMath's Group Relative Policy Optimization sidesteps that entirely: "GRPO foregoes the critic model, instead estimating the baseline from group scores." Sample a group of completions to the same prompt, score each one, and use the group's own statistics as the baseline — "rewards are normalized by subtracting the group average and dividing by the group standard deviation," and "sets the advantages of all tokens in the output as the normalized reward." No critic, no separate value network — the group tells you, relative to itself, which samples were actually better.</p>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="kn">import</span><span class="w"> </span><span class="nn">statistics</span>
+</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>
+</span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>
+</span><span id="__span-0-4"><a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="k">def</span><span class="w"> </span><span class="nf">grpo_advantages</span><span class="p">(</span><span class="n">rewards</span><span class="p">:</span> <span class="nb">list</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">:</span>
+</span><span id="__span-0-5"><a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="w">    </span><span class="sd">"""Exactly DeepSeekMath's formula: subtract the group mean, divide by</span>
+</span><span id="__span-0-6"><a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="sd">    the group standard deviation. No critic model, no value network --</span>
+</span><span id="__span-0-7"><a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="sd">    the group itself is the baseline."""</span>
+</span><span id="__span-0-8"><a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>    <span class="n">mean</span> <span class="o">=</span> <span class="n">statistics</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">rewards</span><span class="p">)</span>
+</span><span id="__span-0-9"><a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>    <span class="n">std</span> <span class="o">=</span> <span class="n">statistics</span><span class="o">.</span><span class="n">pstdev</span><span class="p">(</span><span class="n">rewards</span><span class="p">)</span>
+</span><span id="__span-0-10"><a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>    <span class="k">if</span> <span class="n">std</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+</span><span id="__span-0-11"><a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a>        <span class="c1"># The real, documented failure: DAPO's own paper calls this the</span>
+</span><span id="__span-0-12"><a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a>        <span class="c1"># "gradient-decreasing problem" -- a zero-variance group produces</span>
+</span><span id="__span-0-13"><a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a>        <span class="c1"># a zero advantage for every sample, and zero advantage means</span>
+</span><span id="__span-0-14"><a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a>        <span class="c1"># zero policy gradient from this group, regardless of group size.</span>
+</span><span id="__span-0-15"><a id="__codelineno-0-15" name="__codelineno-0-15" href="#__codelineno-0-15"></a>        <span class="k">return</span> <span class="p">[</span><span class="mf">0.0</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="n">rewards</span><span class="p">]</span>
+</span><span id="__span-0-16"><a id="__codelineno-0-16" name="__codelineno-0-16" href="#__codelineno-0-16"></a>    <span class="k">return</span> <span class="p">[(</span><span class="n">r</span> <span class="o">-</span> <span class="n">mean</span><span class="p">)</span> <span class="o">/</span> <span class="n">std</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">rewards</span><span class="p">]</span>
+</span><span id="__span-0-17"><a id="__codelineno-0-17" name="__codelineno-0-17" href="#__codelineno-0-17"></a>
+</span><span id="__span-0-18"><a id="__codelineno-0-18" name="__codelineno-0-18" href="#__codelineno-0-18"></a>
+</span><span id="__span-0-19"><a id="__codelineno-0-19" name="__codelineno-0-19" href="#__codelineno-0-19"></a><span class="k">def</span><span class="w"> </span><span class="nf">grpo_demo</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+</span><span id="__span-0-20"><a id="__codelineno-0-20" name="__codelineno-0-20" href="#__codelineno-0-20"></a>    <span class="n">mixed_group</span> <span class="o">=</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span>  <span class="c1"># a genuinely hard prompt -- real variance across 8 samples</span>
+</span><span id="__span-0-21"><a id="__codelineno-0-21" name="__codelineno-0-21" href="#__codelineno-0-21"></a>    <span class="n">degenerate_group</span> <span class="o">=</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span>  <span class="c1"># a prompt the model already always gets right</span>
+</span><span id="__span-0-22"><a id="__codelineno-0-22" name="__codelineno-0-22" href="#__codelineno-0-22"></a>
+</span><span id="__span-0-23"><a id="__codelineno-0-23" name="__codelineno-0-23" href="#__codelineno-0-23"></a>    <span class="k">return</span> <span class="p">{</span>
+</span><span id="__span-0-24"><a id="__codelineno-0-24" name="__codelineno-0-24" href="#__codelineno-0-24"></a>        <span class="s2">"mixed_group"</span><span class="p">:</span> <span class="p">{</span><span class="s2">"rewards"</span><span class="p">:</span> <span class="n">mixed_group</span><span class="p">,</span> <span class="s2">"advantages"</span><span class="p">:</span> <span class="p">[</span><span class="nb">round</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">grpo_advantages</span><span class="p">(</span><span class="n">mixed_group</span><span class="p">)]},</span>
+</span><span id="__span-0-25"><a id="__codelineno-0-25" name="__codelineno-0-25" href="#__codelineno-0-25"></a>        <span class="s2">"degenerate_group"</span><span class="p">:</span> <span class="p">{</span><span class="s2">"rewards"</span><span class="p">:</span> <span class="n">degenerate_group</span><span class="p">,</span> <span class="s2">"advantages"</span><span class="p">:</span> <span class="n">grpo_advantages</span><span class="p">(</span><span class="n">degenerate_group</span><span class="p">)},</span>
+</span><span id="__span-0-26"><a id="__codelineno-0-26" name="__codelineno-0-26" href="#__codelineno-0-26"></a>    <span class="p">}</span>
+</span></code></pre></div>
+<div class="admonition success">
+<p class="admonition-title">A real run — the exact formula, a real mixed group, and a real degenerate one</p>
+<p><strong>Input</strong> — a group of 8 binary rewards for a genuinely hard prompt (a mix of correct and incorrect samples): <code>[1, 1, 0, 1, 0, 0, 1, 0]</code>.</p>
+<p><strong>Output — real computed advantages</strong>: <code>[1.0, 1.0, -1.0, 1.0, -1.0, -1.0, 1.0, -1.0]</code>. Every reward-1 sample gets a positive advantage, every reward-0 sample gets a negative one — exactly the group-relative signal the formula is supposed to produce, computed for real, not asserted.</p>
+<p><strong>Input</strong> — a second group, for a prompt the model already always answers correctly: <code>[1, 1, 1, 1, 1, 1, 1, 1]</code>.</p>
+<p><strong>Output</strong>: <code>[0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]</code>. Every advantage is exactly zero — not a bug in this recipe's code, a real, exact reproduction of the mechanism DAPO's paper names and explains next.</p>
+</div>
+<h2 id="dapo-the-gradient-decreasing-problem-and-the-fix">DAPO: the gradient-decreasing problem, and the fix<a class="headerlink" href="#dapo-the-gradient-decreasing-problem-and-the-fix" title="Permanent link">&para;</a></h2>
+<p>That all-zero result above isn't a corner case nobody worries about — it's common enough in practice that DAPO built a named fix for it. The paper's own diagnosis: "Existing RL algorithm suffers from the gradient-decreasing problem when some prompts have accuracy equal to 1. For example for GRPO, if all outputs of a particular prompt are correct and receive the same reward, the resulting advantage for this group is zero. A zero advantage results in zero policy gradients, shrinking the magnitude and increasing the noise sensitivity of the batch gradient, thereby degrading sample efficiency." A model that's already mastered a prompt (or one it always fails, symmetrically) contributes nothing to training from that prompt at all, while still costing a full group of real sampling compute to discover that.</p>
+<p>DAPO's fix, dynamic sampling, is exactly what it sounds like: "we propose to over-sample and filter out prompts with the accuracy equal to 1 and 0 ... leaving all prompts in the batch with effective gradients and keeping a consistent number of prompts." Keep sampling until you find groups with real internal variance, and only train on those. This is one of DAPO's four named techniques (alongside Clip-Higher, Token-Level Policy Gradient Loss, and Overlong Reward Shaping), and the paper reports the combination reaching 50 points on AIME 2024 with a Qwen2.5-32B base model — ahead of DeepSeek-R1-Zero-Qwen-32B's 47 points, using only half the training steps.</p>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="k">def</span><span class="w"> </span><span class="nf">dynamic_sample</span><span class="p">(</span><span class="n">candidate_groups</span><span class="p">:</span> <span class="nb">list</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+</span><span id="__span-1-2"><a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="w">    </span><span class="sd">"""DAPO's actual fix: over-sample prompts, then filter out any group</span>
+</span><span id="__span-1-3"><a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="sd">    whose accuracy is exactly 0 or exactly 1 -- exactly what the paper</span>
+</span><span id="__span-1-4"><a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="sd">    describes -- keeping only groups that will produce a real gradient."""</span>
+</span><span id="__span-1-5"><a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>    <span class="k">for</span> <span class="n">group</span> <span class="ow">in</span> <span class="n">candidate_groups</span><span class="p">:</span>
+</span><span id="__span-1-6"><a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>        <span class="n">accuracy</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">group</span><span class="p">)</span> <span class="o">/</span> <span class="nb">len</span><span class="p">(</span><span class="n">group</span><span class="p">)</span>
+</span><span id="__span-1-7"><a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>        <span class="k">if</span> <span class="mi">0</span> <span class="o">&lt;</span> <span class="n">accuracy</span> <span class="o">&lt;</span> <span class="mi">1</span><span class="p">:</span>
+</span><span id="__span-1-8"><a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>            <span class="k">return</span> <span class="p">{</span><span class="s2">"kept_group"</span><span class="p">:</span> <span class="n">group</span><span class="p">,</span> <span class="s2">"accuracy"</span><span class="p">:</span> <span class="n">accuracy</span><span class="p">,</span> <span class="s2">"advantages"</span><span class="p">:</span> <span class="p">[</span><span class="nb">round</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">grpo_advantages</span><span class="p">(</span><span class="n">group</span><span class="p">)]}</span>
+</span><span id="__span-1-9"><a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a>    <span class="k">return</span> <span class="p">{</span><span class="s2">"kept_group"</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span> <span class="s2">"accuracy"</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span> <span class="s2">"advantages"</span><span class="p">:</span> <span class="kc">None</span><span class="p">}</span>
+</span><span id="__span-1-10"><a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a>
+</span><span id="__span-1-11"><a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a>
+</span><span id="__span-1-12"><a id="__codelineno-1-12" name="__codelineno-1-12" href="#__codelineno-1-12"></a><span class="k">def</span><span class="w"> </span><span class="nf">dapo_demo</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+</span><span id="__span-1-13"><a id="__codelineno-1-13" name="__codelineno-1-13" href="#__codelineno-1-13"></a>    <span class="c1"># Simulates re-sampling the same prompt: the first two attempts happen</span>
+</span><span id="__span-1-14"><a id="__codelineno-1-14" name="__codelineno-1-14" href="#__codelineno-1-14"></a>    <span class="c1"># to be degenerate (all-correct), the third has real variance -- DAPO</span>
+</span><span id="__span-1-15"><a id="__codelineno-1-15" name="__codelineno-1-15" href="#__codelineno-1-15"></a>    <span class="c1"># keeps sampling until it finds a group that isn't.</span>
+</span><span id="__span-1-16"><a id="__codelineno-1-16" name="__codelineno-1-16" href="#__codelineno-1-16"></a>    <span class="n">candidate_groups</span> <span class="o">=</span> <span class="p">[</span>
+</span><span id="__span-1-17"><a id="__codelineno-1-17" name="__codelineno-1-17" href="#__codelineno-1-17"></a>        <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span>
+</span><span id="__span-1-18"><a id="__codelineno-1-18" name="__codelineno-1-18" href="#__codelineno-1-18"></a>        <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span>
+</span><span id="__span-1-19"><a id="__codelineno-1-19" name="__codelineno-1-19" href="#__codelineno-1-19"></a>        <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span>
+</span><span id="__span-1-20"><a id="__codelineno-1-20" name="__codelineno-1-20" href="#__codelineno-1-20"></a>    <span class="p">]</span>
+</span><span id="__span-1-21"><a id="__codelineno-1-21" name="__codelineno-1-21" href="#__codelineno-1-21"></a>    <span class="n">result</span> <span class="o">=</span> <span class="n">dynamic_sample</span><span class="p">(</span><span class="n">candidate_groups</span><span class="p">)</span>
+</span><span id="__span-1-22"><a id="__codelineno-1-22" name="__codelineno-1-22" href="#__codelineno-1-22"></a>    <span class="k">return</span> <span class="p">{</span><span class="s2">"candidate_groups"</span><span class="p">:</span> <span class="n">candidate_groups</span><span class="p">,</span> <span class="s2">"resampling_result"</span><span class="p">:</span> <span class="n">result</span><span class="p">}</span>
+</span></code></pre></div>
+<div class="admonition success">
+<p class="admonition-title">A real run — the exact degenerate group, filtered and replaced</p>
+<p><strong>Input</strong> — three candidate groups, simulating repeated sampling attempts on the same prompt: two degenerate (<code>[1,1,1,1,1,1,1,1]</code>, twice) and one genuinely mixed (<code>[1,0,1,1,0,1,0,1]</code>).</p>
+<p><strong>Output</strong>: the filter correctly skipped both degenerate groups (accuracy exactly 1.0, per DAPO's own stated condition) and kept the third — accuracy 0.625 — computing real, non-degenerate advantages from it: <code>[0.775, -1.291, 0.775, 0.775, -1.291, 0.775, -1.291, 0.775]</code>. The same formula that produced all-zeros above now produces a real, usable gradient signal, because the input it was given this time actually had variance to normalize against.</p>
+</div>
+<h2 id="outcome-reward-vs-process-reward">Outcome reward vs. process reward<a class="headerlink" href="#outcome-reward-vs-process-reward" title="Permanent link">&para;</a></h2>
+<p>Both are answers to "what should the model be rewarded for," and they disagree about the unit that gets scored. Outcome supervision scores the final result — did the proof conclude correctly, did the task actually succeed. Process supervision scores each intermediate step on its own merits. PRM800K's own comparison is direct: "process supervision significantly outperforms outcome supervision for training models to solve problems from the challenging MATH dataset," with a process-supervised model reported solving 78% of a representative MATH test subset — and the cost of that improvement is real too: 800,000 human step-level labels went into building it. Process reward models aren't free to build well, either — a later paper's own finding: Monte-Carlo-estimated PRM labels are flawed, and consensus filtering across multiple estimates is needed to get usable step-level signal at all.</p>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="k">def</span><span class="w"> </span><span class="nf">outcome_only_credit</span><span class="p">(</span><span class="n">step_rewards</span><span class="p">:</span> <span class="nb">list</span><span class="p">,</span> <span class="n">final_outcome_reward</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">:</span>
+</span><span id="__span-2-2"><a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="w">    </span><span class="sd">"""The naive approach: the single final-outcome reward gets broadcast</span>
+</span><span id="__span-2-3"><a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="sd">    as the credit for every step in the trajectory, regardless of which</span>
+</span><span id="__span-2-4"><a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="sd">    step actually caused the outcome."""</span>
+</span><span id="__span-2-5"><a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a>    <span class="k">return</span> <span class="p">[</span><span class="n">final_outcome_reward</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="n">step_rewards</span><span class="p">]</span>
+</span><span id="__span-2-6"><a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a>
+</span><span id="__span-2-7"><a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a>
+</span><span id="__span-2-8"><a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a><span class="k">def</span><span class="w"> </span><span class="nf">credit_assignment_demo</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+</span><span id="__span-2-9"><a id="__codelineno-2-9" name="__codelineno-2-9" href="#__codelineno-2-9"></a>    <span class="c1"># A toy 3-step trajectory: steps 1 and 3 were genuinely fine, step 2</span>
+</span><span id="__span-2-10"><a id="__codelineno-2-10" name="__codelineno-2-10" href="#__codelineno-2-10"></a>    <span class="c1"># was the actual mistake that caused the task to fail.</span>
+</span><span id="__span-2-11"><a id="__codelineno-2-11" name="__codelineno-2-11" href="#__codelineno-2-11"></a>    <span class="n">step_labels</span> <span class="o">=</span> <span class="p">[</span><span class="s2">"step 1 (correct sub-action)"</span><span class="p">,</span> <span class="s2">"step 2 (the actual mistake)"</span><span class="p">,</span> <span class="s2">"step 3 (correct sub-action)"</span><span class="p">]</span>
+</span><span id="__span-2-12"><a id="__codelineno-2-12" name="__codelineno-2-12" href="#__codelineno-2-12"></a>    <span class="n">true_step_quality</span> <span class="o">=</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span>  <span class="c1"># ground truth, for comparison only -- not seen by either method</span>
+</span><span id="__span-2-13"><a id="__codelineno-2-13" name="__codelineno-2-13" href="#__codelineno-2-13"></a>    <span class="n">final_outcome_reward</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span>  <span class="c1"># the trajectory failed overall, because of step 2</span>
+</span><span id="__span-2-14"><a id="__codelineno-2-14" name="__codelineno-2-14" href="#__codelineno-2-14"></a>
+</span><span id="__span-2-15"><a id="__codelineno-2-15" name="__codelineno-2-15" href="#__codelineno-2-15"></a>    <span class="n">outcome_credit</span> <span class="o">=</span> <span class="n">outcome_only_credit</span><span class="p">(</span><span class="n">true_step_quality</span><span class="p">,</span> <span class="n">final_outcome_reward</span><span class="p">)</span>
+</span><span id="__span-2-16"><a id="__codelineno-2-16" name="__codelineno-2-16" href="#__codelineno-2-16"></a>    <span class="n">process_credit</span> <span class="o">=</span> <span class="n">true_step_quality</span>  <span class="c1"># a process/step-level reward model scores each step on its own merits</span>
+</span><span id="__span-2-17"><a id="__codelineno-2-17" name="__codelineno-2-17" href="#__codelineno-2-17"></a>
+</span><span id="__span-2-18"><a id="__codelineno-2-18" name="__codelineno-2-18" href="#__codelineno-2-18"></a>    <span class="k">return</span> <span class="p">{</span>
+</span><span id="__span-2-19"><a id="__codelineno-2-19" name="__codelineno-2-19" href="#__codelineno-2-19"></a>        <span class="s2">"step_labels"</span><span class="p">:</span> <span class="n">step_labels</span><span class="p">,</span>
+</span><span id="__span-2-20"><a id="__codelineno-2-20" name="__codelineno-2-20" href="#__codelineno-2-20"></a>        <span class="s2">"outcome_only_credit"</span><span class="p">:</span> <span class="n">outcome_credit</span><span class="p">,</span>
+</span><span id="__span-2-21"><a id="__codelineno-2-21" name="__codelineno-2-21" href="#__codelineno-2-21"></a>        <span class="s2">"process_reward_credit"</span><span class="p">:</span> <span class="n">process_credit</span><span class="p">,</span>
+</span><span id="__span-2-22"><a id="__codelineno-2-22" name="__codelineno-2-22" href="#__codelineno-2-22"></a>        <span class="s2">"outcome_only_can_distinguish_steps"</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">outcome_credit</span><span class="p">))</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">,</span>
+</span><span id="__span-2-23"><a id="__codelineno-2-23" name="__codelineno-2-23" href="#__codelineno-2-23"></a>        <span class="s2">"process_reward_can_distinguish_steps"</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">process_credit</span><span class="p">))</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">,</span>
+</span><span id="__span-2-24"><a id="__codelineno-2-24" name="__codelineno-2-24" href="#__codelineno-2-24"></a>    <span class="p">}</span>
+</span></code></pre></div>
+<div class="admonition success">
+<p class="admonition-title">A real run — a toy trajectory, both credit-assignment methods, run on the identical steps</p>
+<p><strong>Input</strong> — a 3-step toy trajectory where only the middle step was actually the mistake: step 1 (correct sub-action), step 2 (the actual mistake), step 3 (correct sub-action). The trajectory failed overall, because of step 2 — final outcome reward: <code>-1</code>.</p>
+<p><strong>Output — outcome-only credit</strong>, the single final reward broadcast across all three steps: <code>[-1, -1, -1]</code>. <code>outcome_only_can_distinguish_steps: false</code> — this credit assignment is bitwise identical to what a trajectory where <em>all three</em> steps were bad would have produced. There's no way to look at this output and recover which step actually caused the failure.</p>
+<p><strong>Output — process-level credit</strong>, each step scored on its own: <code>[1, -1, 1]</code>. <code>process_reward_can_distinguish_steps: true</code> — the actual culprit is visible directly in the numbers, not just asserted.</p>
+</div>
+<p>This is the concrete version of the credit assignment problem: reinforcement learning needs to know which action in a trajectory deserves credit or blame, and a single scalar at the end of a multi-step trajectory structurally cannot answer that question on its own, no matter how well-tuned the final reward is. A 2026 survey of the field counts 69 papers (56 core methods) trying to close exactly this gap — from GRPO's group-relative baseline to methods like GiGPO's "anchor state grouping," which groups identical states that recur across different rollouts to get finer-grained, step-level credit while keeping GRPO's critic-free, low-memory properties.</p>
+<h2 id="dpo-preference-pairs-no-separate-reward-model">DPO: preference pairs, no separate reward model<a class="headerlink" href="#dpo-preference-pairs-no-separate-reward-model" title="Permanent link">&para;</a></h2>
+<p>Classic RLHF is a two-stage pipeline: train a separate reward model on human preference data, then run PPO against it. Direct Preference Optimization collapses this into one step — the paper's own framing: the approach "enable[s] extraction of the corresponding optimal policy in closed form, allowing us to solve the standard RLHF problem with only a simple classification loss." No reward model, no RL sampling loop during training — just a loss computed directly over <code>(prompt, chosen, rejected)</code> triples. The reported trade-off is favorable, not just simpler: DPO is described as "stable, performant, and computationally lightweight, eliminating the need for sampling from the LM during fine-tuning," while "exceed[ing] PPO-based RLHF in ability to control sentiment of generations" and matching or improving quality in summarization and dialogue.</p>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="k">def</span><span class="w"> </span><span class="nf">_text</span><span class="p">(</span><span class="n">response</span><span class="p">,</span> <span class="n">client</span><span class="p">,</span> <span class="n">model</span><span class="p">):</span>
+</span><span id="__span-3-2"><a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>    <span class="c1"># client.messages.create(...) -- see agent_loop.py for the full call shape.</span>
+</span><span id="__span-3-3"><a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>    <span class="o">...</span>
+</span><span id="__span-3-4"><a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a>
+</span><span id="__span-3-5"><a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a>
+</span><span id="__span-3-6"><a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a><span class="kn">import</span><span class="w"> </span><span class="nn">json</span>
+</span><span id="__span-3-7"><a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a>
+</span><span id="__span-3-8"><a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a><span class="n">_PROMPT</span> <span class="o">=</span> <span class="s2">"Write a one-sentence tagline for a fictional productivity app called Nimbus."</span>
+</span><span id="__span-3-9"><a id="__codelineno-3-9" name="__codelineno-3-9" href="#__codelineno-3-9"></a>
+</span><span id="__span-3-10"><a id="__codelineno-3-10" name="__codelineno-3-10" href="#__codelineno-3-10"></a><span class="n">_JUDGE_INSTRUCTION</span> <span class="o">=</span> <span class="p">(</span>
+</span><span id="__span-3-11"><a id="__codelineno-3-11" name="__codelineno-3-11" href="#__codelineno-3-11"></a>    <span class="s2">"You are judging two taglines for the same fictional product, for clarity and how "</span>
+</span><span id="__span-3-12"><a id="__codelineno-3-12" name="__codelineno-3-12" href="#__codelineno-3-12"></a>    <span class="s2">"specific/concrete (vs generic) they are. Reply with strict JSON only: "</span>
+</span><span id="__span-3-13"><a id="__codelineno-3-13" name="__codelineno-3-13" href="#__codelineno-3-13"></a>    <span class="s1">'{"better": "A" or "B", "reason": "one sentence"}'</span>
+</span><span id="__span-3-14"><a id="__codelineno-3-14" name="__codelineno-3-14" href="#__codelineno-3-14"></a><span class="p">)</span>
+</span><span id="__span-3-15"><a id="__codelineno-3-15" name="__codelineno-3-15" href="#__codelineno-3-15"></a>
+</span><span id="__span-3-16"><a id="__codelineno-3-16" name="__codelineno-3-16" href="#__codelineno-3-16"></a>
+</span><span id="__span-3-17"><a id="__codelineno-3-17" name="__codelineno-3-17" href="#__codelineno-3-17"></a><span class="k">def</span><span class="w"> </span><span class="nf">dpo_pair_demo</span><span class="p">(</span><span class="n">client</span><span class="p">,</span> <span class="n">model</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+</span><span id="__span-3-18"><a id="__codelineno-3-18" name="__codelineno-3-18" href="#__codelineno-3-18"></a>    <span class="c1"># No explicit temperature -- default sampling already produces real</span>
+</span><span id="__span-3-19"><a id="__codelineno-3-19" name="__codelineno-3-19" href="#__codelineno-3-19"></a>    <span class="c1"># variance across independent calls.</span>
+</span><span id="__span-3-20"><a id="__codelineno-3-20" name="__codelineno-3-20" href="#__codelineno-3-20"></a>    <span class="n">response_a</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">messages</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">,</span> <span class="n">max_tokens</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span> <span class="n">messages</span><span class="o">=</span><span class="p">[{</span><span class="s2">"role"</span><span class="p">:</span> <span class="s2">"user"</span><span class="p">,</span> <span class="s2">"content"</span><span class="p">:</span> <span class="n">_PROMPT</span><span class="p">}])</span>
+</span><span id="__span-3-21"><a id="__codelineno-3-21" name="__codelineno-3-21" href="#__codelineno-3-21"></a>    <span class="n">response_b</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">messages</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">,</span> <span class="n">max_tokens</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span> <span class="n">messages</span><span class="o">=</span><span class="p">[{</span><span class="s2">"role"</span><span class="p">:</span> <span class="s2">"user"</span><span class="p">,</span> <span class="s2">"content"</span><span class="p">:</span> <span class="n">_PROMPT</span><span class="p">}])</span>
+</span><span id="__span-3-22"><a id="__codelineno-3-22" name="__codelineno-3-22" href="#__codelineno-3-22"></a>    <span class="n">completion_a</span><span class="p">,</span> <span class="n">completion_b</span> <span class="o">=</span> <span class="n">_text</span><span class="p">(</span><span class="n">response_a</span><span class="p">,</span> <span class="n">client</span><span class="p">,</span> <span class="n">model</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">(),</span> <span class="n">_text</span><span class="p">(</span><span class="n">response_b</span><span class="p">,</span> <span class="n">client</span><span class="p">,</span> <span class="n">model</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+</span><span id="__span-3-23"><a id="__codelineno-3-23" name="__codelineno-3-23" href="#__codelineno-3-23"></a>
+</span><span id="__span-3-24"><a id="__codelineno-3-24" name="__codelineno-3-24" href="#__codelineno-3-24"></a>    <span class="n">judge_prompt</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">_JUDGE_INSTRUCTION</span><span class="si">}</span><span class="se">\n\n</span><span class="s2">A: </span><span class="si">{</span><span class="n">completion_a</span><span class="si">}</span><span class="se">\n</span><span class="s2">B: </span><span class="si">{</span><span class="n">completion_b</span><span class="si">}</span><span class="s2">"</span>
+</span><span id="__span-3-25"><a id="__codelineno-3-25" name="__codelineno-3-25" href="#__codelineno-3-25"></a>    <span class="n">judge_response</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">messages</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">,</span> <span class="n">max_tokens</span><span class="o">=</span><span class="mi">150</span><span class="p">,</span> <span class="n">messages</span><span class="o">=</span><span class="p">[{</span><span class="s2">"role"</span><span class="p">:</span> <span class="s2">"user"</span><span class="p">,</span> <span class="s2">"content"</span><span class="p">:</span> <span class="n">judge_prompt</span><span class="p">}])</span>
+</span><span id="__span-3-26"><a id="__codelineno-3-26" name="__codelineno-3-26" href="#__codelineno-3-26"></a>    <span class="n">judge_text</span> <span class="o">=</span> <span class="n">_text</span><span class="p">(</span><span class="n">judge_response</span><span class="p">,</span> <span class="n">client</span><span class="p">,</span> <span class="n">model</span><span class="p">)</span>
+</span><span id="__span-3-27"><a id="__codelineno-3-27" name="__codelineno-3-27" href="#__codelineno-3-27"></a>    <span class="n">verdict</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">judge_text</span><span class="p">[</span><span class="n">judge_text</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="s2">"{"</span><span class="p">):</span><span class="n">judge_text</span><span class="o">.</span><span class="n">rindex</span><span class="p">(</span><span class="s2">"}"</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span><span class="p">])</span>
+</span><span id="__span-3-28"><a id="__codelineno-3-28" name="__codelineno-3-28" href="#__codelineno-3-28"></a>
+</span><span id="__span-3-29"><a id="__codelineno-3-29" name="__codelineno-3-29" href="#__codelineno-3-29"></a>    <span class="n">chosen</span><span class="p">,</span> <span class="n">rejected</span> <span class="o">=</span> <span class="p">(</span><span class="n">completion_a</span><span class="p">,</span> <span class="n">completion_b</span><span class="p">)</span> <span class="k">if</span> <span class="n">verdict</span><span class="p">[</span><span class="s2">"better"</span><span class="p">]</span> <span class="o">==</span> <span class="s2">"A"</span> <span class="k">else</span> <span class="p">(</span><span class="n">completion_b</span><span class="p">,</span> <span class="n">completion_a</span><span class="p">)</span>
+</span><span id="__span-3-30"><a id="__codelineno-3-30" name="__codelineno-3-30" href="#__codelineno-3-30"></a>    <span class="k">return</span> <span class="p">{</span>
+</span><span id="__span-3-31"><a id="__codelineno-3-31" name="__codelineno-3-31" href="#__codelineno-3-31"></a>        <span class="s2">"completion_a"</span><span class="p">:</span> <span class="n">completion_a</span><span class="p">,</span> <span class="s2">"completion_b"</span><span class="p">:</span> <span class="n">completion_b</span><span class="p">,</span> <span class="s2">"judge_verdict"</span><span class="p">:</span> <span class="n">verdict</span><span class="p">,</span>
+</span><span id="__span-3-32"><a id="__codelineno-3-32" name="__codelineno-3-32" href="#__codelineno-3-32"></a>        <span class="s2">"dpo_pair"</span><span class="p">:</span> <span class="p">{</span><span class="s2">"prompt"</span><span class="p">:</span> <span class="n">_PROMPT</span><span class="p">,</span> <span class="s2">"chosen"</span><span class="p">:</span> <span class="n">chosen</span><span class="p">,</span> <span class="s2">"rejected"</span><span class="p">:</span> <span class="n">rejected</span><span class="p">},</span>
+</span><span id="__span-3-33"><a id="__codelineno-3-33" name="__codelineno-3-33" href="#__codelineno-3-33"></a>    <span class="p">}</span>
+</span></code></pre></div>
+<div class="admonition success">
+<p class="admonition-title">A real run — two real completions, a real judge verdict, a real preference pair</p>
+<p><strong>Input</strong>, identical for both completions: <em>"Write a one-sentence tagline for a fictional productivity app called Nimbus."</em> — no temperature was set explicitly (this SDK version's Messages API has no top-level <code>temperature</code> parameter at all), and default sampling still produced two genuinely different completions on two independent calls.</p>
+<p><strong>Output — completion A</strong>: <em>"Nimbus: Your thoughts organized, your tasks flowing, your potential limitless."</em>
+<strong>Output — completion B</strong>: <em>"Nimbus: Rise above the chaos and let your tasks drift into focus."</em></p>
+<p><strong>Output — the real judge verdict</strong>: <em>"B is more concrete and specific with vivid metaphors ('drift into focus', 'rise above chaos') that better differentiate the product, while A relies on generic aspirational language that could apply to almost any productivity tool."</em></p>
+<p><strong>The resulting DPO pair</strong>, constructed directly from that verdict: <code>chosen</code> = completion B, <code>rejected</code> = completion A. This is the exact shape DPO's loss consumes — no reward model was trained to produce it, just one comparison call over two real samples.</p>
+</div>
+<h2 id="interview-angle">Interview angle<a class="headerlink" href="#interview-angle" title="Permanent link">&para;</a></h2>
+<p><strong>Weak answer</strong> to "how would you train an agent to be more reliable at a multi-step task": <em>"Just run RL with a reward for task success."</em> This names the reward signal and skips the actual hard part this page's own real run demonstrates twice: a single outcome reward can't tell which step in a multi-step trajectory deserves the blame, and (separately) a naive group-relative baseline silently contributes zero gradient on every prompt the model already handles perfectly or fails completely — which, on a real model partway through training, is not a rare edge case.</p>
+<p><strong>Strong answer</strong>: outcome reward and process reward solve different problems and have different costs. Outcome reward is cheap to compute (often just a verifier) but structurally can't do credit assignment across steps — this page's own toy trajectory shows the exact failure: identical credit for a uniformly-bad run and a run where only one step failed. Process reward fixes that but costs real labeling or estimation effort (PRM800K needed 800,000 human labels; MC-estimated alternatives need consensus filtering to be trustworthy at all). Separately, whichever reward you pick, the optimizer itself needs real variance to learn from — GRPO's group-relative baseline goes to exactly zero gradient on a zero-variance group, which is why DAPO's dynamic sampling (filter out accuracy-0-or-1 groups, keep sampling until you find real variance) is a documented, measured fix, not a hypothetical one.</p>
+<p><strong>Follow-up to expect</strong>: "when would you reach for DPO instead of a full RL loop like GRPO?" DPO's real advantage is that it needs only static preference pairs, not a live sampling loop against an evolving policy — cheaper and more stable, which is exactly why the paper reports it matching or beating PPO-based RLHF while eliminating "the need for sampling from the LM during fine-tuning." GRPO (and its multi-turn agentic descendants) earn their extra complexity specifically when the reward signal itself needs to come from actually running the policy — executing a multi-step trajectory, checking whether a tool call succeeded, verifying an intermediate state — which a static, pre-collected preference dataset structurally cannot capture.</p>
+<h2 id="build-it-yourself-30-minutes">Build it yourself — 30 minutes<a class="headerlink" href="#build-it-yourself-30-minutes" title="Permanent link">&para;</a></h2>
+<ol>
+<li>Implement <code>grpo_advantages</code> exactly as the formula reads: group mean, group standard deviation, <code>(reward - mean) / std</code>. Test it against a group with real variance, then deliberately test it against a group where every reward is identical — read the actual numbers, don't just assume what happens.</li>
+<li>Build the dynamic-sampling filter: given several candidate groups, keep only the ones with accuracy strictly between 0 and 1. Feed it a sequence where the first few groups are degenerate and a later one isn't, and verify it actually skips the useless ones rather than training on them.</li>
+<li>Construct a toy multi-step trajectory (3-5 steps) with a clear ground-truth "which step was actually wrong." Implement outcome-only credit assignment (broadcast the final reward to every step) and process-level credit (score each step individually), and check programmatically whether each method's output can actually distinguish the bad step from the good ones — don't just eyeball it.</li>
+<li>Generate two real completions to the same prompt and have a real judge call rank them into a <code>(chosen, rejected)</code> pair. Read both completions and the judge's stated reason before trusting the pair — a judge call can fail to parse or produce a verdict that doesn't hold up, the same way any other LLM call can.</li>
+</ol>
+<h2 id="scenario-check">Scenario Check<a class="headerlink" href="#scenario-check" title="Permanent link">&para;</a></h2>
+<div class="quiz-widget" data-title="Scenario Check: Training Agents">
+<script type="application/json">
+{
+  "questions": [
+    {
+      "scenario": "A real run computed GRPO advantages for a group where every one of 8 sampled completions received the identical reward (all correct). The result was an advantage of exactly 0.0 for all 8 samples.",
+      "question": "What is the most accurate description of what this result demonstrates?",
+      "options": [
+        "DAPO's 'gradient-decreasing problem' -- zero variance, zero gradient",
+        "A bug in the advantage formula needing a special case for perfect groups",
+        "That the model has nothing left to learn from any prompt it handles well",
+        "That group sizes of 8 are too small to produce meaningful advantages"
+      ],
+      "correct": 0,
+      "explanations": [
+        "Correct. DAPO's own paper names this exactly: 'if all outputs of a particular prompt are correct and receive the same reward, the resulting advantage for this group is zero. A zero advantage results in zero policy gradients.'",
+        "Misdiagnoses a real, documented property of the formula as an implementation error -- the zero result is mathematically correct given the formula, not a flaw needing a workaround.",
+        "Overgeneralizes from one group's result to a permanent claim about the prompt -- the issue is this specific batch having no variance, not that the prompt is unlearnable from in general.",
+        "Introduces an unsupported claim about group size -- the zero result occurs at any group size whenever every sample receives an identical reward; size isn't the variable at fault."
+      ]
+    },
+    {
+      "scenario": "DAPO's dynamic sampling filters out any group whose accuracy is exactly 0 or exactly 1, keeping only groups with accuracy strictly between those values. A team proposes simplifying this to: 'Just filter out any group with accuracy below 50%, since low-accuracy groups are clearly not useful.'",
+      "question": "What's the strongest problem with that proposed simplification?",
+      "options": [
+        "The proposal is equivalent to DAPO's actual rule, just phrased differently",
+        "It would discard groups with usable variance that DAPO's rule actually keeps",
+        "The 50% threshold should be higher, closer to 90%, to match DAPO's behavior",
+        "Filtering by accuracy is never a valid strategy for any RL training approach"
+      ],
+      "correct": 1,
+      "explanations": [
+        "Misstates the comparison -- a group with accuracy 0.3 is kept by the real rule and discarded by the proposed one, so the two are not equivalent.",
+        "Correct. DAPO's actual condition keeps any group with accuracy strictly between 0 and 1 -- including accuracy 0.3, which still has real reward variance and produces a real, non-zero gradient. A 50% floor would discard genuinely useful training signal DAPO's real rule correctly retains.",
+        "Proposes an arbitrary alternative threshold with no grounding -- DAPO's real rule isn't a threshold at all, it specifically excludes only the two boundary values (0 and 1).",
+        "Overgeneralizes into an absolute claim the material contradicts -- DAPO's own dynamic sampling IS a form of filtering by accuracy, so filtering by accuracy is demonstrably valid as published."
+      ]
+    },
+    {
+      "scenario": "A real toy repro showed outcome-only credit assignment producing identical values ([-1, -1, -1]) for a 3-step trajectory where only the middle step was actually the mistake, while process-level credit correctly produced [1, -1, 1]. A candidate concludes: 'This proves outcome-only reward should never be used, since it always fails to identify which step is bad.'",
+      "question": "What's the most accurate pushback on this conclusion?",
+      "options": [
+        "The conclusion is correct -- outcome-only reward provides no information at all",
+        "Process-level reward is strictly better in every respect, including cost",
+        "It shows one limitation (can't localize the bad step), not that it's worthless",
+        "The result only applies to exactly 3-step trajectories, not longer ones"
+      ],
+      "correct": 2,
+      "explanations": [
+        "Overstates the finding -- outcome reward does provide real information (whether the trajectory succeeded overall), just not step-level localization within it.",
+        "Contradicts the material directly -- process reward's real documented cost (800,000 human labels, or MC-estimation needing consensus filtering) is exactly why it isn't simply better in every respect.",
+        "Correct. The demo's specific limitation is that outcome-only credit can't distinguish WHICH step caused a failure -- it says nothing about whether outcome reward is useful at all. It remains cheap (often just a verifier) and gives a valid trajectory-level signal.",
+        "Fabricates a scope restriction with no basis -- the structural issue applies to any trajectory with more than one step, not specifically three."
+      ]
+    },
+    {
+      "scenario": "A real DPO-pair repro generated two completions to the same prompt with no explicit temperature setting, and the two completions were genuinely different. A candidate explains: 'This must mean the SDK silently applied a high default temperature to force diversity for this demo.'",
+      "question": "What's the most accurate explanation of what actually happened?",
+      "options": [
+        "SDKs commonly apply hidden temperature overrides for preference-pair use cases",
+        "Two identical completions would have been expected, so this suggests an error",
+        "The judge call itself introduced the variation, not the two completion calls",
+        "Default sampling alone can produce real variance, with no temperature setting"
+      ],
+      "correct": 3,
+      "explanations": [
+        "Fabricates an unsupported claim about hidden, use-case-specific SDK behavior -- there's no support for such a mechanism, and this SDK version doesn't even expose a top-level temperature parameter to set in the first place.",
+        "Assumes determinism that isn't supported -- nothing about the API guarantees identical outputs across independent calls by default, and the real repro directly demonstrates otherwise.",
+        "Misattributes the source of variation -- the judge call happens AFTER both completions already exist and differ; it evaluates the difference, it doesn't create it.",
+        "Correct. Two independent calls with no temperature specified still produced genuinely different completions -- consistent with default sampling variance being normal model behavior, not something requiring explicit configuration to observe."
+      ]
+    }
+  ]
+}
+</script>
+</div>
+
+<h2 id="sources-further-reading">Sources &amp; further reading<a class="headerlink" href="#sources-further-reading" title="Permanent link">&para;</a></h2>
+<ul>
+<li>Shao et al., <a href="https://arxiv.org/abs/2402.03300">"DeepSeekMath: Pushing the Limits of Mathematical Reasoning in Open Language Models"</a> (arXiv 2402.03300, 2024-02) — GRPO's group-relative advantage, critic-free baseline.</li>
+<li>Yu et al., <a href="https://arxiv.org/abs/2503.14476">"DAPO: An Open-Source LLM Reinforcement Learning System at Scale"</a> (arXiv 2503.14476, 2025-03) — the gradient-decreasing problem, dynamic sampling, and the other three named techniques.</li>
+<li>Rafailov et al., <a href="https://arxiv.org/abs/2305.18290">"Direct Preference Optimization: Your Language Model is Secretly a Reward Model"</a> (arXiv 2305.18290, 2023-05) — preference pairs as a direct classification loss.</li>
+<li>Lightman et al., <a href="https://arxiv.org/abs/2305.20050">"Let's Verify Step by Step"</a> (arXiv 2305.20050, 2023-05, PRM800K) — process supervision vs. outcome supervision on MATH.</li>
+<li>Zhang et al., <a href="https://arxiv.org/abs/2501.07301">"Lessons of Developing Process Reward Models in Mathematical Reasoning"</a> (arXiv 2501.07301, 2025-01) — Monte-Carlo PRM pitfalls and consensus filtering.</li>
+<li>Feng et al., <a href="https://arxiv.org/abs/2505.10978">"GiGPO"</a> (arXiv 2505.10978, 2025-05) — anchor-state grouping for fine-grained, step-level credit assignment while keeping GRPO's critic-free properties.</li>
+<li>Zhang et al., <a href="https://arxiv.org/abs/2604.09459">"Credit Assignment in Reinforcement Learning for LLMs"</a> (arXiv 2604.09459, 2026-04) — a survey of 69 papers (56 core credit-assignment methods).</li>
+</ul>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+        
+<div class="md-social">
+  
+    
+    
+    
+    
+      
+      
+    
+    <a href="https://github.com/dhruvmakwana" target="_blank" rel="noopener" title="github.com" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": ["navigation.instant", "navigation.tracking", "navigation.tabs", "navigation.tabs.sticky", "navigation.sections", "navigation.top", "navigation.indexes", "toc.follow", "search.suggest", "search.highlight", "content.code.copy", "content.code.annotate"], "search": "../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../assets/javascripts/bundle.d7400e89.min.js"></script>
+      
+        <script src="../javascripts/quiz.js"></script>
+      
+        <script src="../javascripts/flashcards.js"></script>
+      
+    
+  </body>
+</html>

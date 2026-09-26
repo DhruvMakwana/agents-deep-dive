@@ -1,0 +1,3004 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="A deep-dive reference on LLM agents — architectures, tools, context and memory, multi-agent systems, evaluation, security, durable execution, and training agents with RL.">
+      
+      
+        <meta name="author" content="Dhruv Makwana">
+      
+      
+        <link rel="canonical" href="https://dhruvmakwana.github.io/agents-deep-dive/kv-cache-economics/">
+      
+      
+        <link rel="prev" href="../skills-a2a-protocols/">
+      
+      
+        <link rel="next" href="../memory-architectures/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../assets/favicon.svg">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
+    
+    
+      
+        <title>KV-Cache Economics - Agents, Deep Dive</title>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/main.ec1eaa64.min.css">
+      
+        
+        <link rel="stylesheet" href="../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Inter:300,300i,400,400i,700,700i%7CJetBrains+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Inter";--md-code-font:"JetBrains Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../stylesheets/extra.css">
+    
+      <link rel="stylesheet" href="../stylesheets/quiz.css">
+    
+      <link rel="stylesheet" href="../stylesheets/flashcards.css">
+    
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="slate" data-md-color-primary="black" data-md-color-accent="deep-purple">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#kv-cache-economics" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow md-header--lifted" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href=".." title="Agents, Deep Dive" class="md-header__button md-logo" aria-label="Agents, Deep Dive" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Agents, Deep Dive
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              KV-Cache Economics
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="slate" data-md-color-primary="black" data-md-color-accent="deep-purple"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 7a5 5 0 0 1 5 5 5 5 0 0 1-5 5 5 5 0 0 1-5-5 5 5 0 0 1 5-5m0 2a3 3 0 0 0-3 3 3 3 0 0 0 3 3 3 3 0 0 0 3-3 3 3 0 0 0-3-3m0-7 2.39 3.42C13.65 5.15 12.84 5 12 5s-1.65.15-2.39.42zM3.34 7l4.16-.35A7.2 7.2 0 0 0 5.94 8.5c-.44.74-.69 1.5-.83 2.29zm.02 10 1.76-3.77a7.131 7.131 0 0 0 2.38 4.14zM20.65 7l-1.77 3.79a7.02 7.02 0 0 0-2.38-4.15zm-.01 10-4.14.36c.59-.51 1.12-1.14 1.54-1.86.42-.73.69-1.5.83-2.29zM12 22l-2.41-3.44c.74.27 1.55.44 2.41.44.82 0 1.63-.17 2.37-.44z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="default" data-md-color-primary="white" data-md-color-accent="deep-purple"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="m17.75 4.09-2.53 1.94.91 3.06-2.63-1.81-2.63 1.81.91-3.06-2.53-1.94L12.44 4l1.06-3 1.06 3zm3.5 6.91-1.64 1.25.59 1.98-1.7-1.17-1.7 1.17.59-1.98L15.75 11l2.06-.05L18.5 9l.69 1.95zm-2.28 4.95c.83-.08 1.72 1.1 1.19 1.85-.32.45-.66.87-1.08 1.27C15.17 23 8.84 23 4.94 19.07c-3.91-3.9-3.91-10.24 0-14.14.4-.4.82-.76 1.27-1.08.75-.53 1.93.36 1.85 1.19-.27 2.86.69 5.83 2.89 8.02a9.96 9.96 0 0 0 8.02 2.89m-1.64 2.02a12.08 12.08 0 0 1-7.8-3.47c-2.17-2.19-3.33-5-3.49-7.82-2.81 3.14-2.7 7.96.31 10.98 3.02 3.01 7.84 3.12 10.98.31"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/dhruvmakwana/agents-deep-dive" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    dhruvmakwana/agents-deep-dive
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+    
+      
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href=".." class="md-tabs__link">
+        
+  
+  
+    
+  
+  Home
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../revision/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Revision
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../what-is-an-agent/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Foundations
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+    
+  
+  
+    
+    
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../tool-design/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Tools and Context
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../planning-and-decomposition/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Systems
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../evaluating-agents/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Production
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../training-agents/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Training
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../case-studies/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Case Studies
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../tutorials/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Tutorials & Code
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../interview-playbook/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Interview
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../about/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  About
+
+      </a>
+    </li>
+  
+
+      
+    </ul>
+  </div>
+</nav>
+    
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href=".." title="Agents, Deep Dive" class="md-nav__button md-logo" aria-label="Agents, Deep Dive" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    Agents, Deep Dive
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/dhruvmakwana/agents-deep-dive" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    dhruvmakwana/agents-deep-dive
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href=".." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../revision/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Revision
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Foundations
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Foundations
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../what-is-an-agent/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    What Is an Agent?
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../agent-loop-from-scratch/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    The Agent Loop From Scratch
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../workflow-patterns/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Workflow Patterns
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../reasoning-paradigms/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Reasoning Paradigms
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../choosing-a-framework/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Choosing a Framework
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+        
+        
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Tools and Context
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Tools and Context
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../tool-design/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Tool Design
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../context-engineering/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Context Engineering
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../tools-at-scale/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Tools at Scale
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../mcp-deep-dive/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MCP Deep Dive
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../mcp-tool-ecosystem/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MCP and Tool Ecosystem
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../skills-a2a-protocols/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Skills, A2A and Other Protocols
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    KV-Cache Economics
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    KV-Cache Economics
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+  
+
+<nav class="md-nav md-nav--secondary" aria-label="On this page">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      On this page
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#why-the-cache-has-a-hierarchy-not-just-a-size" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Why the cache has a hierarchy, not just a size
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#repro-1-cache-write-cache-read-and-the-hierarchy-under-real-load" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Repro 1: cache write, cache read, and the hierarchy under real load
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#repro-2-tool-masking-vs-removal-a-real-current-beta-feature" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Repro 2: tool masking vs. removal — a real, current beta feature
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#what-this-means-in-practice" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What this means in practice
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#interview-angle" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Interview angle
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#build-it-yourself-30-minutes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Build it yourself — 30 minutes
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#scenario-check" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Scenario Check
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#sources-further-reading" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Sources &amp; further reading
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../memory-architectures/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Memory Architectures
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../models-for-agents/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Models for Agents
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Systems
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Systems
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../planning-and-decomposition/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Planning and Decomposition
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../multi-agent-systems/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Multi-Agent Systems
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../harness-engineering/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Harness Engineering
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../coding-agents-mechanisms/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Coding Agents: Mechanisms
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../coding-agent-config/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Coding Agent Products and Configuration
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../deep-research-agents/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Deep Research Agents
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../computer-use-browser-agents/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Computer-Use and Browser Agents
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../personal-always-on-agents/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Personal and Always-On Agents
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6" >
+        
+          
+          <label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Production
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Production
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../evaluating-agents/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Evaluating Agents
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../benchmark-atlas/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Benchmark Atlas
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../observability-debugging/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Observability and Debugging
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../observability-ecosystem/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Observability Ecosystem
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../agent-security/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Agent Security
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../guardrails-human-in-the-loop/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Guardrails and Human-in-the-Loop
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../identity-governance-compliance/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Identity, Governance and Compliance
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../sandboxes-permissions/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Sandboxes and Permissions
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../durable-execution/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Durable Execution
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../cost-latency/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Cost and Latency
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7" >
+        
+          
+          <label class="md-nav__link" for="__nav_7" id="__nav_7_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Training
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_7_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_7">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Training
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../training-agents/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Training Agents: Reward and Credit
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../rl-search-tool-agents/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    RL for Search and Tool Agents
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../data-environments/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Data and Environments
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../self-improving-agents/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Self-Improving Agents
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_8" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../case-studies/" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Case Studies
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_8" id="__nav_8_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_8_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_8">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Case Studies
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../case-studies/replit-database-deletion/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Replit: Agent Deletes a Production Database
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../case-studies/sakana-ai-scientist/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Sakana AI: Self-Improving Agent Escapes Its Own Timeout
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../case-studies/intercom-fin-anthropic/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Intercom Fin at Anthropic
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../case-studies/cloudflare-mcp/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Cloudflare's Internal MCP Platform
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../case-studies/block-goose/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Block's goose
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../case-studies/cognition-devin/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Cognition's Devin: The Benchmark and the Demo
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_9" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../tutorials/" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Tutorials & Code
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_9" id="__nav_9_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_9_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_9">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Tutorials & Code
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../tutorials/production-support-agent/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Build a Production-Shaped Support Agent
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_10" >
+        
+          
+          <label class="md-nav__link" for="__nav_10" id="__nav_10_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Interview
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_10_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_10">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Interview
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../interview-playbook/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Interview Playbook
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../about/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    About
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+  
+
+<nav class="md-nav md-nav--secondary" aria-label="On this page">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      On this page
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#why-the-cache-has-a-hierarchy-not-just-a-size" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Why the cache has a hierarchy, not just a size
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#repro-1-cache-write-cache-read-and-the-hierarchy-under-real-load" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Repro 1: cache write, cache read, and the hierarchy under real load
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#repro-2-tool-masking-vs-removal-a-real-current-beta-feature" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Repro 2: tool masking vs. removal — a real, current beta feature
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#what-this-means-in-practice" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What this means in practice
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#interview-angle" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Interview angle
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#build-it-yourself-30-minutes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Build it yourself — 30 minutes
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#scenario-check" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Scenario Check
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#sources-further-reading" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Sources &amp; further reading
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+
+<h1 id="kv-cache-economics">KV-Cache Economics<a class="headerlink" href="#kv-cache-economics" title="Permanent link">&para;</a></h1>
+<div class="admonition example">
+<p class="admonition-title">Hands-on</p>
+<p>Full runnable recipe: <a href="https://github.com/DhruvMakwana/agents-cookbook/tree/main/kv-cache-economics"><code>kv-cache-economics/</code></a> in the companion cookbook — real cache write/read token counts against the live API, the real invalidation hierarchy, and tool masking vs. removal using the real <code>mid-conversation-tool-changes</code> beta.</p>
+</div>
+<details class="abstract">
+<summary>TL;DR — quick revision</summary>
+<ul>
+<li><strong>Prompt caching isn't a flat discount — it's a hierarchy with a precise cost structure.</strong> A 5-minute cache write costs 1.25x base input price; a cache read costs 0.1x (cheaper still — 0.025x–0.05x — on some model families). The cache follows a strict prefix order, <code>tools</code> → <code>system</code> → <code>messages</code>, and a change at any level invalidates that level <em>and everything after it</em>.</li>
+<li><strong>A real run confirmed the hierarchy precisely</strong>: changing <code>tool_choice</code> between calls — same tools, same system prompt — left the cached tools+system prefix fully intact (<code>cache_read_input_tokens</code> unchanged). Editing one word in one tool's description invalidated the entire cache and forced a full, fresh write.</li>
+<li><strong>"Tool masking vs. removal" is a real, current, shipped feature, not just a conceptual pattern</strong>: the <code>mid-conversation-tool-changes</code> beta's <code>tool_removal</code> content block withdraws a tool from a running conversation while the top-level <code>tools</code> array stays byte-identical — so the cache survives. Physically editing the <code>tools</code> array to drop a tool produces a different array and a fresh cache entry, every time.</li>
+<li><strong>A real repro measured the contrast directly</strong>: masking a tool (three calls in a row, including one a full turn later) kept reading the identical 2,211-token cache entry. Removing the same tool by editing the array instead produced a new, distinct 2,113-token entry with no relationship to what came before.</li>
+<li><strong>Masking is enforced, not cosmetic</strong>: forcing <code>tool_choice</code> to the masked tool by name produced a real API error — <em>"forced tool 'check_feature_flag' is absent from the final available-tool set (a tool_removal block removed it without a later add-back)"</em> — the model genuinely cannot call it, not just a description change that happens not to mention it.</li>
+</ul>
+</details>
+<h2 id="why-the-cache-has-a-hierarchy-not-just-a-size">Why the cache has a hierarchy, not just a size<a class="headerlink" href="#why-the-cache-has-a-hierarchy-not-just-a-size" title="Permanent link">&para;</a></h2>
+<p>Anthropic's prompt cache doesn't treat a request as one undifferentiated blob of tokens — it walks the request in a fixed order and hashes prefixes as it goes: <em>"the cache follows the hierarchy: <code>tools</code> → <code>system</code> → <code>messages</code>. Changes at each level invalidate that level and all subsequent levels."</em> That ordering is deliberate, not incidental: <code>tools</code> and <code>system</code> are usually the most stable part of an agent's request — the same tool library and instructions on every single turn — while <code>messages</code> is where the actual, ever-changing conversation lives. Placing the volatile part last means the stable, expensive-to-regenerate part can be cached once and reused across an entire session, as long as nothing earlier in that hierarchy changes.</p>
+<p>The pricing makes the incentive concrete. A cache write costs <em>more</em> than a normal request — <em>"5-minute cache write tokens are 1.25 times the base input tokens price"</em> — because the system does real extra work to store the entry. A cache read costs a small fraction of that — <em>"0.1 times the base input tokens price"</em> on most models, and as little as <em>"0.025x the base input price"</em> on some newer families. The economics only work out if the same prefix gets read many more times than it gets written — which is exactly the shape of a real agent loop: one tool library, one system prompt, dozens of turns.</p>
+<h2 id="repro-1-cache-write-cache-read-and-the-hierarchy-under-real-load">Repro 1: cache write, cache read, and the hierarchy under real load<a class="headerlink" href="#repro-1-cache-write-cache-read-and-the-hierarchy-under-real-load" title="Permanent link">&para;</a></h2>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="n">RESEARCH_SYSTEM_PROMPT</span> <span class="o">=</span> <span class="p">(</span>
+</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>    <span class="s2">"You are a research assistant for an internal knowledge base. You help engineers find "</span>
+</span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>    <span class="s2">"documentation, check service status, and look up internal records. Always answer in one "</span>
+</span><span id="__span-0-4"><a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>    <span class="s2">"short sentence unless asked for more detail. Never fabricate a document ID, service name, "</span>
+</span><span id="__span-0-5"><a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>    <span class="s2">"or record that wasn't returned by a tool call. If a tool returns no result, say so plainly "</span>
+</span><span id="__span-0-6"><a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>    <span class="s2">"instead of guessing. Prefer the most specific tool available for a task over a general one. "</span>
+</span><span id="__span-0-7"><a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>    <span class="s2">"When multiple tools could apply, pick the one whose description most precisely matches the "</span>
+</span><span id="__span-0-8"><a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>    <span class="s2">"user's request, and explain your choice only if asked."</span>
+</span><span id="__span-0-9"><a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a><span class="p">)</span>
+</span><span id="__span-0-10"><a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>
+</span><span id="__span-0-11"><a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a><span class="n">_FILLER_TOOL_SPECS</span> <span class="o">=</span> <span class="p">[</span>
+</span><span id="__span-0-12"><a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a>    <span class="p">(</span><span class="s2">"search_docs"</span><span class="p">,</span> <span class="s2">"Full-text search across internal documentation pages, ranked by relevance to the query."</span><span class="p">),</span>
+</span><span id="__span-0-13"><a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a>    <span class="p">(</span><span class="s2">"get_doc_by_id"</span><span class="p">,</span> <span class="s2">"Fetch a single documentation page in full by its exact document ID, including revision history."</span><span class="p">),</span>
+</span><span id="__span-0-14"><a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a>    <span class="p">(</span><span class="s2">"list_recent_incidents"</span><span class="p">,</span> <span class="s2">"List incidents reported in the last 24 hours, including severity and current status."</span><span class="p">),</span>
+</span><span id="__span-0-15"><a id="__codelineno-0-15" name="__codelineno-0-15" href="#__codelineno-0-15"></a>    <span class="p">(</span><span class="s2">"check_service_status"</span><span class="p">,</span> <span class="s2">"Check whether a named internal service is currently healthy, degraded, or down."</span><span class="p">),</span>
+</span><span id="__span-0-16"><a id="__codelineno-0-16" name="__codelineno-0-16" href="#__codelineno-0-16"></a>    <span class="p">(</span><span class="s2">"get_oncall_engineer"</span><span class="p">,</span> <span class="s2">"Look up who is currently on call for a given team, including their contact channel."</span><span class="p">),</span>
+</span><span id="__span-0-17"><a id="__codelineno-0-17" name="__codelineno-0-17" href="#__codelineno-0-17"></a>    <span class="p">(</span><span class="s2">"search_runbooks"</span><span class="p">,</span> <span class="s2">"Search operational runbooks by keyword, returning the runbook title and matching section."</span><span class="p">),</span>
+</span><span id="__span-0-18"><a id="__codelineno-0-18" name="__codelineno-0-18" href="#__codelineno-0-18"></a>    <span class="p">(</span><span class="s2">"get_deploy_history"</span><span class="p">,</span> <span class="s2">"Get the last 10 deployments for a named service, including commit hash and deploy time."</span><span class="p">),</span>
+</span><span id="__span-0-19"><a id="__codelineno-0-19" name="__codelineno-0-19" href="#__codelineno-0-19"></a>    <span class="p">(</span><span class="s2">"check_feature_flag"</span><span class="p">,</span> <span class="s2">"Check the current value and rollout percentage of a named feature flag."</span><span class="p">),</span>
+</span><span id="__span-0-20"><a id="__codelineno-0-20" name="__codelineno-0-20" href="#__codelineno-0-20"></a>    <span class="p">(</span><span class="s2">"search_slack_archives"</span><span class="p">,</span> <span class="s2">"Search archived Slack messages by keyword and channel, within the last 90 days."</span><span class="p">),</span>
+</span><span id="__span-0-21"><a id="__codelineno-0-21" name="__codelineno-0-21" href="#__codelineno-0-21"></a>    <span class="p">(</span><span class="s2">"get_team_roster"</span><span class="p">,</span> <span class="s2">"List the members of a named engineering team, including their role and time zone."</span><span class="p">),</span>
+</span><span id="__span-0-22"><a id="__codelineno-0-22" name="__codelineno-0-22" href="#__codelineno-0-22"></a>    <span class="p">(</span><span class="s2">"lookup_api_endpoint"</span><span class="p">,</span> <span class="s2">"Look up the base URL, auth scheme, and rate limits for a named internal API."</span><span class="p">),</span>
+</span><span id="__span-0-23"><a id="__codelineno-0-23" name="__codelineno-0-23" href="#__codelineno-0-23"></a>    <span class="p">(</span><span class="s2">"get_service_owner"</span><span class="p">,</span> <span class="s2">"Look up which team owns a named internal service and their escalation policy."</span><span class="p">),</span>
+</span><span id="__span-0-24"><a id="__codelineno-0-24" name="__codelineno-0-24" href="#__codelineno-0-24"></a>    <span class="p">(</span><span class="s2">"search_postmortems"</span><span class="p">,</span> <span class="s2">"Search past incident postmortems by keyword, returning the summary and root cause."</span><span class="p">),</span>
+</span><span id="__span-0-25"><a id="__codelineno-0-25" name="__codelineno-0-25" href="#__codelineno-0-25"></a>    <span class="p">(</span><span class="s2">"get_dashboard_link"</span><span class="p">,</span> <span class="s2">"Get the monitoring dashboard URL for a named service, scoped to the last 24 hours."</span><span class="p">),</span>
+</span><span id="__span-0-26"><a id="__codelineno-0-26" name="__codelineno-0-26" href="#__codelineno-0-26"></a>    <span class="p">(</span><span class="s2">"check_certificate_expiry"</span><span class="p">,</span> <span class="s2">"Check the expiry date of the TLS certificate for a named internal domain."</span><span class="p">),</span>
+</span><span id="__span-0-27"><a id="__codelineno-0-27" name="__codelineno-0-27" href="#__codelineno-0-27"></a>    <span class="p">(</span><span class="s2">"get_service_dependencies"</span><span class="p">,</span> <span class="s2">"List the upstream and downstream dependencies of a named internal service."</span><span class="p">),</span>
+</span><span id="__span-0-28"><a id="__codelineno-0-28" name="__codelineno-0-28" href="#__codelineno-0-28"></a>    <span class="p">(</span><span class="s2">"search_architecture_decisions"</span><span class="p">,</span> <span class="s2">"Search recorded architecture decision records by keyword or affected service."</span><span class="p">),</span>
+</span><span id="__span-0-29"><a id="__codelineno-0-29" name="__codelineno-0-29" href="#__codelineno-0-29"></a>    <span class="p">(</span><span class="s2">"get_capacity_forecast"</span><span class="p">,</span> <span class="s2">"Get the projected capacity headroom for a named service over the next 30 days."</span><span class="p">),</span>
+</span><span id="__span-0-30"><a id="__codelineno-0-30" name="__codelineno-0-30" href="#__codelineno-0-30"></a><span class="p">]</span>
+</span><span id="__span-0-31"><a id="__codelineno-0-31" name="__codelineno-0-31" href="#__codelineno-0-31"></a>
+</span><span id="__span-0-32"><a id="__codelineno-0-32" name="__codelineno-0-32" href="#__codelineno-0-32"></a>
+</span><span id="__span-0-33"><a id="__codelineno-0-33" name="__codelineno-0-33" href="#__codelineno-0-33"></a><span class="k">def</span><span class="w"> </span><span class="nf">build_tool_library</span><span class="p">(</span><span class="o">*</span><span class="p">,</span> <span class="n">include</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">]:</span>
+</span><span id="__span-0-34"><a id="__codelineno-0-34" name="__codelineno-0-34" href="#__codelineno-0-34"></a><span class="w">    </span><span class="sd">"""Builds the tools array. include=None means every tool; otherwise only the named ones."""</span>
+</span><span id="__span-0-35"><a id="__codelineno-0-35" name="__codelineno-0-35" href="#__codelineno-0-35"></a>    <span class="n">names</span> <span class="o">=</span> <span class="n">include</span> <span class="k">if</span> <span class="n">include</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="p">[</span><span class="n">n</span> <span class="k">for</span> <span class="n">n</span><span class="p">,</span> <span class="n">_</span> <span class="ow">in</span> <span class="n">_FILLER_TOOL_SPECS</span><span class="p">]</span>
+</span><span id="__span-0-36"><a id="__codelineno-0-36" name="__codelineno-0-36" href="#__codelineno-0-36"></a>    <span class="n">tools</span> <span class="o">=</span> <span class="p">[]</span>
+</span><span id="__span-0-37"><a id="__codelineno-0-37" name="__codelineno-0-37" href="#__codelineno-0-37"></a>    <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">description</span> <span class="ow">in</span> <span class="n">_FILLER_TOOL_SPECS</span><span class="p">:</span>
+</span><span id="__span-0-38"><a id="__codelineno-0-38" name="__codelineno-0-38" href="#__codelineno-0-38"></a>        <span class="k">if</span> <span class="n">name</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">names</span><span class="p">:</span>
+</span><span id="__span-0-39"><a id="__codelineno-0-39" name="__codelineno-0-39" href="#__codelineno-0-39"></a>            <span class="k">continue</span>
+</span><span id="__span-0-40"><a id="__codelineno-0-40" name="__codelineno-0-40" href="#__codelineno-0-40"></a>        <span class="n">tools</span><span class="o">.</span><span class="n">append</span><span class="p">({</span>
+</span><span id="__span-0-41"><a id="__codelineno-0-41" name="__codelineno-0-41" href="#__codelineno-0-41"></a>            <span class="s2">"name"</span><span class="p">:</span> <span class="n">name</span><span class="p">,</span>
+</span><span id="__span-0-42"><a id="__codelineno-0-42" name="__codelineno-0-42" href="#__codelineno-0-42"></a>            <span class="s2">"description"</span><span class="p">:</span> <span class="n">description</span><span class="p">,</span>
+</span><span id="__span-0-43"><a id="__codelineno-0-43" name="__codelineno-0-43" href="#__codelineno-0-43"></a>            <span class="s2">"input_schema"</span><span class="p">:</span> <span class="p">{</span>
+</span><span id="__span-0-44"><a id="__codelineno-0-44" name="__codelineno-0-44" href="#__codelineno-0-44"></a>                <span class="s2">"type"</span><span class="p">:</span> <span class="s2">"object"</span><span class="p">,</span>
+</span><span id="__span-0-45"><a id="__codelineno-0-45" name="__codelineno-0-45" href="#__codelineno-0-45"></a>                <span class="s2">"properties"</span><span class="p">:</span> <span class="p">{</span><span class="s2">"query"</span><span class="p">:</span> <span class="p">{</span><span class="s2">"type"</span><span class="p">:</span> <span class="s2">"string"</span><span class="p">,</span> <span class="s2">"description"</span><span class="p">:</span> <span class="s2">"The search query or identifier."</span><span class="p">}},</span>
+</span><span id="__span-0-46"><a id="__codelineno-0-46" name="__codelineno-0-46" href="#__codelineno-0-46"></a>                <span class="s2">"required"</span><span class="p">:</span> <span class="p">[</span><span class="s2">"query"</span><span class="p">],</span>
+</span><span id="__span-0-47"><a id="__codelineno-0-47" name="__codelineno-0-47" href="#__codelineno-0-47"></a>            <span class="p">},</span>
+</span><span id="__span-0-48"><a id="__codelineno-0-48" name="__codelineno-0-48" href="#__codelineno-0-48"></a>        <span class="p">})</span>
+</span><span id="__span-0-49"><a id="__codelineno-0-49" name="__codelineno-0-49" href="#__codelineno-0-49"></a>    <span class="n">tools</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">][</span><span class="s2">"cache_control"</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"type"</span><span class="p">:</span> <span class="s2">"ephemeral"</span><span class="p">}</span>
+</span><span id="__span-0-50"><a id="__codelineno-0-50" name="__codelineno-0-50" href="#__codelineno-0-50"></a>    <span class="k">return</span> <span class="n">tools</span>
+</span><span id="__span-0-51"><a id="__codelineno-0-51" name="__codelineno-0-51" href="#__codelineno-0-51"></a>
+</span><span id="__span-0-52"><a id="__codelineno-0-52" name="__codelineno-0-52" href="#__codelineno-0-52"></a>
+</span><span id="__span-0-53"><a id="__codelineno-0-53" name="__codelineno-0-53" href="#__codelineno-0-53"></a><span class="k">def</span><span class="w"> </span><span class="nf">cached_system</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">:</span>
+</span><span id="__span-0-54"><a id="__codelineno-0-54" name="__codelineno-0-54" href="#__codelineno-0-54"></a>    <span class="k">return</span> <span class="p">[{</span><span class="s2">"type"</span><span class="p">:</span> <span class="s2">"text"</span><span class="p">,</span> <span class="s2">"text"</span><span class="p">:</span> <span class="n">RESEARCH_SYSTEM_PROMPT</span><span class="p">,</span> <span class="s2">"cache_control"</span><span class="p">:</span> <span class="p">{</span><span class="s2">"type"</span><span class="p">:</span> <span class="s2">"ephemeral"</span><span class="p">}}]</span>
+</span></code></pre></div>
+<div class="admonition success">
+<p class="admonition-title">A real run — four calls against Claude Sonnet 5, the same ~18-tool library and system prompt throughout</p>
+<p><strong>Call 1</strong> (cold cache): <code>cache_creation_input_tokens: 2279</code>, <code>cache_read_input_tokens: 0</code> — a real write, at the 1.25x price, for the full tools+system prefix.</p>
+<p><strong>Call 2</strong> (identical tools+system, a different user question): <code>cache_read_input_tokens: 2279</code>, <code>cache_creation_input_tokens: 0</code> — an exact match to call 1's write size, read at the 0.1x price instead of paid for again in full.</p>
+<p><strong>Call 3</strong> (same tools+system, <code>tool_choice</code> changed to <code>{"type": "any"}</code>): <code>cache_read_input_tokens: 2279</code> — <strong>unchanged</strong>. Anthropic's own documentation states plainly that <em>"Changing <code>tool_choice</code>"</em> invalidates only the <em>"Messages cache"</em> — this real run confirms the tools+system cache survives a <code>tool_choice</code> change completely untouched, exactly as documented.</p>
+<p><strong>Call 4</strong> (same tools+system, but one tool's description edited by a single word — <code>" (updated)"</code> appended): <code>cache_creation_input_tokens: 2283</code>, <code>cache_read_input_tokens: 0</code> — <strong>full invalidation</strong>. The documented rule: <em>"Modifying tool definitions (names, descriptions, parameters) invalidates the entire cache."</em> A one-word change to one tool's description was enough to force a complete, fresh 2,283-token write — nothing from the identical system prompt or the 17 unchanged tools was salvaged.</p>
+<p>The contrast between call 3 and call 4 is the entire hierarchy, demonstrated with real numbers: a parameter that lives in the <code>messages</code>-adjacent layer (<code>tool_choice</code>) costs nothing extra when changed; a byte anywhere inside the <code>tools</code> array costs everything.</p>
+</div>
+<h2 id="repro-2-tool-masking-vs-removal-a-real-current-beta-feature">Repro 2: tool masking vs. removal — a real, current beta feature<a class="headerlink" href="#repro-2-tool-masking-vs-removal-a-real-current-beta-feature" title="Permanent link">&para;</a></h2>
+<p>The obvious follow-up question: if editing the <code>tools</code> array invalidates everything, how do you ever change which tools are available mid-conversation without paying full price on every single turn from then on? Anthropic's answer, shipped as a real beta (<code>mid-conversation-tool-changes-2026-07-01</code>, expanded further under <code>inline-tools-2026-09-15</code>): don't edit the array. Declare the full tool set once, and control what's actually <em>offered</em> to the model through <code>tool_addition</code> and <code>tool_removal</code> content blocks on a mid-conversation <code>role:"system"</code> message instead. The documentation is direct about why this matters for caching specifically: <em>"The <code>tools</code> array itself never changes, so the cached prefix stays intact"</em> — because <em>"The <code>tools</code> array sits even earlier in the hashed request prefix than the top-level <code>system</code> field, so editing it invalidates the prompt cache for the entire conversation."</em></p>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="n">MID_CONVERSATION_TOOL_CHANGES_BETA</span> <span class="o">=</span> <span class="s2">"mid-conversation-tool-changes-2026-07-01"</span>
+</span><span id="__span-1-2"><a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>
+</span><span id="__span-1-3"><a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>
+</span><span id="__span-1-4"><a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="k">def</span><span class="w"> </span><span class="nf">mask_a_tool</span><span class="p">(</span><span class="n">client</span><span class="p">,</span> <span class="n">model</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">tools</span><span class="p">:</span> <span class="nb">list</span><span class="p">,</span> <span class="n">system</span><span class="p">:</span> <span class="nb">list</span><span class="p">,</span> <span class="n">tool_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
+</span><span id="__span-1-5"><a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a><span class="w">    </span><span class="sd">"""The tools array is byte-identical to any earlier call -- masking via tool_removal,</span>
+</span><span id="__span-1-6"><a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a><span class="sd">    not editing the array, is what preserves the cache. A role:"system" message must</span>
+</span><span id="__span-1-7"><a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a><span class="sd">    precede an assistant message or end the array, so it ends this one."""</span>
+</span><span id="__span-1-8"><a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>    <span class="n">tool_removal_directive</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"role"</span><span class="p">:</span> <span class="s2">"system"</span><span class="p">,</span> <span class="s2">"content"</span><span class="p">:</span> <span class="p">[</span>
+</span><span id="__span-1-9"><a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a>        <span class="p">{</span><span class="s2">"type"</span><span class="p">:</span> <span class="s2">"tool_removal"</span><span class="p">,</span> <span class="s2">"tool"</span><span class="p">:</span> <span class="p">{</span><span class="s2">"type"</span><span class="p">:</span> <span class="s2">"tool_reference"</span><span class="p">,</span> <span class="s2">"name"</span><span class="p">:</span> <span class="n">tool_name</span><span class="p">}},</span>
+</span><span id="__span-1-10"><a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a>    <span class="p">]}</span>
+</span><span id="__span-1-11"><a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a>    <span class="k">return</span> <span class="n">client</span><span class="o">.</span><span class="n">beta</span><span class="o">.</span><span class="n">messages</span><span class="o">.</span><span class="n">create</span><span class="p">(</span>
+</span><span id="__span-1-12"><a id="__codelineno-1-12" name="__codelineno-1-12" href="#__codelineno-1-12"></a>        <span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">,</span> <span class="n">max_tokens</span><span class="o">=</span><span class="mi">50</span><span class="p">,</span> <span class="n">tools</span><span class="o">=</span><span class="n">tools</span><span class="p">,</span> <span class="n">system</span><span class="o">=</span><span class="n">system</span><span class="p">,</span>
+</span><span id="__span-1-13"><a id="__codelineno-1-13" name="__codelineno-1-13" href="#__codelineno-1-13"></a>        <span class="n">betas</span><span class="o">=</span><span class="p">[</span><span class="n">MID_CONVERSATION_TOOL_CHANGES_BETA</span><span class="p">],</span>
+</span><span id="__span-1-14"><a id="__codelineno-1-14" name="__codelineno-1-14" href="#__codelineno-1-14"></a>        <span class="n">messages</span><span class="o">=</span><span class="p">[{</span><span class="s2">"role"</span><span class="p">:</span> <span class="s2">"user"</span><span class="p">,</span> <span class="s2">"content"</span><span class="p">:</span> <span class="s2">"Say OK."</span><span class="p">},</span> <span class="n">tool_removal_directive</span><span class="p">],</span>
+</span><span id="__span-1-15"><a id="__codelineno-1-15" name="__codelineno-1-15" href="#__codelineno-1-15"></a>    <span class="p">)</span>
+</span><span id="__span-1-16"><a id="__codelineno-1-16" name="__codelineno-1-16" href="#__codelineno-1-16"></a>
+</span><span id="__span-1-17"><a id="__codelineno-1-17" name="__codelineno-1-17" href="#__codelineno-1-17"></a>
+</span><span id="__span-1-18"><a id="__codelineno-1-18" name="__codelineno-1-18" href="#__codelineno-1-18"></a><span class="k">def</span><span class="w"> </span><span class="nf">remove_a_tool</span><span class="p">(</span><span class="n">client</span><span class="p">,</span> <span class="n">model</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">tool_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">system</span><span class="p">:</span> <span class="nb">list</span><span class="p">):</span>
+</span><span id="__span-1-19"><a id="__codelineno-1-19" name="__codelineno-1-19" href="#__codelineno-1-19"></a><span class="w">    </span><span class="sd">"""Contrast: physically edit the tools array (a different array than any earlier call)."""</span>
+</span><span id="__span-1-20"><a id="__codelineno-1-20" name="__codelineno-1-20" href="#__codelineno-1-20"></a>    <span class="n">tools_without</span> <span class="o">=</span> <span class="n">build_tool_library</span><span class="p">(</span>
+</span><span id="__span-1-21"><a id="__codelineno-1-21" name="__codelineno-1-21" href="#__codelineno-1-21"></a>        <span class="n">include</span><span class="o">=</span><span class="p">[</span><span class="n">n</span> <span class="k">for</span> <span class="n">n</span><span class="p">,</span> <span class="n">_</span> <span class="ow">in</span> <span class="n">_FILLER_TOOL_SPECS</span> <span class="k">if</span> <span class="n">n</span> <span class="o">!=</span> <span class="n">tool_name</span><span class="p">]</span>
+</span><span id="__span-1-22"><a id="__codelineno-1-22" name="__codelineno-1-22" href="#__codelineno-1-22"></a>    <span class="p">)</span>
+</span><span id="__span-1-23"><a id="__codelineno-1-23" name="__codelineno-1-23" href="#__codelineno-1-23"></a>    <span class="k">return</span> <span class="n">client</span><span class="o">.</span><span class="n">beta</span><span class="o">.</span><span class="n">messages</span><span class="o">.</span><span class="n">create</span><span class="p">(</span>
+</span><span id="__span-1-24"><a id="__codelineno-1-24" name="__codelineno-1-24" href="#__codelineno-1-24"></a>        <span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">,</span> <span class="n">max_tokens</span><span class="o">=</span><span class="mi">50</span><span class="p">,</span> <span class="n">tools</span><span class="o">=</span><span class="n">tools_without</span><span class="p">,</span> <span class="n">system</span><span class="o">=</span><span class="n">system</span><span class="p">,</span>
+</span><span id="__span-1-25"><a id="__codelineno-1-25" name="__codelineno-1-25" href="#__codelineno-1-25"></a>        <span class="n">betas</span><span class="o">=</span><span class="p">[</span><span class="n">MID_CONVERSATION_TOOL_CHANGES_BETA</span><span class="p">],</span>
+</span><span id="__span-1-26"><a id="__codelineno-1-26" name="__codelineno-1-26" href="#__codelineno-1-26"></a>        <span class="n">messages</span><span class="o">=</span><span class="p">[{</span><span class="s2">"role"</span><span class="p">:</span> <span class="s2">"user"</span><span class="p">,</span> <span class="s2">"content"</span><span class="p">:</span> <span class="s2">"Say OK."</span><span class="p">}],</span>
+</span><span id="__span-1-27"><a id="__codelineno-1-27" name="__codelineno-1-27" href="#__codelineno-1-27"></a>    <span class="p">)</span>
+</span></code></pre></div>
+<div class="admonition success">
+<p class="admonition-title">A real run — masking vs. removal, against Claude Opus 5 (the beta isn't available on Sonnet 5)</p>
+<p><strong>Call A</strong> (baseline): <code>cache_read_input_tokens: 2211</code>. This is itself worth being honest about — it shows as a <em>read</em>, not a fresh write, because prompt-cache reads refresh the cache's TTL, and earlier development runs of this exact recipe against this exact tools+system prefix had already kept the entry warm. A genuinely cold first call to this same content would show a <code>cache_creation_input_tokens: 2211</code> write instead — the same real mechanism repro 1's call 1 demonstrated directly.</p>
+<p><strong>Call B1</strong> — a <code>tool_removal</code> block withdraws <code>check_feature_flag</code> via a mid-conversation <code>role:"system"</code> message; the top-level <code>tools</code> array is byte-identical to call A's: <code>cache_read_input_tokens: 2211</code> — <strong>identical to call A</strong>. The masking directive cost nothing in cache terms.</p>
+<p><strong>Call B2</strong> — the same conversation continued one more real turn (the actual assistant reply from call B1 replayed as history, plus a new question): <code>cache_read_input_tokens: 2211</code> — still identical. Masking isn't a one-call trick; it holds across the rest of the conversation.</p>
+<p><strong>Forced <code>tool_choice</code> on the masked tool</strong> — attempting to force the model to call <code>check_feature_flag</code> by name, after it had been masked: a real <code>400</code> error, not a quiet no-op: <code>"tool_choice: forced tool 'check_feature_flag' is absent from the final available-tool set (a tool_removal block removed it without a later add-back). Add it back via tool_addition, or change tool_choice."</code> The API itself enforces the removal — this isn't cosmetic, the tool is genuinely gone from what the model can be made to call.</p>
+<p><strong>Call C</strong> (contrast — physically drop the tool from the top-level <code>tools</code> array instead, a 17-tool array rather than an 18-tool array with a masking directive layered on top): <code>cache_creation_input_tokens: 2113</code> — a <strong>fresh, distinct</strong> cache entry. Not a partial read, not a discount on the shared prefix — a completely new write, because the array itself is now different bytes.</p>
+<p>Both paths reach the identical functional outcome: the model cannot use <code>check_feature_flag</code> afterward. The cache bill is not identical. Three calls of masking read the same 2,211-token entry over and over; one call of removal wrote an entirely new 2,113-token entry that shares nothing with what came before it.</p>
+</div>
+<h2 id="what-this-means-in-practice">What this means in practice<a class="headerlink" href="#what-this-means-in-practice" title="Permanent link">&para;</a></h2>
+<p>The general principle underneath both repros is the same: <strong>the cache doesn't know what a change means, only where it happened.</strong> A <code>tool_choice</code> change and a one-word tool-description edit are both, semantically, small adjustments — but one lives after the <code>tools</code>/<code>system</code> hash boundary and one lives inside it, so their real costs differ by an entire cache write. Masking a tool via <code>tool_removal</code> and physically deleting it from the array produce the identical <em>functional</em> result for the model — it can't call that tool either way — but one keeps the expensive prefix intact and one doesn't, purely because of which part of the request the change touches. Designing a cache-stable agent loop means internalizing this distinction concretely: anything that needs to vary turn-to-turn (which tools are currently offered, how the model should choose among them, what's in the conversation history) belongs after the hierarchy's expensive layers, or routed through a mechanism — like <code>tool_removal</code> — specifically built to make a real behavioral change without an array edit.</p>
+<h2 id="interview-angle">Interview angle<a class="headerlink" href="#interview-angle" title="Permanent link">&para;</a></h2>
+<p><strong>Weak answer</strong> to "how would you make a long-running agent's tool use cheaper?": <em>"Use prompt caching on the system prompt."</em> True but incomplete — it treats caching as a single on/off switch, and doesn't explain what silently breaks it. A team that ships this understanding will confidently cache their system prompt, then remove a tool from the array between turns (a completely reasonable-looking thing to do) and never notice they just paid full price on every subsequent turn.</p>
+<p><strong>Strong answer</strong>: caching has a real prefix hierarchy (<code>tools</code> → <code>system</code> → <code>messages</code>), and the practical skill is knowing which layer a given change touches before making it — this page's own real numbers show a <code>tool_choice</code> change costing nothing extra (messages-level only) while a one-word tool-description edit costs a full re-write (invalidates everything after it in the hierarchy, including <code>tools</code> itself). For agents whose available tool set genuinely needs to change mid-conversation, the real, current answer isn't "accept the cache cost" — it's using a mechanism purpose-built to change <em>availability</em> without changing the <em>array</em>, like the <code>mid-conversation-tool-changes</code> beta's <code>tool_removal</code> block, which this page's own repro confirmed keeps the cache fully intact across multiple turns while still being a real, API-enforced restriction, not a cosmetic one.</p>
+<p><strong>Follow-up to expect</strong>: "if masking and removal reach the same functional outcome, why does the cache economics difference matter?" Because at agent-loop scale, the difference compounds every single turn. A 2,000+ token tools+system prefix re-written on every turn instead of read once and reused for the rest of a long-running session is exactly the kind of quadratic-feeling cost this whole track (Cost and Latency, a later Tier-2 topic) exists to name directly — and it's avoidable, for free, purely by choosing the mechanism that changes availability without changing bytes.</p>
+<h2 id="build-it-yourself-30-minutes">Build it yourself — 30 minutes<a class="headerlink" href="#build-it-yourself-30-minutes" title="Permanent link">&para;</a></h2>
+<ol>
+<li>Build a tools array with <code>cache_control: {"type": "ephemeral"}</code> on the last tool, large enough to clear your model's minimum cacheable length (1,024 tokens for Sonnet 5). Send the identical request twice and compare real <code>cache_creation_input_tokens</code> vs. <code>cache_read_input_tokens</code> — this page's own repro 1 is exactly this comparison.</li>
+<li>Send a third, identical-prefix request but change only <code>tool_choice</code>. Confirm the tools+system cache read is unaffected — then send a fourth request with one tool's description edited by one word, and watch the entire cache invalidate.</li>
+<li>If your model supports the <code>mid-conversation-tool-changes</code> beta, withdraw a tool with a <code>tool_removal</code> block instead of editing the <code>tools</code> array, and compare the real cache cost against physically removing it. Confirm the masked tool genuinely can't be forced via <code>tool_choice</code> afterward — a real API error, not just an assumption.</li>
+<li>Watch for the TTL-refresh effect this page's own repro hit honestly: re-running the same cache-hitting request during development keeps the entry warm, so a "second run" of your own test may show a read where you expected to see a fresh write. That's real caching behavior working correctly, not a bug in your test.</li>
+</ol>
+<h2 id="scenario-check">Scenario Check<a class="headerlink" href="#scenario-check" title="Permanent link">&para;</a></h2>
+<div class="quiz-widget" data-title="Scenario Check: KV-Cache Economics">
+<script type="application/json">
+{
+  "questions": [
+    {
+      "scenario": "A real repro sent four calls with an identical, cached tools+system prefix. Call 3 changed only tool_choice (same tools, same system prompt) and still showed cache_read_input_tokens unchanged from call 2. Call 4 edited one word in one tool's description and showed a full cache_creation_input_tokens write instead.",
+      "question": "What's the most accurate explanation for why these two small changes had such different real costs?",
+      "options": [
+        "The tools array sits earlier in the real cache prefix hierarchy than tool_choice touches",
+        "Call 4 happened later in the session, and caches naturally degrade over elapsed time",
+        "Editing a tool description is a larger change in total byte count than changing tool_choice",
+        "Call 4 happened later in the session, and caches naturally degrade with time passing"
+      ],
+      "correct": 0,
+      "explanations": [
+        "Correct. The cache follows a fixed hierarchy (tools -> system -> messages), and a change only invalidates the level it occurs at plus everything after it. tool_choice affects the messages level, downstream of tools/system, so it leaves the tools+system prefix's hash untouched. A tool description lives inside the tools array itself, upstream of everything, so changing it invalidates the whole chain.",
+        "Contradicts the real, documented mechanism directly -- prompt caches don't 'naturally degrade'; they persist for their TTL (unless invalidated by a structural change) and are refreshed on each read. Elapsed time within a session isn't what caused call 4's invalidation.",
+        "Not the real mechanism -- a single appended word (' (updated)') is a tiny byte-count change, smaller than many tool_choice payloads could be, yet it caused full invalidation; the deciding factor is WHERE in the hierarchy the byte changed, not how many bytes changed.",
+        "Overgeneralizes -- tool_choice itself doesn't invalidate the tools/system cache, but this doesn't mean EVERY possible combination of changes alongside it would also be free; the real claim is narrower and specifically about which cache LEVEL it touches."
+      ]
+    },
+    {
+      "scenario": "A real repro compared two ways of making a tool functionally unavailable to the model mid-conversation: (1) a tool_removal content block on a mid-conversation role:'system' message, with the top-level tools array left byte-identical, and (2) physically deleting the tool from the top-level tools array. Both produced the same real outcome -- the model could no longer use that tool.",
+      "question": "Given the identical functional outcome, what was the real, measured difference between the two approaches?",
+      "options": [
+        "Array-editing is faster because it requires fewer tokens to express than a tool_removal block",
+        "There was no real difference at all -- both approaches are equivalent in every measurable way",
+        "Only the tool_removal approach actually works; array-editing silently fails to remove access",
+        "tool_removal kept reading one identical cache entry; array-editing produced a distinct entry"
+      ],
+      "correct": 3,
+      "explanations": [
+        "Not what was measured or claimed -- the comparison in this repro was about cache token accounting (creation vs. read), not about raw request size or response latency; token-count-for-expressing-the-change was not the dimension being compared.",
+        "Directly contradicted by the real measured numbers -- the two approaches produced very different cache_read/cache_creation values across the actual repro, not identical ones.",
+        "Contradicts the real repro directly -- the array-editing call (call C) genuinely worked; it produced a valid response with a distinct, freshly-created cache entry (2,113 tokens), not a silent failure. Both approaches genuinely worked functionally; they differed in cache cost, not in whether they worked.",
+        "Correct. Three calls using tool_removal (with the tools array unchanged) all read the identical 2,211-token cache entry. The call that instead physically edited the tools array produced a completely new, distinct 2,113-token entry with no relationship to the earlier ones -- same functional outcome, very different cache economics."
+      ]
+    },
+    {
+      "scenario": "After masking a tool with a tool_removal block, a real repro attempted to force tool_choice to that exact tool by name. The real API response was a 400 error: \"forced tool 'check_feature_flag' is absent from the final available-tool set (a tool_removal block removed it without a later add-back).\"",
+      "question": "What does this specific result establish about tool masking that the cache-preservation numbers alone don't?",
+      "options": [
+        "That masking is purely a description-level change with no effect on actual tool availability",
+        "That the masked tool remained fully callable, and the error was an unrelated bug",
+        "That masking is enforced by the API itself, not just a cosmetic hint to the model",
+        "That forcing tool_choice is generally unsupported whenever a beta header is active"
+      ],
+      "correct": 2,
+      "explanations": [
+        "The opposite of what the real error demonstrates -- if masking were purely cosmetic, forcing tool_choice to the masked tool would have succeeded (the model would just be told to call something it could still technically invoke); instead the API itself rejected the request outright.",
+        "Directly contradicts the quoted real error message, which explicitly states the tool is 'absent from the final available-tool set' -- not callable, and the error is specifically about that absence, not an unrelated fault.",
+        "Correct. A real, specific 400 error tied directly to the tool_removal block's effect shows the API is actively tracking and enforcing which tools are genuinely available -- this is a hard access-control result, not just Claude choosing not to mention the tool in its own responses.",
+        "Unsupported and too broad -- nothing in the real error message suggests forced tool_choice is broken generally under beta headers; the rejection was specific to the named tool having been removed, not a general incompatibility."
+      ]
+    },
+    {
+      "scenario": "A developer re-runs kv_cache_economics.py twice in a row during development, a few minutes apart, against the identical tools+system prefix. The second run's first call shows cache_read_input_tokens instead of the cache_creation_input_tokens they expected for a 'fresh' first call.",
+      "question": "What's the most accurate explanation for this observation?",
+      "options": [
+        "This indicates a bug in the recipe -- a fresh script run should always start with a cache miss",
+        "Cache reads refresh the entry's TTL, so an identical prefix tested repeatedly stays warm",
+        "The Anthropic API caches responses indefinitely once written, regardless of any TTL",
+        "The second run used a different model than the first, which explains the cache hit"
+      ],
+      "correct": 1,
+      "explanations": [
+        "Misdiagnoses the cause -- 'fresh script run' and 'fresh cache state' are different things; the cache is scoped to the exact request content and lives server-side independent of when or how many times a local script has been invoked.",
+        "Correct. This is real caching behavior, not a bug -- prompt cache entries have a TTL (5 minutes by default), and reading an entry resets that window. Testing the identical prefix repeatedly during development, within that window, keeps extending its life, so a 'first' call in a later run can legitimately read an entry created by an earlier run or test.",
+        "Contradicts the documented mechanism directly -- prompt caches are explicitly time-limited (5-minute or 1-hour TTL options), not indefinite; an entry does expire if enough real time passes without being read.",
+        "Not the described scenario -- the setup specifies an identical tools+system prefix on both runs; a genuine model change would itself normally produce a DIFFERENT cache entry (as this page's own repro observed between Sonnet 5 and Opus 5 runs), not the same one being read."
+      ]
+    }
+  ]
+}
+</script>
+</div>
+
+<h2 id="sources-further-reading">Sources &amp; further reading<a class="headerlink" href="#sources-further-reading" title="Permanent link">&para;</a></h2>
+<ul>
+<li>Anthropic, <a href="https://platform.claude.com/docs/en/build-with-claude/prompt-caching">"Prompt caching"</a> — cache write/read cost multipliers, TTL options, minimum cacheable lengths, breakpoint mechanics, and the <code>tools → system → messages</code> invalidation hierarchy.</li>
+<li>Anthropic, <a href="https://platform.claude.com/docs/en/agents-and-tools/tool-use/tool-use-with-prompt-caching">"Tool use with prompt caching"</a> — <code>cache_control</code> placement on tool definitions, <code>defer_loading</code> and cache preservation, and the per-change invalidation table this page's repro 1 verified directly.</li>
+<li>Anthropic API release notes — the <code>mid-conversation-tool-changes-2026-07-01</code> beta (2026-07-24) and its <code>inline-tools-2026-09-15</code> expansion (2026-09-22): <code>tool_addition</code>/<code>tool_removal</code> blocks on mid-conversation <code>role:"system"</code> messages.</li>
+<li><a href="../tools-at-scale/">Tools at Scale</a> — <code>defer_loading</code> and tool search, a complementary technique for keeping large tool libraries out of context and cache-stable at the same time.</li>
+<li><a href="../context-engineering/">Context Engineering</a> — the "select" and "compress" context-engineering verbs this page's cache-stability principle is a specific, measurable instance of.</li>
+</ul>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+        
+<div class="md-social">
+  
+    
+    
+    
+    
+      
+      
+    
+    <a href="https://github.com/dhruvmakwana" target="_blank" rel="noopener" title="github.com" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": ["navigation.instant", "navigation.tracking", "navigation.tabs", "navigation.tabs.sticky", "navigation.sections", "navigation.top", "navigation.indexes", "toc.follow", "search.suggest", "search.highlight", "content.code.copy", "content.code.annotate"], "search": "../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../assets/javascripts/bundle.d7400e89.min.js"></script>
+      
+        <script src="../javascripts/quiz.js"></script>
+      
+        <script src="../javascripts/flashcards.js"></script>
+      
+    
+  </body>
+</html>
