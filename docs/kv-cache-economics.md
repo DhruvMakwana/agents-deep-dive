@@ -18,6 +18,8 @@ The pricing makes the incentive concrete. A cache write costs *more* than a norm
 
 ## Repro 1: cache write, cache read, and the hierarchy under real load
 
+The setup below builds a real ~18-tool library and system prompt, then sends four calls against it — a cold write, an identical-prefix read, a `tool_choice` change, and a one-word tool-description edit — to see exactly where the cache invalidation hierarchy actually bites.
+
 ```python
 --8<-- "https://raw.githubusercontent.com/DhruvMakwana/agents-cookbook/main/kv-cache-economics/kv_cache_economics_docs.py:tool-library"
 ```

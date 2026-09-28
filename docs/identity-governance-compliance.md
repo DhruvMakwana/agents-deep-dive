@@ -16,9 +16,13 @@ The real, converging principle across current identity work: an agent acting for
 
 ## Repro: identity disclosure isn't automatic, it's a design choice
 
+The code below defines the two system-prompt conditions — one telling the agent to simply act as the user, the other giving it a distinct identity and an explicit, scoped delegation — for the identical invoice-approval task.
+
 ```python
 --8<-- "https://raw.githubusercontent.com/DhruvMakwana/agents-cookbook/main/identity-governance-compliance/identity_governance_compliance_docs.py:two-identity-conditions"
 ```
+
+The second block checks whether that identity and delegation actually surface in what the agent sends externally:
 
 ```python
 --8<-- "https://raw.githubusercontent.com/DhruvMakwana/agents-cookbook/main/identity-governance-compliance/identity_governance_compliance_docs.py:identity-check"

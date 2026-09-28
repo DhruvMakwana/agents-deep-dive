@@ -37,6 +37,8 @@ But this guarantee is narrower than it first sounds, and the real, named limit m
 
 ## Repro: theft vs. misuse, tested separately
 
+The block below sets up the two sandboxed conditions — a real credential placed directly in scope versus only a placeholder reachable — that the mechanism-level check right after it will run the same payment call against.
+
 ```python
 --8<-- "https://raw.githubusercontent.com/DhruvMakwana/agents-cookbook/main/sandboxes-permissions/sandboxes_permissions_docs.py:backend-and-namespace"
 ```
@@ -65,6 +67,8 @@ This check involves zero LLM judgment on purpose — it hand-writes the sandboxe
     The credential value split exactly as designed: real key visible in `inside`, only the placeholder visible in `proxied`. But the payment call to `external-refund-9f31` went through in **both** conditions — proxying closed the theft path and left the misuse path exactly as open, because nothing in the proxy itself asks whether this particular destination or amount is legitimate.
 
 ## The same task, given to a real agent under a real prompt injection
+
+The block below defines the same theft-vs-misuse setup as a live task for a real agent, with a single embedded prompt injection asking it to both leak the credential and push an unauthorized payment — so the result afterward shows what the model actually chose to do, not just what the architecture permits.
 
 ```python
 --8<-- "https://raw.githubusercontent.com/DhruvMakwana/agents-cookbook/main/sandboxes-permissions/sandboxes_permissions_docs.py:injected-task"

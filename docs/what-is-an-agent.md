@@ -40,9 +40,13 @@ Same 5-entry FAQ knowledge base for both:
 --8<-- "https://raw.githubusercontent.com/DhruvMakwana/agents-cookbook/main/what-is-an-agent/workflow_vs_agent_docs.py:agent_judge_step"
 ```
 
+The judge step's `sufficient: false` verdict is what this next step actually reads before picking an action:
+
 ```python
 --8<-- "https://raw.githubusercontent.com/DhruvMakwana/agents-cookbook/main/what-is-an-agent/workflow_vs_agent_docs.py:agent_decision_point"
 ```
+
+That action choice — `CLARIFY`, in the run below — is what the loop then carries out:
 
 ```python
 --8<-- "https://raw.githubusercontent.com/DhruvMakwana/agents-cookbook/main/what-is-an-agent/workflow_vs_agent_docs.py:agent_loop"

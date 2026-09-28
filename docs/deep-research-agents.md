@@ -24,13 +24,19 @@ Their own real, prescribed fix is specific, not a vague call for "better prompti
 
 ## Repro: measuring real redundancy, vague vs. scoped
 
+The block below builds a small, fixed 6-document corpus and a simple search tool over it, so the vague and scoped conditions that follow can be tested against the identical real documents.
+
 ```python
 --8<-- "https://raw.githubusercontent.com/DhruvMakwana/agents-cookbook/main/deep-research-agents/deep_research_agents_docs.py:corpus-and-search"
 ```
 
+The block below is where the two conditions actually run — the same 3 subagents given either identical, unscoped instructions, or Anthropic's own fix of an explicit objective plus boundary per subagent.
+
 ```python
 --8<-- "https://raw.githubusercontent.com/DhruvMakwana/agents-cookbook/main/deep-research-agents/deep_research_agents_docs.py:vague-vs-scoped"
 ```
+
+The block below computes the real overlap and coverage numbers from those runs — total retrievals, how many were redundant, and how much of the corpus was actually covered — reported in the success box below.
 
 ```python
 --8<-- "https://raw.githubusercontent.com/DhruvMakwana/agents-cookbook/main/deep-research-agents/deep_research_agents_docs.py:overlap-stats"

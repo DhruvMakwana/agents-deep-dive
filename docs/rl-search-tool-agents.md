@@ -27,6 +27,8 @@ ToolRL asks a narrower, sharper question: given that a tool call itself (not jus
 
 ## Repro: what binary reward can't see, on real tool calls
 
+The code below implements both a binary (exact-match) reward function and ToolRL's decomposed, component-by-component version, then runs both against a set of real tool-call completions to see where the two scoring methods actually disagree.
+
 ```python
 --8<-- "https://raw.githubusercontent.com/DhruvMakwana/agents-cookbook/main/rl-search-tool-agents/rl_search_tool_agents_docs.py:reward-functions"
 ```

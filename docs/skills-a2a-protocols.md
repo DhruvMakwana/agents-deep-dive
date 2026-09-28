@@ -15,6 +15,8 @@ Anthropic's own Agent Skills architecture is built on a real, named principle th
 
 ## Repro: measuring the real gap between all-upfront and progressive
 
+The block below defines the task and three fictional skills it's tested against, and the block after it sets up the two conditions — loading every skill's full body upfront versus loading a body only on demand — whose real token costs the success box reports next.
+
 ```python
 --8<-- "https://raw.githubusercontent.com/DhruvMakwana/agents-cookbook/main/skills-a2a-protocols/skills_a2a_protocols_docs.py:skills-and-task"
 ```

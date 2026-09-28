@@ -17,6 +17,8 @@ The most direct answer to "how does discovery work" is the real, official MCP re
 
 ## Repro: what an agent actually finds, searching the real thing
 
+The first block wires a single `search_mcp_registry` tool up to the live registry API described above; the second defines the real payment and browser-automation tasks the agent below is given, each requiring it to search the registry itself and pick a real result.
+
 ```python
 --8<-- "https://raw.githubusercontent.com/DhruvMakwana/agents-cookbook/main/mcp-tool-ecosystem/mcp_tool_ecosystem_docs.py:registry-search"
 ```

@@ -24,6 +24,8 @@ Rather than every product inventing its own instructions-file format, a real ope
 
 ## Repro 1: does a CLAUDE.md-style file actually change generated code?
 
+The block below runs the identical order-total formatting task twice — once with no project instructions, once with a CLAUDE.md-style instructions block delivered as a real user message, matching Anthropic's own documented delivery mechanics — so the compliance numbers in the success box below can be compared directly.
+
 ```python
 --8<-- "https://raw.githubusercontent.com/DhruvMakwana/agents-cookbook/main/coding-agent-config/coding_agent_config_docs.py:claude-md-delivery"
 ```
@@ -41,7 +43,7 @@ Anthropic's own docs are precise about how this actually works, not just that it
 
 ## Repro 2: what does a hook actually protect, that a prompted rule doesn't?
 
-The single most load-bearing real distinction in Anthropic's own docs, verified verbatim from the raw source: *"Claude treats them as context, not enforced configuration. To block an action regardless of what Claude decides, use a PreToolUse hook instead."* And, even more directly: *"Settings rules are enforced by the client regardless of what Claude decides to do. CLAUDE.md instructions shape Claude's behavior but are not a hard enforcement layer."* Hooks themselves are defined broadly — *"user-defined shell commands, HTTP endpoints, MCP tool calls, LLM prompts, or subagents that execute automatically at specific points in Claude Code's lifecycle"* — but the specific event this repro tests, `PreToolUse`, is described precisely: *"Before a tool call executes. Can block it."*
+This repro's real question is whether a rule written into CLAUDE.md is something Claude merely reads and might follow, or something structurally guaranteed to hold regardless of what Claude decides — and the single most load-bearing real distinction in Anthropic's own docs, verified verbatim from the raw source, settles exactly that: *"Claude treats them as context, not enforced configuration. To block an action regardless of what Claude decides, use a PreToolUse hook instead."* And, even more directly: *"Settings rules are enforced by the client regardless of what Claude decides to do. CLAUDE.md instructions shape Claude's behavior but are not a hard enforcement layer."* Hooks themselves are defined broadly — *"user-defined shell commands, HTTP endpoints, MCP tool calls, LLM prompts, or subagents that execute automatically at specific points in Claude Code's lifecycle"* — but the specific event this repro tests, `PreToolUse`, is described precisely: *"Before a tool call executes. Can block it."*
 
 ```python
 --8<-- "https://raw.githubusercontent.com/DhruvMakwana/agents-cookbook/main/coding-agent-config/coding_agent_config_docs.py:hook-vs-prompt"

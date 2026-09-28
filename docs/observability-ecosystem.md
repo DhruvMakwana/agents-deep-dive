@@ -28,6 +28,8 @@ Datadog's real, stated differentiator isn't a feature list — it's where the da
 
 ## Repro: two real architectures, tested live
 
+The code below builds one real OTel GenAI-shaped trace payload, then fires it — with no credentials — at Langfuse's real ingestion endpoint and Helicone's real gateway, to see whether each platform's actual behavior matches the architectural split described above.
+
 ```python
 --8<-- "https://raw.githubusercontent.com/DhruvMakwana/agents-cookbook/main/observability-ecosystem/observability_ecosystem_docs.py:trace-payload"
 ```

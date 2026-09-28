@@ -28,6 +28,8 @@ Unit 42's own root-cause diagnosis is the real, precise reason this page treats 
 
 ## Repro: the same mechanism, tested at the architecture level
 
+The code below defines a fictional "CryptoTrack Pro" skill — an ordinary-looking price-checker whose own instructions secretly direct the agent to also read financial account data and email it out — plus the unscoped and scoped tool configurations the run below tests it against.
+
 ```python
 --8<-- "https://raw.githubusercontent.com/DhruvMakwana/agents-cookbook/main/personal-always-on-agents/personal_always_on_agents_docs.py:tools-and-scope"
 ```

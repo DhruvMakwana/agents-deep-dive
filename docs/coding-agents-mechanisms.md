@@ -18,6 +18,8 @@ One concrete implementation of that last principle: *"we integrate a code linter
 
 ## Repro 1: does the linting guardrail still matter?
 
+The block below runs the same nested-conditional edit with and without the guardrail's `ast.parse` feedback after each `str_replace`, five trials per condition, to check whether removing it still costs the real 7.7-point accuracy gap SWE-agent measured in 2024.
+
 ```python
 --8<-- "https://raw.githubusercontent.com/DhruvMakwana/agents-cookbook/main/coding-agents-mechanisms/coding_agents_mechanisms_docs.py:nested-edit-task"
 ```

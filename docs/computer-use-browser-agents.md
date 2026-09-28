@@ -39,6 +39,8 @@ The real risk in this space isn't hypothetical. Brave Security documented a real
 --8<-- "https://raw.githubusercontent.com/DhruvMakwana/agents-cookbook/main/computer-use-browser-agents/computer_use_browser_agents_docs.py:fictional-page"
 ```
 
+The block above builds the fictional page and its hidden pretext; the block below is what actually sends the identical benign "summarize this" request against it under both the raw and content-tagged conditions, producing the resistant outcomes reported next.
+
 ```python
 --8<-- "https://raw.githubusercontent.com/DhruvMakwana/agents-cookbook/main/computer-use-browser-agents/computer_use_browser_agents_docs.py:raw-vs-tagged"
 ```

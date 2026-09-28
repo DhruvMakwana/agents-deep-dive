@@ -23,9 +23,13 @@ A closely related, real, and equally concrete guideline: organizations should *"
 
 ## Repro: flat-autonomous vs. flat-gated vs. risk-tiered, on the identical task
 
+The code below sets up the identical refund task and defines the three gating conditions — flat-autonomous, flat-gated, and risk-tiered — that the real run below compares side by side.
+
 ```python
 --8<-- "https://raw.githubusercontent.com/DhruvMakwana/agents-cookbook/main/guardrails-human-in-the-loop/guardrails_human_in_the_loop_docs.py:refund-scenario"
 ```
+
+The risk-tiered condition depends on a per-call risk function, shown next:
 
 ```python
 --8<-- "https://raw.githubusercontent.com/DhruvMakwana/agents-cookbook/main/guardrails-human-in-the-loop/guardrails_human_in_the_loop_docs.py:risk-tier"

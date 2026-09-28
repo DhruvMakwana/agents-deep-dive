@@ -18,6 +18,8 @@ The real fix Anthropic documents is structural, not just "compact better": a ded
 
 ## Repro: a genuine multi-session continuation, with a real bug caught along the way
 
+The code below defines the shared progress file and the turn-limited session loop used to force a real, unplanned reset between two genuinely independent sessions.
+
 ```python
 --8<-- "https://raw.githubusercontent.com/DhruvMakwana/agents-cookbook/main/harness-engineering/harness_engineering_docs.py:progress-file"
 ```
@@ -32,6 +34,8 @@ The real fix Anthropic documents is structural, not just "compact better": a ded
     **A real bug surfaced and got fixed before this result was trusted.** The first version of the session loop treated any non-`tool_use` stop reason as "the agent is done." Session 1's real transcript included the model's own text — *"Now recording all six findings"* — immediately followed by zero actual `update_progress_file` calls: the response had been cut off by `max_tokens` mid-generation, not genuinely concluded, and the loop was silently treating a truncation as a clean finish. Fixed by explicitly checking `stop_reason == "max_tokens"` as a distinct case from real completion. This is itself a real, on-topic harness-engineering lesson, not an incidental implementation detail: a harness that can't tell "the agent decided it's done" apart from "the agent got cut off mid-sentence" will silently corrupt whatever state it's tracking across sessions — precisely the class of failure a progress file is meant to protect against, undermined at the one place nobody was checking.
 
 ## Repro: self-verification, tested against a result designed to tempt a false "passing"
+
+The block below is the system prompt that states the self-verify instruction explicitly, run against the identical deliberately ambiguous tool result as the plain, unstated-instruction condition.
 
 ```python
 --8<-- "https://raw.githubusercontent.com/DhruvMakwana/agents-cookbook/main/harness-engineering/harness_engineering_docs.py:self-verify-system-prompt"

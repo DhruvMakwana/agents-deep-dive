@@ -46,6 +46,8 @@ Most benchmark headlines report a single accuracy number — but tau-bench's own
 --8<-- "https://raw.githubusercontent.com/DhruvMakwana/agents-cookbook/main/benchmark-atlas/benchmark_atlas_docs.py:policy-scenario"
 ```
 
+The block below is where the actual verdict comes from: it checks whether the policy-breaking tool was really called across 5 independent trials, not whether the reply's wording sounds compliant, and rolls that into the `pass_at_1`/`pass_hat_k` numbers reported next.
+
 ```python
 --8<-- "https://raw.githubusercontent.com/DhruvMakwana/agents-cookbook/main/benchmark-atlas/benchmark_atlas_docs.py:action-grading"
 ```

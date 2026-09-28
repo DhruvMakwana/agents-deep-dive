@@ -26,6 +26,8 @@ Both are right about their own evidence, and the difference is task shape, not w
 
 ## Real experiment 1: token economics
 
+The code below runs the identical three independent questions through both architectures — one call handling all three, versus a lead agent dispatching one subagent per question plus a synthesis call — so the token counts and ratio below are measured directly, not estimated.
+
 ```python
 --8<-- "https://raw.githubusercontent.com/DhruvMakwana/agents-cookbook/main/multi-agent-systems/multi_agent_systems_docs.py:token_economics"
 ```
@@ -40,6 +42,8 @@ Both are right about their own evidence, and the difference is task shape, not w
     **Ratio: 3.21x.** Smaller than Anthropic's own reported 4x (agent vs. chat) or 15x (multi-agent vs. chat) — those are measured on real production workloads against a plain-chat baseline, not against a single-agent-doing-everything baseline on one small toy task — but the same direction, on a real number this page computed itself rather than borrowed. The mechanism is visible in the design itself: each subagent call repeats system framing overhead ("You are a research subagent...") that a single combined call only pays once, and the synthesis call has to re-read all three subagent outputs in full before producing the final answer — tokens single-agent's one pass never had to spend at all.
 
 ## Real experiment 2: consistency risk
+
+The code below has two subagents independently invent a shared fact — a fictional app's free-trial length — each blind to the other's output, to test whether Cognition's "conflicting decisions" risk actually shows up when two agents have to agree on the same underspecified detail.
 
 ```python
 --8<-- "https://raw.githubusercontent.com/DhruvMakwana/agents-cookbook/main/multi-agent-systems/multi_agent_systems_docs.py:consistency_risk"

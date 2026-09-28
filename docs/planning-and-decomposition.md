@@ -17,6 +17,8 @@ The mechanics of revision are explicit in the same framing: *"Once execution is 
 
 ## Repro 1: a plan's assumption breaks mid-execution — does replanning matter?
 
+The code below sets up the release-notes task and its two system prompts — one telling the model to execute its plan without second-guessing, one explicitly instructing it to revise on a broken assumption — against a repo that has never been tagged, so the plan's own premise is false before execution even starts.
+
 ```python
 --8<-- "https://raw.githubusercontent.com/DhruvMakwana/agents-cookbook/main/planning-and-decomposition/planning_and_decomposition_docs.py:release-notes-tools"
 ```
@@ -31,6 +33,8 @@ The mechanics of revision are explicit in the same framing: *"Once execution is 
     Both conditions produced the same three real tool calls and the same correct changelog, covering the same three real PRs. This is a genuine, honest negative result: whatever value an explicit replanning instruction adds in general, it didn't show up here, because Sonnet 5's baseline behavior already handled the broken assumption correctly without being told to.
 
 ## Repro 2: the granularity tradeoff — a real, reproducible failure
+
+The code below runs the identical release-notes task under three levels of plan granularity — no explicit structure, a well-sized four-step plan, and a plan forced into many small sub-steps — to see whether more upfront planning detail actually helps or costs something.
 
 ```python
 --8<-- "https://raw.githubusercontent.com/DhruvMakwana/agents-cookbook/main/planning-and-decomposition/planning_and_decomposition_docs.py:granularity-system-prompts"

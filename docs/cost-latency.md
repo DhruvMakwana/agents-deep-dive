@@ -17,9 +17,13 @@ The real, worked scale of this: a 20-step loop where each step generates 1,000 t
 
 ## Repro: measuring the quadratic shape directly
 
+The block below defines the fixed 6-file task and a naive tool-calling loop that resends the entire growing transcript every turn — the setup that produces the per-turn token counts reported below.
+
 ```python
 --8<-- "https://raw.githubusercontent.com/DhruvMakwana/agents-cookbook/main/cost-latency/cost_latency_docs.py:files-and-task"
 ```
+
+The block below adds a windowed variant of that same loop, keeping only the last 2 tool results sent in full, to measure how much of that per-turn growth a simple context constraint actually removes.
 
 ```python
 --8<-- "https://raw.githubusercontent.com/DhruvMakwana/agents-cookbook/main/cost-latency/cost_latency_docs.py:windowing"
@@ -36,9 +40,13 @@ The windowing logic is deliberately simple: keep the message structure intact (e
 
 ## Routing: a real, positive result and a real, sharp limitation, in the same run
 
+The block below defines the routing tool itself — a Haiku-first call that must also report its own confidence — and the ten real questions it gets tested against.
+
 ```python
 --8<-- "https://raw.githubusercontent.com/DhruvMakwana/agents-cookbook/main/cost-latency/cost_latency_docs.py:routing-tool"
 ```
+
+The block below is the loop that actually runs those ten questions two ways — always-Sonnet versus Haiku-with-escalation — and tallies the real cost and accuracy numbers reported next.
 
 ```python
 --8<-- "https://raw.githubusercontent.com/DhruvMakwana/agents-cookbook/main/cost-latency/cost_latency_docs.py:routing-loop"

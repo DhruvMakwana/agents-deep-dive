@@ -21,9 +21,13 @@ The detail that matters most for actual debugging — where the real tool call a
 
 ## Repro: a confidently wrong answer, and whether the trace alone can catch it
 
+The code below defines the buggy tool itself — `get_daily_active_users`, which silently returns cumulative all-time users instead of yesterday's figure — the exact mislabeled value the run below has to be diagnosable from.
+
 ```python
 --8<-- "https://raw.githubusercontent.com/DhruvMakwana/agents-cookbook/main/observability-debugging/observability_debugging_docs.py:buggy-tool"
 ```
+
+The next block wires that tool into a real agent call and emits the trace using the actual OpenTelemetry GenAI attribute names, so what follows is a real spec-shaped trace, not a mocked one.
 
 ```python
 --8<-- "https://raw.githubusercontent.com/DhruvMakwana/agents-cookbook/main/observability-debugging/observability_debugging_docs.py:trace-emitter"
