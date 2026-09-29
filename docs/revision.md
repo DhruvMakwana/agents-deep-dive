@@ -3130,7 +3130,7 @@ Every page's TL;DR in one place, every page's Scenario Check merged into one com
 
 === "Flashcards"
 
-    294 flashcards from every page with a deck so far — click a card to flip it, shuffle for random order.
+    295 flashcards from every page with a deck so far — click a card to flip it, shuffle for random order.
 
     <div class="flashcard-widget" data-title="Flashcards — All Pages">
     <script type="application/json">
@@ -3664,6 +3664,11 @@ Every page's TL;DR in one place, every page's Scenario Check merged into one com
         {
           "front": "What are Mem0's real, cited numbers vs. a full-context baseline?",
           "back": "26% relative improvement in the LJudge metric over OpenAI's own memory feature, 91% lower p95 latency, and over 90% token cost savings -- from extracting and consolidating salient facts rather than keeping full conversation history in context. Mem0g (graph variant) adds ~2% on top of base Mem0.",
+          "source": "Memory Architectures"
+        },
+        {
+          "front": "MemGPT and Mem0 both solve 'memory beyond one context window' -- what's the real, concrete difference in HOW they do it?",
+          "back": "MemGPT manages the prompt itself like an OS manages RAM and disk: it pages whole chunks of content between 'main context' (in the window) and 'external context' (outside it), via function calls the model itself generates. Mem0 works at a finer grain: it continuously extracts small, discrete facts (not chunks of transcript), consolidates/updates them over time, and retrieves only the handful relevant to the current question -- it never carries whole conversation blocks around at all, which is why its cost/latency savings are so much larger.",
           "source": "Memory Architectures"
         },
         {
