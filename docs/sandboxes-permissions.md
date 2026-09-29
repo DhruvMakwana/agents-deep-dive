@@ -11,15 +11,12 @@
 
 ## The isolation ladder
 
-"Run it in a sandbox" hides a real range of what's actually being promised, because the isolation mechanisms underneath it differ by orders of magnitude in what they actually isolate:
+"Run it in a sandbox" hides a real range of what's actually being promised, because the isolation mechanisms underneath it differ by orders of magnitude in what they actually isolate. In rising order of how much they actually isolate:
 
-**Containers (Linux namespaces + cgroups)** are the weakest real tier — the sandboxed process still shares the host kernel with everything else on the machine. Every namespace/cgroup boundary is enforced *by* that shared kernel; a kernel-level exploit inside the sandbox reaches the host directly, because there's no second kernel in the way.
-
-**gVisor** adds a real layer in between: the **Sentry**, a per-sandbox application kernel running in user space that re-implements Linux's system-call surface itself. Every syscall the sandboxed workload makes gets intercepted and handled by the Sentry — not by the real host kernel directly — and the Sentry's own access back down to the host kernel is deliberately narrowed through seccomp filters to a small subset of calls. A kernel exploit inside the sandbox now has to defeat the Sentry first, not just cross a namespace boundary.
-
-**Firecracker and Kata microVMs** go further still: real hardware virtualization gives each workload its own dedicated guest kernel, not a shared one. That's the strongest real isolation on this ladder — and, contrary to the intuition that "real VMs are too slow for this," the real, verified numbers say otherwise: Firecracker microVMs **boot in <125ms**, carry **<5 MiB of memory overhead per VM**, and a single host can launch **up to 150 microVMs per second**. Strong isolation and fast, disposable, per-task VMs are not actually in tension at this point in the ladder — that tradeoff is exactly what Firecracker was built to remove.
-
-**WebAssembly** sits on a different axis from the other three rather than strictly on the same ladder: it's real, verified as *"lighter weight than containers or virtual machines,"* and its security model is capability-first — sandboxed code gets zero ambient access by default (no filesystem, no network, no syscalls) and only the specific capabilities it's explicitly granted, rather than starting with broad access that later restrictions narrow down.
+1. **Containers (Linux namespaces + cgroups) — weakest real tier.** The sandboxed process still shares the host kernel with everything else on the machine. Every namespace/cgroup boundary is enforced *by* that shared kernel; a kernel-level exploit inside the sandbox reaches the host directly, because there's no second kernel in the way.
+2. **gVisor — a user-space kernel in between.** The **Sentry**, a per-sandbox application kernel running in user space, re-implements Linux's system-call surface itself. Every syscall the sandboxed workload makes gets intercepted and handled by the Sentry — not by the real host kernel directly — and the Sentry's own access back down to the host kernel is deliberately narrowed through seccomp filters to a small subset of calls. A kernel exploit inside the sandbox now has to defeat the Sentry first, not just cross a namespace boundary.
+3. **Firecracker and Kata microVMs — strongest real tier.** Real hardware virtualization gives each workload its own dedicated guest kernel, not a shared one — and, contrary to the intuition that "real VMs are too slow for this," the real, verified numbers say otherwise: Firecracker microVMs **boot in <125ms**, carry **<5 MiB of memory overhead per VM**, and a single host can launch **up to 150 microVMs per second**. Strong isolation and fast, disposable, per-task VMs are not actually in tension at this point in the ladder — that tradeoff is exactly what Firecracker was built to remove.
+4. **WebAssembly — a different axis, not just another rung.** It's real, verified as *"lighter weight than containers or virtual machines,"* and its security model is capability-first — sandboxed code gets zero ambient access by default (no filesystem, no network, no syscalls) and only the specific capabilities it's explicitly granted, rather than starting with broad access that later restrictions narrow down.
 
 None of these tiers say anything yet about credentials — that's a separate, and separately dangerous, concern.
 
@@ -44,6 +41,8 @@ The block below sets up the two sandboxed conditions — a real credential place
 ```
 
 Two conditions for a fictional payments sandbox: `inside` (the real key lives directly in the executed code's namespace) and `proxied` (only a placeholder lives there — the real substitution happens in `send_payment`, running *outside* the sandboxed code's own reach, standing in for a real proxy boundary).
+
+The check itself is the code below: it reads whatever credential value it can see in each condition, then calls the same payment function regardless.
 
 ```python
 --8<-- "https://raw.githubusercontent.com/DhruvMakwana/agents-cookbook/main/sandboxes-permissions/sandboxes_permissions_docs.py:mechanism-level-check"

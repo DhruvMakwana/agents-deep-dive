@@ -20,11 +20,28 @@ Reflexion's real contribution isn't the act-observe-reflect loop by itself — i
 
 ## ACE: an evolving playbook, and a real, named failure mode it fixes
 
-ACE — Agentic Context Engineering — frames self-improvement as evolving a persistent context rather than updating weights. Three real roles: a Generator produces reasoning trajectories, a Reflector extracts lessons, a Curator merges them into a growing "playbook." Its real ablations name two specific failure modes worth knowing by name: **brevity bias**, *"the tendency of optimization to collapse toward short, generic prompts"* that *"omit domain-specific heuristics, tool-use guidelines, or common failure modes,"* and **context collapse**, where rewriting accumulated context at each step *"tends to compress it into much shorter, less informative summaries, causing a dramatic loss of information"* — a real, documented example shrank context from *"18,282 tokens → 122 tokens,"* with accuracy falling *"66.7% → 57.1%."* ACE's own fix avoids full rewrites in favor of incremental curation, producing real, measured gains: **59.4%** average on AppWorld against a 42.4% ReAct baseline, plus real efficiency wins — **82.3%** less adaptation latency and **75.1%** fewer rollouts than GEPA.
+ACE — Agentic Context Engineering — treats self-improvement as evolving a persistent piece of context (a growing "playbook" of what's worked before) rather than updating the model's own weights. Three real roles split that work:
+
+- **Generator** — produces reasoning trajectories, i.e. actually attempts the task.
+- **Reflector** — extracts lessons from what the Generator just produced.
+- **Curator** — merges those lessons into the growing playbook.
+
+Its real ablations name two specific failure modes worth knowing by name:
+
+- **Brevity bias** — *"the tendency of optimization to collapse toward short, generic prompts"* that *"omit domain-specific heuristics, tool-use guidelines, or common failure modes."*
+- **Context collapse** — rewriting the accumulated playbook from scratch at each step *"tends to compress it into much shorter, less informative summaries, causing a dramatic loss of information."* A real, documented example shrank context from *"18,282 tokens → 122 tokens,"* with accuracy falling *"66.7% → 57.1%."*
+
+ACE's own fix avoids full rewrites in favor of incremental curation, producing real, measured gains: **59.4%** average on AppWorld against a 42.4% ReAct baseline, plus real efficiency wins — **82.3%** less adaptation latency and **75.1%** fewer rollouts than GEPA.
 
 ## Voyager: a skill library built for reuse, not just recall
 
-Voyager's real, three-part architecture: *"an automatic curriculum that maximizes exploration,"* *"an ever-growing skill library of executable code for storing and retrieving complex behaviors,"* and iterative prompting incorporating *"environment feedback, execution errors, and self-verification."* The real, distinguishing detail: skills are stored as genuinely reusable executable code, with the prompt design saying so explicitly — *"Your function will be reused for building more complex functions. Therefore, you should make it generic and reusable."* Real, verified gains over prior SOTA: *"3.3x more unique items,"* *"2.3x longer distances,"* tech-tree milestones *"up to 15.3x faster."* The real test of genuine self-improvement, not just within-episode competence: Voyager's *"skills developed... are temporally extended, interpretable, and compositional, which compounds the agent's abilities rapidly and alleviates catastrophic forgetting"* — and in practice, it *"is able to utilize the learned skill library in a new Minecraft world to solve novel tasks from scratch, while other techniques struggle to generalize."*
+Voyager is an agent that plays open-ended Minecraft and gets better over time not by retraining, but by writing itself a growing library of reusable code. Its real, three-part architecture:
+
+1. **An automatic curriculum** — *"an automatic curriculum that maximizes exploration."*
+2. **A skill library** — *"an ever-growing skill library of executable code for storing and retrieving complex behaviors."*
+3. **Iterative prompting** — incorporating *"environment feedback, execution errors, and self-verification."*
+
+The real, distinguishing detail: skills are stored as genuinely reusable executable code, with the prompt design saying so explicitly — *"Your function will be reused for building more complex functions. Therefore, you should make it generic and reusable."* Real, verified gains over prior SOTA: *"3.3x more unique items,"* *"2.3x longer distances,"* tech-tree milestones *"up to 15.3x faster."* The real test of genuine self-improvement, not just within-episode competence: Voyager's *"skills developed... are temporally extended, interpretable, and compositional, which compounds the agent's abilities rapidly and alleviates catastrophic forgetting"* — and in practice, it *"is able to utilize the learned skill library in a new Minecraft world to solve novel tasks from scratch, while other techniques struggle to generalize."*
 
 ## AlphaEvolve: evolution plus automated evaluation, at real, verified scale
 

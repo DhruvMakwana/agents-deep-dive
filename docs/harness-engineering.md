@@ -14,7 +14,13 @@
 
 The obvious-seeming fix for an agent that needs to work longer than one context window fits is compaction — summarize the old conversation, keep going. Anthropic's own real finding, from building a genuinely long-running coding agent (a claude.ai clone, over 200 real features), is that this isn't enough on its own: *"even a frontier coding model like Opus 4.5 running on the Claude Agent SDK in a loop across multiple context windows will fall short of building a production-quality web app if it's only given a high-level prompt."* Two concrete failure patterns showed up: the agent tried to do too much in one continuous push, running out of context mid-implementation, and — separately — later sessions would prematurely declare the work done. Compaction alone doesn't fix either: it keeps the conversation going, but *"compaction doesn't always pass perfectly clear instructions to the next agent"* — the summary itself can lose exactly the specificity a fresh session needs to avoid repeating the same two failures.
 
-The real fix Anthropic documents is structural, not just "compact better": a dedicated initializer session sets up three concrete artifacts before any real work starts — *"an `init.sh` script, a claude-progress.txt file that keeps a log of what agents have done, and an initial git commit that shows what files were added."* Every subsequent session reads the progress file first, works from a known state, and updates it before it might run out of room — the harness, not the model's raw context window, is what actually survives across sessions.
+The real fix Anthropic documents is structural, not just "compact better": a dedicated initializer session sets up three concrete artifacts before any real work starts, each doing a different job:
+
+1. **Setup** — *"an `init.sh` script."*
+2. **Progress log** — *"a claude-progress.txt file that keeps a log of what agents have done."*
+3. **Recoverable baseline** — *"an initial git commit that shows what files were added."*
+
+Every subsequent session reads the progress file first, works from a known state, and updates it before it might run out of room — the harness, not the model's raw context window, is what actually survives across sessions.
 
 ## Repro: a genuine multi-session continuation, with a real bug caught along the way
 

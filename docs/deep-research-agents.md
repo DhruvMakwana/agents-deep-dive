@@ -14,13 +14,20 @@
 
 Anthropic's own engineering write-up on building their Research feature gives real, exact numbers for a claim this whole page rests on: multi-agent research works, but it's expensive, and the expense itself is most of why it works. The architecture is the same orchestrator-worker shape covered on [Multi-Agent Systems](multi-agent-systems.md): *"a lead agent coordinates the process while delegating to specialized subagents that operate in parallel."* Real, measured performance: *"multi-agent system with Claude Opus 4 as the lead agent and Claude Sonnet 4 subagents outperformed single-agent Claude Opus 4 by 90.2%"* — and real parallelization gains, separately: *"these changes cut research time by up to 90% for complex queries."*
 
-The real, more surprising number is what actually explains that gain: *"token usage by itself explains 80% of the variance, with the number of tool calls and the model choice as the two other explanatory factors."* Most of the improvement isn't from cleverer coordination — it's from simply spending more real compute in parallel. That's the same real 3.21x-and-4x/15x territory [Multi-Agent Systems](multi-agent-systems.md) already covers in depth; this page picks up where that one leaves off, on the failure mode Anthropic documents *underneath* that headline number.
+The real, more surprising number is what actually explains that gain: *"token usage by itself explains 80% of the variance, with the number of tool calls and the model choice as the two other explanatory factors."* Most of the improvement isn't from cleverer coordination — it's from simply spending more real compute in parallel. [Multi-Agent Systems](multi-agent-systems.md) covers this same token-cost tradeoff in depth, including a real, measured 3.21x token multiplier from its own small experiment — smaller than, but the same direction as, Anthropic's 4x/15x figures above. This page picks up where that one leaves off, on the failure mode Anthropic documents *underneath* that headline number.
 
 ## The real failure mode: redundant work without a real division of labor
 
-Anthropic's own documented finding, stated plainly: subagents *"performed the exact same searches as other agents... without an effective division of labor,"* and separately, agents would continue *"when they already had sufficient results, using overly verbose search queries, or selecting incorrect tools."* Spending 15x the tokens of a single chat only pays off if those tokens are actually covering *different* ground — if three subagents independently converge on the same handful of obvious searches, the real cost is 15x with barely more real coverage than one agent would have gotten.
+Spending 15x the tokens of a single chat (the multiplier the section above just quoted) only pays off if those tokens are actually covering *different* ground — if three subagents independently converge on the same handful of obvious searches, the real cost is 15x with barely more real coverage than one agent would have gotten. Anthropic's own documented finding shows exactly this happening in practice: subagents *"performed the exact same searches as other agents... without an effective division of labor,"* and separately, agents would continue *"when they already had sufficient results, using overly verbose search queries, or selecting incorrect tools."*
 
-Their own real, prescribed fix is specific, not a vague call for "better prompting": *"Each subagent needs an objective, an output format, guidance on the tools and sources to use, and clear task boundaries."* Four concrete, checkable things, not a general instruction to "coordinate well."
+Their own real, prescribed fix is specific, not a vague call for "better prompting." Each subagent needs four concrete things:
+
+1. **An objective** — what it's actually trying to find out.
+2. **An output format** — what shape its findings should come back in.
+3. **Guidance on tools and sources** — where and how it should look.
+4. **Clear task boundaries** — what it should leave to other subagents, so work doesn't overlap.
+
+Anthropic's own framing: *"Each subagent needs an objective, an output format, guidance on the tools and sources to use, and clear task boundaries."*
 
 ## Repro: measuring real redundancy, vague vs. scoped
 
@@ -53,7 +60,13 @@ A fixed, fictional 6-document corpus on one broad research topic — three real 
 
 ## STORM: better structure from simulated disagreement, not a single pass
 
-A different, real approach to the same underlying research problem — not multiple agents researching a live topic, but one system producing a well-structured long-form article. STORM's real, three-stage mechanism: first, *"discovering diverse perspectives in researching the given topic,"* then *"simulating conversations where writers carrying different perspectives pose questions to a topic expert grounded on trusted Internet sources,"* and finally *"curating the collected information to create an outline."* The real payoff of asking from multiple simulated angles rather than once: *"more of STORM's articles are deemed to be organized (by a 25% absolute increase) and broad in coverage (by 10%)"* compared to a baseline that outlines once and writes. A real, honestly documented limitation from the same evaluation: editor feedback surfaced *"source bias transfer and over-association of unrelated facts"* as new problems this kind of automated synthesis introduces.
+A different, real approach to the same underlying research problem — not multiple agents researching a live topic, but one system producing a well-structured long-form article. STORM's real mechanism has three stages:
+
+1. **Discover perspectives** — *"discovering diverse perspectives in researching the given topic."*
+2. **Simulate expert conversations** — *"simulating conversations where writers carrying different perspectives pose questions to a topic expert grounded on trusted Internet sources."*
+3. **Curate an outline** — *"curating the collected information to create an outline."*
+
+The real payoff of asking from multiple simulated angles rather than once: *"more of STORM's articles are deemed to be organized (by a 25% absolute increase) and broad in coverage (by 10%)"* compared to a baseline that outlines once and writes. A real, honestly documented limitation from the same evaluation: editor feedback surfaced *"source bias transfer and over-association of unrelated facts"* as new problems this kind of automated synthesis introduces.
 
 ## BrowseComp: hard to solve, deliberately easy to grade
 

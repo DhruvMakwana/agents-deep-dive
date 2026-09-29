@@ -18,19 +18,29 @@ A normal web request either succeeds or fails within a few hundred milliseconds,
 
 Two different real mechanisms answer "how does the system know what already happened," and it's worth being precise about which is which, since the terms get used loosely. Temporal's model persists an **event history** — every significant step (starting a workflow, an activity being scheduled, an activity completing) is an event, and recovery means re-executing the workflow's own code from the top while *replaying* already-recorded events instead of re-running the corresponding activities: "replays the Event History and resumes at the line where execution stopped, with local variables and progress intact." LangGraph's model instead **checkpoints application state** directly — a snapshot of the graph's state at each step, persisted so a later run can "resume exactly where it left off." The practical catch, stated plainly in LangGraph's own docs: the default in-memory checkpointers ("`MemorySaver` and `InMemorySaver`") "store checkpoints in RAM. When the process restarts, all checkpoints are lost" — durability, in either model, requires a real persistent backend, not just the presence of a checkpointing API.
 
+The code below is a minimal version of that event history: a plain log of which steps have completed, written to disk after each one, so a later run can tell "already done" apart from "still needs doing" without asking the model again.
+
 ```python
 --8<-- "https://raw.githubusercontent.com/DhruvMakwana/agents-cookbook/main/durable-execution/durable_agent_docs.py:event_log"
 ```
+
+That log is the whole mechanism on the orchestrator's side — nothing fancier than reading and appending records. What it can't do is discussed next: it only knows what it was told, and a crash can happen before it gets told.
 
 ## Idempotent tools: the second line of defense
 
 An event log answers "what does the orchestrator know completed" — but there's a real gap it can't close on its own: the instant between a tool's side effect actually committing and that fact being durably recorded. A crash in that exact window means the orchestrator will, on resume, believe the step never happened and ask for it again. The fix isn't a smarter log — it's a tool that can tell the difference between "do this" and "you already did this," checked against its own persisted state, independent of whatever the orchestrator believes.
 
+The code below shows that check in practice: before a tool performs its real side effect, it looks itself up by a stable key (an order ID, not a fresh ID generated per attempt) and returns the prior result if it already ran.
+
 ```python
 --8<-- "https://raw.githubusercontent.com/DhruvMakwana/agents-cookbook/main/durable-execution/durable_agent_docs.py:idempotent_tools"
 ```
 
+That self-check is what makes a tool safe to call twice — it doesn't rely on the orchestrator getting the "already done" bookkeeping right, because it keeps its own record independently.
+
 ## A real crash, a real resume, no duplicate side effect
+
+The code below is the agent loop itself, wiring the event log and the idempotent tools together: on each turn it checks the log before asking the model for a decision, and appends to the log the moment a tool call returns.
 
 ```python
 --8<-- "https://raw.githubusercontent.com/DhruvMakwana/agents-cookbook/main/durable-execution/durable_agent_docs.py:agent_loop"

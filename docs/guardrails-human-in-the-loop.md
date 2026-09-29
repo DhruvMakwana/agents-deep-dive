@@ -17,7 +17,7 @@ This matters because it changes what "guardrails" actually means in practice: mo
 
 ## Risk tiering: proportional controls, not uniform ones
 
-The real, specific practice this page's repro tests directly: *"Define explicit risk tiers for agent use cases and apply proportional controls. Low-risk tasks like data summarization can run with lighter oversight. High-risk actions involving financial transactions, PII, or policy changes require multi-step verification, human approval, and comprehensive audit trails."* This is a real, concrete design principle, not a vague call for caution — it says explicitly that *not* gating low-risk work is part of doing this correctly, not a corner being cut.
+Not every action an agent takes carries the same risk, so treating them all the same way — either reviewing everything or reviewing nothing — misses the actual distinction that matters: how bad it is if this specific action goes wrong. Real, current guidance names this directly as a design practice, not just an intuition: *"Define explicit risk tiers for agent use cases and apply proportional controls. Low-risk tasks like data summarization can run with lighter oversight. High-risk actions involving financial transactions, PII, or policy changes require multi-step verification, human approval, and comprehensive audit trails."* This is a real, concrete design principle, not a vague call for caution — it says explicitly that *not* gating low-risk work is part of doing this correctly, not a corner being cut.
 
 A closely related, real, and equally concrete guideline: organizations should *"require human approval on any irreversible action like moving money or deleting data"* — naming reversibility, not just dollar amount or category, as a real criterion for what belongs in the highest risk tier.
 
@@ -36,6 +36,8 @@ The risk-tiered condition depends on a per-call risk function, shown next:
 ```
 
 Risk here is computed per real tool call, from the actual arguments — not just which tool got named. A $10 `issue_refund` call and a $250 `issue_refund` call are the identical tool with very different real risk, exactly matching the "specific action... weighed against its current context" framing real risk-based gating uses.
+
+The loop below is what turns that per-call score into an actual decision: each tool call gets scored first, then either runs immediately or pauses and waits for approval, depending on which side of the threshold it lands on.
 
 ```python
 --8<-- "https://raw.githubusercontent.com/DhruvMakwana/agents-cookbook/main/guardrails-human-in-the-loop/guardrails_human_in_the_loop_docs.py:gate-loop"

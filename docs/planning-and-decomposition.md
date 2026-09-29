@@ -11,7 +11,11 @@
 
 ## What plan-and-execute buys over a single loop
 
-A ReAct-style agent interleaves reasoning and action in one continuous loop — every tool call happens after a fresh round of "what should I do next" reasoning from the same model. Plan-and-execute splits that: a planner produces the multi-step plan once, up front, and an executor works through it. LangChain's own framing of the three real advantages this buys: *"they can execute multi-step workflow faster, since the larger agent doesn't need to be consulted after each action"* (speed); *"they offer cost savings over ReAct agents. If LLM calls are used for sub-tasks, they typically can be made to smaller, domain-specific models"* (cost); and *"they can perform better overall (in terms of task completions rate and quality) by forcing the planner to explicitly 'think through' all the steps required"* (quality, from the act of planning itself).
+A ReAct-style agent interleaves reasoning and action in one continuous loop — every tool call happens after a fresh round of "what should I do next" reasoning from the same model. Plan-and-execute splits that: a planner produces the multi-step plan once, up front, and an executor works through it. LangChain's own framing gives three real advantages this buys over ReAct:
+
+1. **Speed** — *"they can execute multi-step workflow faster, since the larger agent doesn't need to be consulted after each action."*
+2. **Cost** — *"they offer cost savings over ReAct agents. If LLM calls are used for sub-tasks, they typically can be made to smaller, domain-specific models."*
+3. **Quality**, from the act of planning itself — *"they can perform better overall (in terms of task completions rate and quality) by forcing the planner to explicitly 'think through' all the steps required."*
 
 The mechanics of revision are explicit in the same framing: *"Once execution is completed, the agent is called again with a re-planning prompt, letting it decide whether to finish with a response or whether to generate a follow-up plan (if the first plan didn't have the desired effect)."* That's the theoretical case for replanning. Whether it's actually *necessary* — whether a model without an explicit replanning step still handles a broken plan assumption reasonably — is an empirical question, not a given.
 

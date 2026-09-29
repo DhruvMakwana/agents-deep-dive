@@ -10,11 +10,25 @@
     - **A second real repro tested the review-loop / verifiable-task pattern directly**: a genuinely subtle binary-search off-by-one bug (confirmed to actually diverge via a 2,000-case random search, since hand-picked test cases initially missed it), fixed with and without a real, independently-run test suite available to check the fix. Another clean, honest tie — Sonnet 5 fixed the bug correctly on the first attempt, every time, with or without the ability to verify its own work.
     - **METR's real, cited trend gives the scale this all sits inside**: model *"time horizon"* — the length of task a model completes with 50% reliability — has grown with *"a doubling time of around 7 months"* over six years; Claude 3.7 Sonnet's measured horizon was *"approximately one hour."* This page's own repros are a small, current, honest data point on a specific slice of that trend: two ACI safety nets that mattered a lot in 2024 didn't move the needle for a 2026 model on small, illustrative tasks.
 
-## Why coding agents need a purpose-built interface, not a repurposed human one
+## The problem: an agent doesn't get a mouse and a monitor
 
-SWE-agent's real argument for building a dedicated Agent-Computer Interface (ACI), rather than just giving a model the same terminal and editor a human engineer uses: *"LM agents represent a new category of end users with their own needs and abilities, and would benefit from specially-built interfaces."* The paper's design principles are specific enough to test directly, not just philosophical: *"Actions should be compact and efficient. Important operations (e.g., file navigation, editing) should be consolidated into as few actions as possible"*; *"Environment feedback should be informative but concise... without unnecessary details"*; and, the principle this page's first repro tests directly: *"Guardrails mitigate error propagation and hasten recovery. Like humans, LMs make mistakes when editing or searching and can struggle to recover from these errors."*
+When a human developer edits code, they see a live, visual, forgiving environment: syntax highlighting flags a typo before they even save, an IDE underlines an undefined variable in red, `Ctrl+Z` undoes a bad edit instantly, and a glance at the file tree shows exactly what changed. A coding agent gets none of that. Its entire perception of the codebase is whatever text comes back after each tool call it makes — a file's contents, a command's stdout, an error message — and nothing else. If a tool's response doesn't happen to mention that an edit broke something, the agent has no other way of knowing; it will just keep building on top of the mistake.
 
-One concrete implementation of that last principle: *"we integrate a code linter into the edit function to alert the agent of mistakes it may have introduced when editing a file."* And the real, measured cost of removing it: without the linting guardrail, SWE-bench Lite performance dropped *"to (10.3% ↓ 7.7)"* from 18.0% with it enabled — a genuine, substantial gap, for the 2024-era models SWE-agent was built and tested against.
+That gap — between how forgiving a human's tools are and how little an agent actually gets told — is the entire reason "interface design" is a real engineering question for coding agents, not just a UI preference. SWE-agent's own paper names this directly, arguing against the instinct to just hand a model the same terminal and editor a human uses: *"LM agents represent a new category of end users with their own needs and abilities, and would benefit from specially-built interfaces."* The rest of this page is about what a purpose-built interface for a coding agent actually looks like, and whether the specific design choices SWE-agent measured in 2024 still hold up against a current model.
+
+## SWE-agent's three real design principles for that interface
+
+The paper's principles are concrete enough to test directly, not just philosophical:
+
+1. **Actions should be compact and efficient** — *"Important operations (e.g., file navigation, editing) should be consolidated into as few actions as possible."* Fewer tool calls per task means fewer opportunities for the agent to lose track of what it's doing.
+2. **Feedback should be informative but concise** — *"Environment feedback should be informative but concise... without unnecessary details."* Enough to act on, not so much that the useful part gets buried.
+3. **Guardrails should catch mistakes before they compound** — *"Guardrails mitigate error propagation and hasten recovery. Like humans, LMs make mistakes when editing or searching and can struggle to recover from these errors."* This is the principle the rest of this section, and this page's first repro, test directly.
+
+## One principle, made concrete: the linting guardrail
+
+Here's what principle 3 looks like as actual code, not just a design philosophy: SWE-agent's own edit tool runs every edit through a linter immediately and reports the result back to the model in the same turn — *"we integrate a code linter into the edit function to alert the agent of mistakes it may have introduced when editing a file."* Concretely, if an edit breaks a file's syntax, the very next thing the agent sees is that syntax error, instead of silently building three more edits on top of already-broken code.
+
+How much did that one guardrail actually matter, measured? SWE-agent's own real ablation removed it and re-ran the benchmark: SWE-bench Lite performance dropped *"to (10.3% ↓ 7.7)"* from 18.0% with the guardrail enabled — a genuine, substantial gap, for the 2024-era models SWE-agent was built and tested against. The obvious next question, and what this page's own repro tests directly: does that same gap still show up against a current model?
 
 ## Repro 1: does the linting guardrail still matter?
 
@@ -33,7 +47,7 @@ The block below runs the same nested-conditional edit with and without the guard
 
 ## Repro 2: the review loop, tested against a bug that hides from a naive read-through
 
-*"Verifiable tasks"* — ones with an automatic, objective pass/fail check — matter because they let an agent (or a review loop within one) actually confirm its own work instead of just asserting it's done, the same theme Evaluating Agents covers from the grading side. This repro tests the mechanism directly: does having a real, checkable test available change whether a fix is actually correct?
+The first repro tested whether an agent's *edits* need a safety net. This one tests a different, second mechanism: whether an agent's *final answer* needs one too. A "review loop" just means giving the agent a way to actually run its own fix against a real check before calling the task done, instead of only asserting "this should work now." That real check only helps if the task is genuinely **verifiable** — meaning it has an automatic, objective pass/fail signal, not a human's opinion — the same theme Evaluating Agents covers from the grading side. This repro tests the mechanism directly: does having a real, checkable test available change whether a fix is actually correct?
 
 ```python
 --8<-- "https://raw.githubusercontent.com/DhruvMakwana/agents-cookbook/main/coding-agents-mechanisms/coding_agents_mechanisms_docs.py:binary-search-bug"
