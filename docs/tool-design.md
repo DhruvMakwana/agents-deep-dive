@@ -17,7 +17,7 @@ The tool schema — its name, its description, its parameter names and descripti
 Ambiguous parameter names (`user` instead of `user_id`) and thin descriptions don't just risk a wrong call — they cost tokens and turns recovering from one, which the rest of this page measures directly rather than asserting.
 
 ```python
---8<-- "https://raw.githubusercontent.com/DhruvMakwana/agents-cookbook/main/tool-design/tool_design_docs.py:tool_surfaces_data"
+--8<-- "snippets/agents-cookbook/tool-design/tool_design_docs.py:tool_surfaces_data"
 ```
 
 ## The agent-computer interface: SWE-agent's finding
@@ -31,19 +31,19 @@ Three ways to expose the same fictional task data to the same model, for the sam
 **Endpoint wrappers** — one tool per low-level operation, composition left entirely to the model:
 
 ```python
---8<-- "https://raw.githubusercontent.com/DhruvMakwana/agents-cookbook/main/tool-design/tool_design_docs.py:endpoint_wrappers"
+--8<-- "snippets/agents-cookbook/tool-design/tool_design_docs.py:endpoint_wrappers"
 ```
 
 **Consolidated** — one purpose-built tool that does the filtering server-side:
 
 ```python
---8<-- "https://raw.githubusercontent.com/DhruvMakwana/agents-cookbook/main/tool-design/tool_design_docs.py:consolidated"
+--8<-- "snippets/agents-cookbook/tool-design/tool_design_docs.py:consolidated"
 ```
 
 **Code execution** — the model writes code against a small library instead of calling named tools one at a time:
 
 ```python
---8<-- "https://raw.githubusercontent.com/DhruvMakwana/agents-cookbook/main/tool-design/tool_design_docs.py:code_execution"
+--8<-- "snippets/agents-cookbook/tool-design/tool_design_docs.py:code_execution"
 ```
 
 !!! success "A real run — the exact question, three surfaces, real call and token counts"
@@ -62,7 +62,7 @@ Three ways to expose the same fictional task data to the same model, for the sam
 A tool's error message is also part of its interface, read by the model as an observation it has to act on — not a log line for a human. Anthropic's own guidance is specific: errors should give "specific and actionable improvements, rather than opaque error codes or tracebacks."
 
 ```python
---8<-- "https://raw.githubusercontent.com/DhruvMakwana/agents-cookbook/main/tool-design/tool_design_docs.py:errors_as_observations"
+--8<-- "snippets/agents-cookbook/tool-design/tool_design_docs.py:errors_as_observations"
 ```
 
 !!! success "A real run — same request, two error conditions, both shown in full"

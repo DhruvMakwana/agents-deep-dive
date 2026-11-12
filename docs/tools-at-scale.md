@@ -23,7 +23,7 @@ Anthropic's Tool Search Tool marks individual tool definitions with `defer_loadi
 The real numbers: *"This represents an 85% reduction in token usage while maintaining access to your full tool library."* And the effect isn't just cheaper — it's more accurate: *"Opus 4 improved from 49% to 74%, and Opus 4.5 improved from 79.5% to 88.1% with Tool Search Tool enabled"* on an MCP evaluation. Fewer, more relevant tool definitions in context at once means less chance of picking the wrong one from a crowded, similar-sounding list.
 
 ```python
---8<-- "https://raw.githubusercontent.com/DhruvMakwana/agents-cookbook/main/tools-at-scale/tools_at_scale_docs.py:tool-search"
+--8<-- "snippets/agents-cookbook/tools-at-scale/tools_at_scale_docs.py:tool-search"
 ```
 
 !!! success "A real run — the input task, the retriever's real output, and the transcript answer"
@@ -50,7 +50,7 @@ Where tool search reduces *which* tool definitions the model sees, programmatic 
 The real measured effect: *"Average usage dropped from 43,588 to 27,297 tokens, a 37% reduction on complex research tasks."*
 
 ```python
---8<-- "https://raw.githubusercontent.com/DhruvMakwana/agents-cookbook/main/tools-at-scale/tools_at_scale_docs.py:programmatic-tool"
+--8<-- "snippets/agents-cookbook/tools-at-scale/tools_at_scale_docs.py:programmatic-tool"
 ```
 
 !!! success "A real run — the model's actual generated code, and the transcript answer"

@@ -28,15 +28,15 @@ SWE-smith takes the opposite real approach: instead of curating existing real bu
 This repro reproduces SWE-smith's exact mechanism, at a much smaller scale: start from ordinary working code with a passing test suite, have a model introduce one realistic bug into it (no historical bug report needed), then confirm with a real test run that the result is a genuine, narrow, solvable failure rather than either nothing at all or a total collapse. Three pieces: the starting code and its test suite, a verifier that actually executes the tests rather than asking a model to judge correctness, and the prompt that asks a model to synthesize a subtle bug.
 
 ```python
---8<-- "https://raw.githubusercontent.com/DhruvMakwana/agents-cookbook/main/data-environments/data_environments_docs.py:starting-code-and-tests"
+--8<-- "snippets/agents-cookbook/data-environments/data_environments_docs.py:starting-code-and-tests"
 ```
 
 ```python
---8<-- "https://raw.githubusercontent.com/DhruvMakwana/agents-cookbook/main/data-environments/data_environments_docs.py:real-verifier"
+--8<-- "snippets/agents-cookbook/data-environments/data_environments_docs.py:real-verifier"
 ```
 
 ```python
---8<-- "https://raw.githubusercontent.com/DhruvMakwana/agents-cookbook/main/data-environments/data_environments_docs.py:synthesis-prompt"
+--8<-- "snippets/agents-cookbook/data-environments/data_environments_docs.py:synthesis-prompt"
 ```
 
 Put together: a real, working `merge_intervals` function with a real, passing 5-test suite. A real Claude call introduces exactly one subtle bug — SWE-smith's own approach, generating a task from arbitrary working code rather than requiring an existing bug report. The real verifier above is the same shape RLVR and SWE-Gym both rely on: actually run the code, don't ask an LLM whether it looks right.

@@ -40,13 +40,13 @@ Beyond MCP-specific browser servers (covered on [MCP and Tool Ecosystem](mcp-too
 The real risk in this space isn't hypothetical. Brave Security documented a real, working attack against Perplexity's Comet browser agent — dubbed CometJacking — with a precise, named root cause: *"when users ask it to 'Summarize this webpage,' Comet feeds a part of the webpage directly to its LLM without distinguishing between the user's instructions and untrusted content."* The real attack chain used a Reddit spoiler tag to hide instructions from a human reader while leaving them fully present in the raw text an LLM-based summarizer receives — genuine data exfiltration was demonstrated, not just a theoretical risk. Separately, OpenAI documented a real omnibox-based injection against ChatGPT Atlas, with its own CISO calling prompt injection *"a frontier, unsolved security problem."*
 
 ```python
---8<-- "https://raw.githubusercontent.com/DhruvMakwana/agents-cookbook/main/computer-use-browser-agents/computer_use_browser_agents_docs.py:fictional-page"
+--8<-- "snippets/agents-cookbook/computer-use-browser-agents/computer_use_browser_agents_docs.py:fictional-page"
 ```
 
 The block above builds the fictional page and its hidden pretext; the block below is what actually sends the identical benign "summarize this" request against it under both the raw and content-tagged conditions, producing the resistant outcomes reported next.
 
 ```python
---8<-- "https://raw.githubusercontent.com/DhruvMakwana/agents-cookbook/main/computer-use-browser-agents/computer_use_browser_agents_docs.py:raw-vs-tagged"
+--8<-- "snippets/agents-cookbook/computer-use-browser-agents/computer_use_browser_agents_docs.py:raw-vs-tagged"
 ```
 
 A fictional page with a hidden instruction, phrased as an ordinary "unlock bonus content" pretext rather than announcing itself as malicious — tested with the identical, entirely innocuous user request ("please summarize this webpage") under raw and content-tagged conditions.

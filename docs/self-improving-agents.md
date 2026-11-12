@@ -56,15 +56,15 @@ Every self-improvement mechanism on this page raises the same real question even
 DGM's incident above raises an obvious follow-up question: is a model's own self-report ever trustworthy, or is "ask it if it's confident" a broken idea from the start? This repro tests the simplest, lowest-stakes version of that question directly — no self-modification loop, no optimization pressure, just one model implementing one function and honestly reporting whether it thinks it got it right. Three pieces make that possible: a coding task with a real, hidden test suite the model never sees, a tool that lets the model self-report its own confidence as a structured field, and an independent verifier that checks the real answer without looking at that self-report at all.
 
 ```python
---8<-- "https://raw.githubusercontent.com/DhruvMakwana/agents-cookbook/main/self-improving-agents/self_improving_agents_docs.py:task-and-tests"
+--8<-- "snippets/agents-cookbook/self-improving-agents/self_improving_agents_docs.py:task-and-tests"
 ```
 
 ```python
---8<-- "https://raw.githubusercontent.com/DhruvMakwana/agents-cookbook/main/self-improving-agents/self_improving_agents_docs.py:self-report-tool"
+--8<-- "snippets/agents-cookbook/self-improving-agents/self_improving_agents_docs.py:self-report-tool"
 ```
 
 ```python
---8<-- "https://raw.githubusercontent.com/DhruvMakwana/agents-cookbook/main/self-improving-agents/self_improving_agents_docs.py:independent-verifier"
+--8<-- "snippets/agents-cookbook/self-improving-agents/self_improving_agents_docs.py:independent-verifier"
 ```
 
 Put together: a real Claude call implements a function from a text description only — no test-running tool, no visibility into the real, hidden test suite — and self-reports whether it's genuinely confident the implementation is fully correct. A real, separate pytest run then checks the actual ground truth, independent of anything the model claims.

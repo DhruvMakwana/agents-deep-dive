@@ -21,7 +21,7 @@ That's not a limitation to work around — it's the reason these patterns are wo
 Break a task into an explicit sequence of steps, where each step's output feeds the next — and, critically, insert a **gate**: a check on an intermediate output before continuing, so a bad intermediate result doesn't silently propagate into an expensive final step.
 
 ```python
---8<-- "https://raw.githubusercontent.com/DhruvMakwana/agents-cookbook/main/workflow-patterns/workflow_patterns_docs.py:chaining"
+--8<-- "snippets/agents-cookbook/workflow-patterns/workflow_patterns_docs.py:chaining"
 ```
 
 !!! success "A real run — input and output shown in full"
@@ -59,7 +59,7 @@ Classify the input, then dispatch to a specialized downstream handler per catego
 Split one task into independent pieces, dispatch them concurrently, combine the results. Two distinct uses: *sectioning* (different pieces answer different sub-questions about the same input, like the demo below) and *voting* (the same question run multiple times for a more confident aggregate answer). The developer decides the fixed set of pieces ahead of time — that's what separates this from orchestrator-workers, below.
 
 ```python
---8<-- "https://raw.githubusercontent.com/DhruvMakwana/agents-cookbook/main/workflow-patterns/workflow_patterns_docs.py:parallelization"
+--8<-- "snippets/agents-cookbook/workflow-patterns/workflow_patterns_docs.py:parallelization"
 ```
 
 !!! success "A real run — input and output shown in full, so the reviewer claims below are checkable"
@@ -84,7 +84,7 @@ Split one task into independent pieces, dispatch them concurrently, combine the 
 A planning call looks at the specific input and decides its **own** sub-tasks — not a fixed set chosen by the developer ahead of time, which is exactly what separates this from parallelization above. Workers answer the sub-tasks, a synthesis call combines them.
 
 ```python
---8<-- "https://raw.githubusercontent.com/DhruvMakwana/agents-cookbook/main/workflow-patterns/workflow_patterns_docs.py:orchestrator_workers"
+--8<-- "snippets/agents-cookbook/workflow-patterns/workflow_patterns_docs.py:orchestrator_workers"
 ```
 
 !!! success "A real run — the same planner, two topics, the exact sub-questions it chose for each"
@@ -128,7 +128,7 @@ A planning call looks at the specific input and decides its **own** sub-tasks �
 Generate, evaluate the output against a concrete criterion, and if it fails, retry with feedback about what to fix — capped at a hard attempt budget. The evaluator doesn't have to be an LLM call; a deterministic check works fine when the criterion is exact.
 
 ```python
---8<-- "https://raw.githubusercontent.com/DhruvMakwana/agents-cookbook/main/workflow-patterns/workflow_patterns_docs.py:evaluator_optimizer"
+--8<-- "snippets/agents-cookbook/workflow-patterns/workflow_patterns_docs.py:evaluator_optimizer"
 ```
 
 !!! success "A real run — full input and output"

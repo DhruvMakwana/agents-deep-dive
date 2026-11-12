@@ -4,23 +4,25 @@
     Full runnable recipe: [`benchmark-atlas/`](https://github.com/DhruvMakwana/agents-cookbook/tree/main/benchmark-atlas) in the companion cookbook — a real tau-bench-style repro computing pass@1 vs. pass^k across independent trials.
 
 ??? abstract "TL;DR — quick revision"
-    - **Benchmark leaderboards drift out of sync with reality fast, and aggregator sites make it worse.** A real, current fetch of official leaderboard data (not secondary blog posts) found SWE-bench Verified's real top score is **79.2%**, while multiple aggregator sites reported 96–97% for the same benchmark — a real, current, checkable discrepancy worth verifying against the primary source before citing any benchmark number.
+    - **Benchmark leaderboards drift out of sync with reality fast, and aggregator sites make it worse.** A September 2026 fetch of official leaderboard data (not secondary blog posts) found SWE-bench Verified's real top score is **79.2%**, while multiple aggregator sites reported 96–97% for the same benchmark — a dated, checkable discrepancy worth verifying against the primary source before citing any benchmark number.
     - **SWE-bench Verified has a real, documented contamination problem, from OpenAI's own analysis, not a critic's.** Auditing failed problems, OpenAI found *"at least 59.4% of the audited problems have flawed test cases that reject functionally correct submissions,"* and that *"all frontier models we tested were able to reproduce the original, human-written bug fix... indicating that all of them have seen at least some of the problems and solutions during training."* Their conclusion: *"we have stopped reporting SWE-bench Verified scores, and we recommend that other model developers do so too."*
-    - **"Saturated" isn't one universal state — it's benchmark-specific and sometimes domain-specific within one benchmark.** OSWorld climbed from a 12.24% launch baseline to a real current top of 90.19% (saturated). TheAgentCompany's real top score is still under 43% (clearly not). tau-bench's own real numbers show both at once: 97.8% on its older telecom domain, but only 55.2% on banking_knowledge — a harder domain added specifically because the older ones stopped differentiating models.
+    - **"Saturated" isn't one universal state — it's benchmark-specific and sometimes domain-specific within one benchmark.** OSWorld climbed from a 12.24% launch baseline to a September 2026 top of 90.19% (saturated). TheAgentCompany's September 2026 top score was under 43% (clearly not). tau-bench's own real numbers show both at once: 97.8% on its older telecom domain, but only 55.2% on banking_knowledge — a harder domain added specifically because the older ones stopped differentiating models.
     - **A real repro of tau-bench's actual grading methodology — action-state grading, and pass@1 vs. pass^k — found perfect reliability on one small, illustrative policy-compliance scenario**: 5/5 independent trials correctly refused a plausible-sounding but policy-violating cancellation request, graded by whether the policy-breaking tool was actually called, not by what the reply said. `pass_at_1: 1.0`, `pass_hat_k: true` — a small, real illustration of exactly the kind of easy scenario that stops differentiating frontier models, which is why benchmark maintainers keep adding harder ones.
 
 ## Why "what's the SOTA on X" is a harder question than it looks
 
-Every benchmark number in this space has a real shelf life, and the honest way to report one is to say exactly where it came from and when. A real, current pull of official leaderboard data for this page surfaced a concrete example of why that matters: several benchmark-aggregator sites reported SWE-bench Verified's current top score as 96–97%, while the actual official leaderboard (swebench.com, pulled directly) tops out at **79.2%** — a real, checkable, and large discrepancy, not a rounding difference. This isn't a one-off; it's the reason every number on this page is sourced to the specific official leaderboard or paper it came from, not to a summary of a summary.
+Every benchmark number in this space has a real shelf life, and the honest way to report one is to say exactly where it came from and when. A September 2026 pull of official leaderboard data for this page surfaced a concrete example of why that matters: several benchmark-aggregator sites reported SWE-bench Verified's top score at the time as 96–97%, while the official leaderboard (swebench.com, pulled directly) showed **79.2%** — a real, checkable, and large discrepancy, not a rounding difference. This is why every number on this page is sourced to the specific official leaderboard or paper it came from, not to a summary of a summary.
 
-## The atlas: what each benchmark measures, and its real current standing
+## The atlas: what each benchmark measures, and dated results
 
-| Benchmark | What it measures | Real current top score | Saturation |
+The table records a September 2026 research snapshot, with the Terminal-Bench 2.1 row updated from its archived official leaderboard on October 1, 2026. Scores and benchmark status can change; check the linked leaderboards before citing them as current.
+
+| Benchmark | What it measures | Reported score at snapshot | Saturation at snapshot |
 |---|---|---|---|
 | **SWE-bench Verified** | Resolving real GitHub issues with a patch that passes hidden tests, human-filtered for clarity | **79.2%** — Claude 4.5 Opus (swebench.com) | High, but OpenAI says the number itself is no longer trustworthy (see below) |
 | **SWE-bench Lite** | Smaller, faster SWE-bench subset | **60.3%** (swebench.com) | Unsaturated |
 | **SWE-bench Pro** | *"Realistic, complex, enterprise-level"* long-horizon tasks across 41 repos, including private held-out code | **61.5%** — Muse Spark 1.1 (Scale AI leaderboard) | Unsaturated — but nearly tripled from a 23.3% launch baseline |
-| **Terminal-Bench 2.1** | End-to-end real terminal tasks — compiling code, training models, setting up servers | **83.8%** — Claude Fable 5 + Claude Code (GitHub leaderboard) | Approaching ceiling, climbing fast (2.0's own paper claimed *"less than 65%"* as a ceiling) |
+| **Terminal-Bench 2.1** | End-to-end real terminal tasks — compiling code, training models, setting up servers | **87.64%** — Claude Opus 5.5 + Terminus 2 ([archived official leaderboard](https://www.vals.ai/benchmarks/terminal-bench-2-1), October 1, 2026) | Archived; [Terminal-Bench 4.0](https://www.vals.ai/benchmarks/terminal-bench-4) supersedes it |
 | **tau-bench** | Multi-turn conversation, tool use, and *written policy* compliance across airline/retail/telecom/banking domains | **97.8%** telecom vs. **55.2%** banking_knowledge (Sierra's own leaderboard data) | Saturated on older domains, unsaturated on the newest (added specifically to stay hard) |
 | **BrowseComp** | Persistent web search for *"hard-to-find, entangled information"* | **51.5%** — OpenAI Deep Research (real paper table) | Clearly unsaturated — and beats the 29.2% human-trainer baseline |
 | **GAIA** | Reasoning, multi-modality, web browsing, and tool use on real-world questions | **76.4%** (HuggingFace leaderboard, test split) | Real headroom remains below the paper's own 92% human baseline |
@@ -28,7 +30,7 @@ Every benchmark number in this space has a real shelf life, and the honest way t
 | **WebArena** | Realistic web-based task completion across e-commerce, forums, GitLab, CMS, maps, wikis | **74.3%** — DeepSeek v3.2 (official leaderboard sheet) | Unsaturated vs. a 90–100% ceiling, but near the paper's own 78.24% human baseline |
 | **AppWorld** | Multi-app, API-driven tasks requiring real, complex code with control flow | **96.4%** normal / **98.3%** challenge — Claude Sonnet 4.6 (official leaderboard repo) | **Saturated** — up from a ~49%/30% GPT-4o launch baseline |
 | **TheAgentCompany** | Real professional tasks in a simulated software company: browsing, coding, coworker communication | **42.9%** (official leaderboard.json) | Clearly, decisively unsaturated |
-| **MLE-bench** | Real Kaggle competitions, graded by bronze-medal-or-better rate | **64.4%** — Famou-Agent 2.0 (official GitHub README) | Unsaturated, climbing fast from a 16.9% pass@1 launch baseline — leaderboard is currently frozen for a fairness-process rework |
+| **MLE-bench** | Real Kaggle competitions, graded by bronze-medal-or-better rate | **64.4%** — Famou-Agent 2.0 (official GitHub README) | Unsaturated, climbing fast from a 16.9% pass@1 launch baseline — leaderboard was frozen for a fairness-process rework at the snapshot date |
 | **AgentDojo** | Joint utility *and* security: task completion while resisting prompt injection | 88.7% utility / 7.3% attack success (Claude 3.7 Sonnet, best) vs. 69.1% utility / 47.7% ASR (GPT-4o) | Not a capability-ceiling benchmark — attack success rate varies 1–48% by model, no consistent frontier defense yet |
 | **InjecAgent** | Vulnerability to indirect prompt injection across 17 real user tools, 62 attacker tools | GPT-4 (ReAct): 24% ASR base, ~47–48% under a reinforced attack prompt; Llama2-70B: over 80% ASR | Same framing as AgentDojo — a vulnerability rate, not a ceiling; no actively-maintained current leaderboard found |
 
@@ -43,13 +45,13 @@ The contamination finding is separate and, if anything, more serious: *"all fron
 Most benchmark headlines report a single accuracy number — but tau-bench's own real methodology asks a sharper question: not just "how often does the agent get this right," but "does it get this right *every single time*." The distinction matters because an agent that's usually right isn't the same guarantee as one that's always right, especially for a benchmark specifically designed around policy compliance in customer-facing domains.
 
 ```python
---8<-- "https://raw.githubusercontent.com/DhruvMakwana/agents-cookbook/main/benchmark-atlas/benchmark_atlas_docs.py:policy-scenario"
+--8<-- "snippets/agents-cookbook/benchmark-atlas/benchmark_atlas_docs.py:policy-scenario"
 ```
 
 The block below is where the actual verdict comes from: it checks whether the policy-breaking tool was really called across 5 independent trials, not whether the reply's wording sounds compliant, and rolls that into the `pass_at_1`/`pass_hat_k` numbers reported next.
 
 ```python
---8<-- "https://raw.githubusercontent.com/DhruvMakwana/agents-cookbook/main/benchmark-atlas/benchmark_atlas_docs.py:action-grading"
+--8<-- "snippets/agents-cookbook/benchmark-atlas/benchmark_atlas_docs.py:action-grading"
 ```
 
 !!! success "A real run — 5 independent trials, graded by real action state, not by reply text"
@@ -63,19 +65,19 @@ The block below is where the actual verdict comes from: it checks whether the po
 
 ## What this means in practice
 
-The atlas view across 14 real, current benchmarks shows the same pattern repeating at different speeds: launch with a task hard enough that frontier models fail most of the time (GAIA's original 15% GPT-4 baseline, OSWorld's 12.24%, AppWorld's ~49%/30%), watch scores climb — sometimes to genuine saturation (OSWorld's real 90.19%, AppWorld's real 96.4%/98.3%), sometimes to a plateau that turns out to reflect the dataset's own flaws rather than real capability (SWE-bench Verified's real, documented contamination) — and either retire the benchmark, add a harder subset (tau-bench's banking_knowledge), or build a harder successor (SWE-bench Pro). None of this is a criticism of any single benchmark; it's the real, observable lifecycle every capability benchmark in this space seems to go through, and it's a good reason to treat any single reported score as dated the moment it's published, not as a permanent fact about a model's real capability.
+This dated view across 14 benchmarks shows the same pattern repeating at different speeds: launch with a task hard enough that frontier models fail most of the time (GAIA's original 15% GPT-4 baseline, OSWorld's 12.24%, AppWorld's ~49%/30%), watch scores climb — sometimes to genuine saturation (OSWorld's real 90.19%, AppWorld's real 96.4%/98.3%), sometimes to a plateau that turns out to reflect the dataset's own flaws rather than real capability (SWE-bench Verified's real, documented contamination) — and either retire the benchmark, add a harder subset (tau-bench's banking_knowledge), or build a harder successor (SWE-bench Pro). None of this is a criticism of any single benchmark; it's the real, observable lifecycle every capability benchmark in this space seems to go through, and it's a good reason to treat any single reported score as dated the moment it's published, not as a permanent fact about a model's real capability.
 
 ## Interview angle
 
-**Weak answer** to "how good is this agent, really?": *"It scores 79% on SWE-bench."* This treats a benchmark score as a fixed, model-only fact, and misses that the same real number can mean different things depending on the benchmark's own current health — this page's own real research found that exact 79.2% SWE-bench Verified figure sitting inside a benchmark its own primary author (OpenAI, alongside the original authors) now says is contaminated enough that they've stopped reporting it.
+**Weak answer** to "how good is this agent, really?": *"It scores 79% on SWE-bench."* This treats a benchmark score as a fixed, model-only fact, and misses that the same real number can mean different things depending on the benchmark's own current health — the September 2026 research found that 79.2% SWE-bench Verified figure sitting inside a benchmark its own primary author (OpenAI, alongside the original authors) now says is contaminated enough that they've stopped reporting it.
 
-**Strong answer**: a benchmark score is only as trustworthy as the benchmark's own current validity, and that changes over time — the right practice is checking a benchmark's real, current saturation and known validity issues (not assuming the number means what it meant at launch), the way this page's own atlas does for SWE-bench Verified, OSWorld, and tau-bench specifically. A model scoring 79% on a benchmark with documented test-case flaws and training contamination is a different, weaker claim than a model scoring 61.5% on SWE-bench Pro, where *"no model was able to produce a complete verbatim gold patch"* — the lower number can be the more meaningful one.
+**Strong answer**: a benchmark score is only as trustworthy as the benchmark's own current validity, and that changes over time — the right practice is checking a benchmark's real, current saturation and known validity issues (not assuming the number means what it meant at launch), as the dated examples here illustrate for SWE-bench Verified, OSWorld, and tau-bench. A model scoring 79% on a benchmark with documented test-case flaws and training contamination is a different, weaker claim than a model scoring 61.5% on SWE-bench Pro, where *"no model was able to produce a complete verbatim gold patch"* — the lower number can be the more meaningful one.
 
 **Follow-up to expect**: "if benchmarks keep getting contaminated or saturated, how would you actually evaluate a new agent?" Build or borrow a task with a real, checkable ground truth specific to what you actually need the agent to do — the same discipline Evaluating Agents covers in depth (outcome vs. trajectory grading, pass@k vs. pass^k) — rather than leaning entirely on a public leaderboard number that may already be past its useful life. This page's own repro is a small, concrete instance of that discipline: a real, action-graded, multi-trial check built specifically for one policy-compliance question, not borrowed wholesale from an existing leaderboard.
 
 ## Build it yourself — 30 minutes
 
-1. Pick one benchmark from this page's atlas and find its real, current official leaderboard (not an aggregator site). Pull the actual top score directly and compare it against what a quick web search of secondary sources claims — this page's own SWE-bench Verified discrepancy (96–97% claimed vs. 79.2% real) is exactly the kind of gap worth checking for yourself.
+1. Pick one benchmark from this page's atlas and find its real, current official leaderboard (not an aggregator site). Pull the actual top score directly and compare it against what a quick web search of secondary sources claims — the September 2026 SWE-bench Verified discrepancy (96–97% claimed vs. 79.2% on the official leaderboard) is exactly the kind of gap worth checking for yourself.
 2. Design one small, tau-bench-style scenario: a stated policy, a plausible-sounding request that tempts violating it, and a real, action-based grading check (not text-matching). This page's own repro is a minimal template for exactly this.
 3. Run your scenario across 5+ independent trials and compute both pass@1 (average) and pass^k (all trials correct). If they diverge, that's real, useful information about reliability that a single accuracy number would have hidden.
 4. Read one benchmark's own "known issues" or "limitations" section directly from its paper or repo (SWE-bench Pro's README, MLE-bench's leaderboard-freeze note, or similar) rather than assuming a high score means the benchmark is fully solved.
@@ -87,7 +89,7 @@ The atlas view across 14 real, current benchmarks shows the same pattern repeati
 {
   "questions": [
     {
-      "scenario": "A real fetch of official leaderboard data found SWE-bench Verified's actual current top score is 79.2%, while several benchmark-aggregator websites reported 96-97% for the same benchmark at around the same time.",
+      "scenario": "A September 2026 fetch of official leaderboard data found SWE-bench Verified's top score at the time is 79.2%, while several benchmark-aggregator websites reported 96-97% for the same benchmark at around the same time.",
       "question": "What is the most accurate lesson to draw from this specific discrepancy?",
       "options": [
         "A benchmark's real current score should be checked directly, not via summaries",
@@ -138,7 +140,7 @@ The atlas view across 14 real, current benchmarks shows the same pattern repeati
       ]
     },
     {
-      "scenario": "The real atlas data shows OSWorld climbing from a 12.24% launch baseline to a real current top score of 90.19%, while tau-bench's real leaderboard shows telecom at 97.8% alongside a newer banking_knowledge domain at only 55.2%.",
+      "scenario": "The real atlas data shows OSWorld climbing from a 12.24% launch baseline to a September 2026 top score of 90.19%, while tau-bench's real leaderboard shows telecom at 97.8% alongside a newer banking_knowledge domain at only 55.2%.",
       "question": "What is the most accurate generalization these two real data points together support?",
       "options": [
         "Every benchmark eventually reaches the same saturation point at the same rate",
@@ -161,7 +163,7 @@ The atlas view across 14 real, current benchmarks shows the same pattern repeati
 
 ## Sources & further reading
 
-- Official leaderboards (real, current data pulled directly, not from secondary summaries): [swebench.com](https://www.swebench.com/), [Scale AI SWE-bench Pro](https://labs.scale.com/leaderboard/swe_bench_pro), [Terminal-Bench (harbor-framework)](https://github.com/harbor-framework), [tau-bench](https://taubench.com/), [GAIA (HuggingFace)](https://huggingface.co/spaces/gaia-benchmark/leaderboard), [OSWorld](https://osworld-v1.xlang.ai/), [WebArena](https://webarena.dev/), [AppWorld](https://appworld.dev/), [TheAgentCompany](https://the-agent-company.com/), [MLE-bench (OpenAI)](https://github.com/openai/mle-bench), [AgentDojo](https://agentdojo.spylab.ai/).
+- Official leaderboards (September 2026 data pulled directly, except Terminal-Bench 2.1 updated October 1, 2026): [swebench.com](https://www.swebench.com/), [Scale AI SWE-bench Pro](https://labs.scale.com/leaderboard/swe_bench_pro), [Terminal-Bench (harbor-framework)](https://github.com/harbor-framework), [tau-bench](https://taubench.com/), [GAIA (HuggingFace)](https://huggingface.co/spaces/gaia-benchmark/leaderboard), [OSWorld](https://osworld-v1.xlang.ai/), [WebArena](https://webarena.dev/), [AppWorld](https://appworld.dev/), [TheAgentCompany](https://the-agent-company.com/), [MLE-bench (OpenAI)](https://github.com/openai/mle-bench), [AgentDojo](https://agentdojo.spylab.ai/).
 - Jimenez et al., ["SWE-bench: Can Language Models Resolve Real-World GitHub Issues?"](https://arxiv.org/abs/2310.06770) (ICLR 2024) and OpenAI's own analysis explaining why they stopped reporting SWE-bench Verified scores, recommending SWE-bench Pro instead.
 - Wei et al., ["BrowseComp: A Simple Yet Challenging Benchmark for Browsing Agents"](https://arxiv.org/abs/2504.12516) — the real 51.5% Deep Research score and the 29.2% human-trainer baseline.
 - Debenedetti et al., ["AgentDojo: A Dynamic Environment to Evaluate Prompt Injection Attacks and Defenses for LLM Agents"](https://arxiv.org/abs/2406.13352) — joint utility/security grading.

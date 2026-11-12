@@ -8,36 +8,36 @@
     - **"Own the loop" is a real, named position, not just a vibe.** 12-Factor Agents' framing: most products calling themselves agentic "aren't that agentic" — real production reliability, in this view, comes from owning your own control flow rather than delegating it to a framework's abstraction.
     - **AutoGen is in maintenance mode, by its own README's words**: "It will not receive new features or enhancements and is community managed going forward. New users should start with Microsoft Agent Framework." Building on it today means building on something the vendor itself says to migrate away from.
     - **A real dependency conflict surfaced and got fixed for real, not glossed over**: the full `pydantic-ai` package pulls in `fastmcp-slim`, which requires `python-dotenv>=1.1.0` — directly conflicting with this cookbook's shared `python-dotenv==1.0.1` pin. `pydantic-ai-slim[anthropic]` (skipping the unneeded `mcp` extra) resolves it cleanly, since this recipe never uses MCP.
-    - **Framework adoption in real job descriptions is smaller than the discourse suggests.** Across 1,978 genuinely AI-technical job postings, LangChain appears in 8.1% (28 companies) and LangGraph in 5.0% (19 companies) — real, current numbers, not zero, but a small fraction of postings even in a corpus specifically filtered for AI-technical roles.
+    - **Framework adoption in real job descriptions is smaller than the discourse suggests.** In a September 21, 2026 snapshot of 1,978 genuinely AI-technical job postings, LangChain appears in 8.1% (28 companies) and LangGraph in 5.0% (19 companies) — dated numbers, not zero, but a small fraction of postings even in a corpus specifically filtered for AI-technical roles.
 
 ## The real trade-off, run four ways
 
 ```python
---8<-- "https://raw.githubusercontent.com/DhruvMakwana/agents-cookbook/main/choosing-a-framework/framework_shootout_docs.py:shared_tool"
+--8<-- "snippets/agents-cookbook/choosing-a-framework/framework_shootout_docs.py:shared_tool"
 ```
 
 **Raw Anthropic client** — full manual control over the message list, tool execution, and stop condition:
 
 ```python
---8<-- "https://raw.githubusercontent.com/DhruvMakwana/agents-cookbook/main/choosing-a-framework/framework_shootout_docs.py:raw"
+--8<-- "snippets/agents-cookbook/choosing-a-framework/framework_shootout_docs.py:raw"
 ```
 
 **LangChain / LangGraph** — `create_agent` builds a compiled graph that handles the loop:
 
 ```python
---8<-- "https://raw.githubusercontent.com/DhruvMakwana/agents-cookbook/main/choosing-a-framework/framework_shootout_docs.py:langgraph"
+--8<-- "snippets/agents-cookbook/choosing-a-framework/framework_shootout_docs.py:langgraph"
 ```
 
 **Pydantic AI** — a typed `Agent` handles the same loop, with its own conventions:
 
 ```python
---8<-- "https://raw.githubusercontent.com/DhruvMakwana/agents-cookbook/main/choosing-a-framework/framework_shootout_docs.py:pydantic_ai"
+--8<-- "snippets/agents-cookbook/choosing-a-framework/framework_shootout_docs.py:pydantic_ai"
 ```
 
 **CrewAI** — a role-based `Agent`, run directly via `kickoff` (no `Task`/`Crew` wrapper):
 
 ```python
---8<-- "https://raw.githubusercontent.com/DhruvMakwana/agents-cookbook/main/choosing-a-framework/framework_shootout_docs.py:crewai"
+--8<-- "snippets/agents-cookbook/choosing-a-framework/framework_shootout_docs.py:crewai"
 ```
 
 !!! success "A real run — the identical question, four implementations, real numbers"
@@ -78,7 +78,7 @@ The frameworks below weren't run in this page's real comparison (CrewAI, above, 
 
 ## What real job descriptions say
 
-Across a same-day snapshot of 1,978 genuinely AI-technical job postings (filtered from 12,977 total postings across 107 company boards), framework mentions are real but modest: LangChain appears in 8.1% of postings across 28 distinct companies, LangGraph in 5.0% across 19 companies, LlamaIndex in 3.0%, CrewAI in 0.7%, and AutoGen in 0.5%. Worth reading precisely: these are genuine, current numbers, not evidence any single framework dominates hiring — the majority of AI-technical roles name no specific agent framework at all, which is itself informative about how replaceable framework-specific expertise is treated relative to understanding the underlying mechanisms this whole site is about.
+Across a September 21, 2026 snapshot of 1,978 genuinely AI-technical job postings (filtered from 12,977 total postings across 107 company boards), framework mentions are real but modest: LangChain appears in 8.1% of postings across 28 distinct companies, LangGraph in 5.0% across 19 companies, LlamaIndex in 3.0%, CrewAI in 0.7%, and AutoGen in 0.5%. Worth reading precisely: these are dated snapshot numbers, not evidence any single framework dominates hiring — the majority of AI-technical roles name no specific agent framework at all, which is itself informative about how replaceable framework-specific expertise is treated relative to understanding the underlying mechanisms this whole site is about.
 
 ## Interview angle
 
@@ -153,7 +153,7 @@ Across a same-day snapshot of 1,978 genuinely AI-technical job postings (filtere
       ]
     },
     {
-      "scenario": "Across 1,978 genuinely AI-technical job postings, LangChain appears in 8.1% (28 companies) and LangGraph in 5.0% (19 companies). A candidate argues: 'Since these percentages are low, frameworks like LangChain and LangGraph are barely used in the industry and not worth learning.'",
+      "scenario": "In a September 21, 2026 snapshot of 1,978 genuinely AI-technical job postings, LangChain appears in 8.1% (28 companies) and LangGraph in 5.0% (19 companies). A candidate argues: 'Since these percentages are low, frameworks like LangChain and LangGraph are barely used in the industry and not worth learning.'",
       "question": "What's the strongest problem with that conclusion?",
       "options": [
         "The conclusion is correct -- low percentages mean a skill is not worth learning for interviews",
@@ -164,7 +164,7 @@ Across a same-day snapshot of 1,978 genuinely AI-technical job postings (filtere
       "correct": 3,
       "explanations": [
         "Draws too strong a conclusion from a relative percentage -- 'a minority of postings name it' and 'not worth learning' are very different claims, especially given the real company counts behind those percentages.",
-        "Introduces an unsupported claim of measurement error with no evidence -- the page states this is a real, current snapshot from a defined methodology.",
+        "Introduces an unsupported claim of measurement error with no evidence -- the page states this is a dated snapshot from a defined methodology.",
         "Overstates the JD data's role -- this page explicitly notes JD frequency and real interview or production usage are related but distinct signals, not the sole measure of anything.",
         "Correct. 28 and 19 distinct real companies naming these frameworks specifically is genuine, verifiable adoption -- modest relative to all AI-technical postings, but a different, more precise claim than 'barely used.'"
       ]

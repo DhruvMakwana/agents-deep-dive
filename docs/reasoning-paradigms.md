@@ -25,7 +25,7 @@ The paradigms on this page are a different axis entirely: they're about what hap
 Reflexion agents verbally reflect on a failure signal, then keep that reflection in an episodic memory buffer to inform the next attempt — no gradient update, no fine-tuning, just text carried forward into the next try. On HumanEval, the paper reports 91% pass@1, ahead of the GPT-4 baseline's reported 80% at the time (Shinn et al., 2023).
 
 ```python
---8<-- "https://raw.githubusercontent.com/DhruvMakwana/agents-cookbook/main/reasoning-paradigms/reasoning_paradigms_docs.py:reflexion"
+--8<-- "snippets/agents-cookbook/reasoning-paradigms/reasoning_paradigms_docs.py:reflexion"
 ```
 
 !!! success "A real run — input and output shown in full"
@@ -55,7 +55,7 @@ Reflexion agents verbally reflect on a failure signal, then keep that reflection
 The seed interview-prep material this blog started from described Plan-and-Solve as an early planner/executor split. That's not what the paper is: it's a **zero-shot prompting technique** — one instruction, "let's first understand the problem and devise a complete plan, then carry out the plan and solve the problem step by step," compared against the plainer "let's think step by step" (zero-shot chain-of-thought). The paper's target is zero-shot-CoT's three failure modes — calculation errors, missing-step errors, and semantic misunderstanding — and it reports that Plan-and-Solve "consistently outperforms Zero-shot-CoT across all datasets by a large margin" and reaches performance "comparable with 8-shot CoT prompting" on math reasoning (Wang et al., ACL 2023). Don't confuse this with LangChain's separately-named Plan-and-Execute *agent*, which genuinely is a two-role architecture — same words, different thing, published two months apart.
 
 ```python
---8<-- "https://raw.githubusercontent.com/DhruvMakwana/agents-cookbook/main/reasoning-paradigms/reasoning_paradigms_docs.py:plan_and_solve"
+--8<-- "snippets/agents-cookbook/reasoning-paradigms/reasoning_paradigms_docs.py:plan_and_solve"
 ```
 
 !!! success "A real run — same problem, two prompts, both shown in full"
@@ -76,7 +76,7 @@ The seed interview-prep material this blog started from described Plan-and-Solve
 ReWOO's own abstract frames the problem directly: in an interleaved loop, "an LLM reasons to call an external tool, gets halted to fetch the tool's response, and then decides the next action based on all preceding response tokens" — a pattern that "often leads to huge computation complexity from redundant prompts and repeated execution" (Xu et al., 2023). ReWOO's fix: one planning call produces the *entire* plan up front, using `#E1`, `#E2`-style variables so a later step can reference an earlier step's result before that result exists yet — then the plan executes deterministically, with real values substituted in, and a final call solves from the gathered evidence. Two LLM calls, no matter how many tool steps the plan has. The paper reports "5x token efficiency and 4% accuracy improvement on HotpotQA" against the interleaved baseline — a token and accuracy claim, notably not a latency one.
 
 ```python
---8<-- "https://raw.githubusercontent.com/DhruvMakwana/agents-cookbook/main/reasoning-paradigms/reasoning_paradigms_docs.py:rewoo"
+--8<-- "snippets/agents-cookbook/reasoning-paradigms/reasoning_paradigms_docs.py:rewoo"
 ```
 
 !!! success "A real run — the exact question, the real generated plan, and a real partial failure"
@@ -108,7 +108,7 @@ Same question, same model (Sonnet), same correct final answer — call count and
 | ReAct | 5 | 5,141 |
 
 ```python
---8<-- "https://raw.githubusercontent.com/DhruvMakwana/agents-cookbook/main/reasoning-paradigms/reasoning_paradigms_docs.py:react"
+--8<-- "snippets/agents-cookbook/reasoning-paradigms/reasoning_paradigms_docs.py:react"
 ```
 
 !!! success "A real run — ReAct's turn-by-turn trace"
@@ -123,7 +123,7 @@ Same question, same model (Sonnet), same correct final answer — call count and
 ReWOO's plan above executes in written order regardless of whether a step actually depends on an earlier one — `E1`, `E2`, and `E3` don't depend on each other at all, yet nothing in ReWOO dispatches them concurrently. LLM Compiler's contribution is exactly that gap: a planner that produces an execution graph, a dispatch unit that starts any task whose dependencies are already satisfied, and an executor running independent tasks in parallel (Kim et al., ICML 2024). The paper reports "latency speedup of up to 3.7x," "cost savings of up to 6.7x," and "accuracy improvement of up to ~9%" against a ReAct-style baseline across their benchmark suite.
 
 ```python
---8<-- "https://raw.githubusercontent.com/DhruvMakwana/agents-cookbook/main/reasoning-paradigms/reasoning_paradigms_docs.py:llm_compiler"
+--8<-- "snippets/agents-cookbook/reasoning-paradigms/reasoning_paradigms_docs.py:llm_compiler"
 ```
 
 !!! success "A real run — reusing ReWOO's own plan, dispatched differently"

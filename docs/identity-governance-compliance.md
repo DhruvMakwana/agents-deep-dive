@@ -19,13 +19,13 @@ The real, converging principle across current identity work: an agent acting for
 The code below defines the two system-prompt conditions — one telling the agent to simply act as the user, the other giving it a distinct identity and an explicit, scoped delegation — for the identical invoice-approval task.
 
 ```python
---8<-- "https://raw.githubusercontent.com/DhruvMakwana/agents-cookbook/main/identity-governance-compliance/identity_governance_compliance_docs.py:two-identity-conditions"
+--8<-- "snippets/agents-cookbook/identity-governance-compliance/identity_governance_compliance_docs.py:two-identity-conditions"
 ```
 
 The second block checks whether that identity and delegation actually surface in what the agent sends externally:
 
 ```python
---8<-- "https://raw.githubusercontent.com/DhruvMakwana/agents-cookbook/main/identity-governance-compliance/identity_governance_compliance_docs.py:identity-check"
+--8<-- "snippets/agents-cookbook/identity-governance-compliance/identity_governance_compliance_docs.py:identity-check"
 ```
 
 The identical real task — approve a vendor invoice by email, on the user's behalf — under two conditions: told to simply act as the user, or given a distinct identity and an explicit, scoped delegation.

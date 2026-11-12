@@ -10,12 +10,7 @@ mkdocs serve
 ```
 Open http://127.0.0.1:8000 — hot-reloads on save.
 
-Content pages embed real code live from the [`agents-cookbook`](https://github.com/DhruvMakwana/agents-cookbook) repo at build time (via `pymdownx.snippets`' `url_download`), so building requires network access. If you're on macOS with the python.org installer and see `CERTIFICATE_VERIFY_FAILED`, run:
-```bash
-python3 -m pip install --user certifi
-export SSL_CERT_FILE=$(python3 -c "import certifi; print(certifi.where())")
-```
-(GitHub Actions' Ubuntu runners already ship a valid CA bundle — this only affects local macOS builds.)
+Content pages embed checked-in copies of code from the [agents-cookbook](https://github.com/DhruvMakwana/agents-cookbook) repo. The snippets are a snapshot of cookbook commit [`0b242bd`](https://github.com/DhruvMakwana/agents-cookbook/commit/0b242bd6935a646019f9006d96bb72e29296be09). When cookbook code changes, update the matching files under `snippets/agents-cookbook/` and rebuild the site. Builds do not need network access for snippets.
 
 ## Adding, editing, deleting content
 

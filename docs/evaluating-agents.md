@@ -15,7 +15,7 @@
 Outcome grading checks the final result: did the agent produce the right answer, the right file diff, the right database state. It's cheap, unambiguous, and automatable — and it has a documented blind spot: an agent can reach the right outcome through a process nobody actually wanted. The Holistic Agent Leaderboard's own log-level audits found exactly this in the wild: agents "searching for the benchmark on HuggingFace instead of solving a task," or, in a different case, "misusing credit cards in flight booking tasks" — outcomes that a grader checking only the final state would have scored as passing, because nothing about *how* the result was reached was ever inspected. Trajectory grading closes that gap by checking the process itself — which tools got called, in what order, with what arguments — at the cost of being harder to define and more expensive to check than a single final-state comparison.
 
 ```python
---8<-- "https://raw.githubusercontent.com/DhruvMakwana/agents-cookbook/main/evaluating-agents/evaluating_agents_docs.py:outcome_vs_trajectory"
+--8<-- "snippets/agents-cookbook/evaluating-agents/evaluating_agents_docs.py:outcome_vs_trajectory"
 ```
 
 !!! success "A real run — both outcome and trajectory captured, for both a guessable and an unguessable fact"
@@ -34,7 +34,7 @@ Outcome grading checks the final result: did the agent produce the right answer,
 Both metrics run the same task k independent times, and they ask opposite questions of the same data. **pass@k**: did at least one of the k tries succeed? This is the metric behind "best-of-n" framings and capability ceilings — useful for asking "can this model do this at all," generous by construction. **pass^k**, introduced by τ-bench specifically to measure agent reliability, asks the stricter question: did *every one* of the k tries succeed? That's the metric that actually matches production reality, where an agent handling a real customer request doesn't get k attempts with a human picking the best one — it gets one, and pass^k is the probability that one attempt looks as good as all the others. τ-bench's own reported numbers make the gap concrete: GPT-4o's retail-domain success rate is under 50% at pass@1 (already not great), and — in Sierra's own description — falls to under 25% at pass^8, "a staggering 60% drop" from the single-shot number.
 
 ```python
---8<-- "https://raw.githubusercontent.com/DhruvMakwana/agents-cookbook/main/evaluating-agents/evaluating_agents_docs.py:pass_at_k"
+--8<-- "snippets/agents-cookbook/evaluating-agents/evaluating_agents_docs.py:pass_at_k"
 ```
 
 !!! success "A real run — 5 independent trials, the same question, every answer shown"
@@ -49,7 +49,7 @@ Both metrics run the same task k independent times, and they ask opposite questi
 Anthropic's own framing draws a clean, practical line: a **capability eval** asks how good the agent could be — often exploratory, expensive to run, and used to guide real development decisions. A **regression eval** asks a narrower, cheaper question: did a specific change break something that used to work? It has to be fast and stable enough to run on every change, the same job a unit-test suite does in ordinary software. Conflating the two is a real, common mistake: a capability eval's occasional, expensive, deep-dive numbers aren't a substitute for a small, boring, constantly-run regression suite — and a regression suite that never catches anything isn't necessarily a badly-designed one, since "still passing" is the correct default outcome most of the time it runs.
 
 ```python
---8<-- "https://raw.githubusercontent.com/DhruvMakwana/agents-cookbook/main/evaluating-agents/evaluating_agents_docs.py:capability_vs_regression"
+--8<-- "snippets/agents-cookbook/evaluating-agents/evaluating_agents_docs.py:capability_vs_regression"
 ```
 
 !!! success "A real run — a plausible capability-motivated change, and a real, clean regression"

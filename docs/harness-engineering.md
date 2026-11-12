@@ -27,7 +27,7 @@ Every subsequent session reads the progress file first, works from a known state
 The code below defines the shared progress file and the turn-limited session loop used to force a real, unplanned reset between two genuinely independent sessions.
 
 ```python
---8<-- "https://raw.githubusercontent.com/DhruvMakwana/agents-cookbook/main/harness-engineering/harness_engineering_docs.py:progress-file"
+--8<-- "snippets/agents-cookbook/harness-engineering/harness_engineering_docs.py:progress-file"
 ```
 
 !!! success "A real run — a checklist filled across two genuinely separate sessions, only sharing a progress file"
@@ -44,7 +44,7 @@ The code below defines the shared progress file and the turn-limited session loo
 The block below is the system prompt that states the self-verify instruction explicitly, run against the identical deliberately ambiguous tool result as the plain, unstated-instruction condition.
 
 ```python
---8<-- "https://raw.githubusercontent.com/DhruvMakwana/agents-cookbook/main/harness-engineering/harness_engineering_docs.py:self-verify-system-prompt"
+--8<-- "snippets/agents-cookbook/harness-engineering/harness_engineering_docs.py:self-verify-system-prompt"
 ```
 
 Anthropic's own cited discipline for avoiding the "prematurely declares work complete" failure mode: *"Self-verify all features. Only mark features as 'passing' after careful testing."* The natural question: does stating this explicitly change real behavior, or is a capable model's baseline judgment already good enough?

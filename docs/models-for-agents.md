@@ -18,7 +18,7 @@ Every agent loop makes the same decision repeatedly, whether or not it's explici
 The block below defines the ambiguous pause-vs-cancel request and the two tempting tool options, run identically against both Haiku 4.5 and Sonnet 5 in the results below.
 
 ```python
---8<-- "https://raw.githubusercontent.com/DhruvMakwana/agents-cookbook/main/models-for-agents/models_for_agents_docs.py:ambiguous-tools"
+--8<-- "snippets/agents-cookbook/models-for-agents/models_for_agents_docs.py:ambiguous-tools"
 ```
 
 !!! success "A real run — 5 trials each, Haiku 4.5 vs. Sonnet 5, on a request built to tempt the wrong tool"
@@ -39,7 +39,7 @@ The real significance isn't that open-weight models are "getting closer" — it'
 The block below implements the router itself — a cheap-model call that classifies each query as simple or complex before dispatching it to the right tier.
 
 ```python
---8<-- "https://raw.githubusercontent.com/DhruvMakwana/agents-cookbook/main/models-for-agents/models_for_agents_docs.py:router"
+--8<-- "snippets/agents-cookbook/models-for-agents/models_for_agents_docs.py:router"
 ```
 
 RouteLLM's real, published result frames the classic case for routing: *"our approach significantly reduces costs — by over 2 times in certain cases — without compromising the quality of responses."* Reported per-benchmark reductions run around 85% on MT Bench, 45% on MMLU, and 35% on GSM8K, each while holding to 95% of GPT-4's own performance level — the value proposition is specifically routing *easy* queries to a cheap model and reserving the expensive model for queries that actually need it.
@@ -47,7 +47,7 @@ RouteLLM's real, published result frames the classic case for routing: *"our app
 The block below defines the actual test batch the router above is run against — two simple queries and two classic reasoning traps — so the three dispatch strategies can be compared on identical input:
 
 ```python
---8<-- "https://raw.githubusercontent.com/DhruvMakwana/agents-cookbook/main/models-for-agents/models_for_agents_docs.py:reasoning-traps"
+--8<-- "snippets/agents-cookbook/models-for-agents/models_for_agents_docs.py:reasoning-traps"
 ```
 
 !!! success "A real run — three dispatch strategies, real tokens, real correctness, against reasoning-trap queries"

@@ -21,7 +21,7 @@ The pricing makes the incentive concrete. A cache write costs *more* than a norm
 The setup below builds a real ~18-tool library and system prompt, then sends four calls against it — a cold write, an identical-prefix read, a `tool_choice` change, and a one-word tool-description edit — to see exactly where the cache invalidation hierarchy actually bites.
 
 ```python
---8<-- "https://raw.githubusercontent.com/DhruvMakwana/agents-cookbook/main/kv-cache-economics/kv_cache_economics_docs.py:tool-library"
+--8<-- "snippets/agents-cookbook/kv-cache-economics/kv_cache_economics_docs.py:tool-library"
 ```
 
 !!! success "A real run — four calls against Claude Sonnet 5, the same ~18-tool library and system prompt throughout"
@@ -40,7 +40,7 @@ The setup below builds a real ~18-tool library and system prompt, then sends fou
 The obvious follow-up question: if editing the `tools` array invalidates everything, how do you ever change which tools are available mid-conversation without paying full price on every single turn from then on? Anthropic's answer, shipped as a real beta (`mid-conversation-tool-changes-2026-07-01`, expanded further under `inline-tools-2026-09-15`): don't edit the array. Declare the full tool set once, and control what's actually *offered* to the model through `tool_addition` and `tool_removal` content blocks on a mid-conversation `role:"system"` message instead. The documentation is direct about why this matters for caching specifically: *"The `tools` array itself never changes, so the cached prefix stays intact"* — because *"The `tools` array sits even earlier in the hashed request prefix than the top-level `system` field, so editing it invalidates the prompt cache for the entire conversation."*
 
 ```python
---8<-- "https://raw.githubusercontent.com/DhruvMakwana/agents-cookbook/main/kv-cache-economics/kv_cache_economics_docs.py:masking-vs-removal"
+--8<-- "snippets/agents-cookbook/kv-cache-economics/kv_cache_economics_docs.py:masking-vs-removal"
 ```
 
 !!! success "A real run — masking vs. removal, against Claude Opus 5 (the beta isn't available on Sonnet 5)"

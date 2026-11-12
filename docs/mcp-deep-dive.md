@@ -33,7 +33,7 @@ A Server exposes what it has through three primitives, defined directly in MCP's
 The smallest real MCP program is a server with a couple of tools:
 
 ```python
---8<-- "https://raw.githubusercontent.com/DhruvMakwana/agents-cookbook/main/mcp-deep-dive/mcp_deep_dive_docs.py:build-server"
+--8<-- "snippets/agents-cookbook/mcp-deep-dive/mcp_deep_dive_docs.py:build-server"
 ```
 
 `@server.tool()` is doing more than it looks like. It reads the function's name, its docstring, and its type-hinted parameters, and turns all three into a **Tool primitive** — a structured description any MCP client can discover and call, without ever seeing this Python source. You never write a schema by hand; the schema is derived from ordinary code. The next section shows exactly what that generated schema looks like.
@@ -43,7 +43,7 @@ The smallest real MCP program is a server with a couple of tools:
 Now the other half — a Client that connects to that server, asks it what it can do, and calls one of its tools:
 
 ```python
---8<-- "https://raw.githubusercontent.com/DhruvMakwana/agents-cookbook/main/mcp-deep-dive/mcp_deep_dive_docs.py:basic-usage"
+--8<-- "snippets/agents-cookbook/mcp-deep-dive/mcp_deep_dive_docs.py:basic-usage"
 ```
 
 !!! success "A real run — one server, one client, one tool call"
@@ -65,7 +65,7 @@ Now the other half — a Client that connects to that server, asks it what it ca
 The server above already has three tools, not one. Here's what a client actually receives when it asks for all of them — the real, auto-generated JSON Schema behind each:
 
 ```python
---8<-- "https://raw.githubusercontent.com/DhruvMakwana/agents-cookbook/main/mcp-deep-dive/mcp_deep_dive_docs.py:multi-tool-schema"
+--8<-- "snippets/agents-cookbook/mcp-deep-dive/mcp_deep_dive_docs.py:multi-tool-schema"
 ```
 
 !!! success "A real run — three tools, three real schemas"
@@ -111,13 +111,13 @@ Every example so far ran the Client and Server in the same process, over HTTP on
 **stdio** is for a server that lives on your own machine, launched by your Host as a child process, and talked to over that process's standard input and output — no network, no port, nothing to expose. This is how most local developer tools work today (a filesystem server, a git server): your Host starts the server program itself and pipes messages to it directly.
 
 ```python
---8<-- "https://raw.githubusercontent.com/DhruvMakwana/agents-cookbook/main/mcp-deep-dive/stdio_server.py"
+--8<-- "snippets/agents-cookbook/mcp-deep-dive/stdio_server.py"
 ```
 
 That file runs as its own separate program. Here's the client side, connecting to it as a subprocess rather than a URL:
 
 ```python
---8<-- "https://raw.githubusercontent.com/DhruvMakwana/agents-cookbook/main/mcp-deep-dive/mcp_deep_dive_docs.py:stdio-client"
+--8<-- "snippets/agents-cookbook/mcp-deep-dive/mcp_deep_dive_docs.py:stdio-client"
 ```
 
 !!! success "A real run — the exact same tool calls, now over stdio instead of HTTP"
@@ -162,7 +162,7 @@ That `_meta` block is the whole point: the server can answer this request correc
 The cookbook's `mcp==2.2.0` install explicitly targets this spec — its own SDK documentation states it was built *"to support the 2026-07-28 MCP specification (and every earlier revision)."* The obvious question, given that stateless design: does the SDK's actual default behavior match it? Concretely, that means sending one raw HTTP request — a plain `tools/list` call, with no session ID attached, because a stateless server shouldn't need one — first against the server's default settings, then again with its explicit `stateless_http=True` mode turned on, and comparing what actually comes back.
 
 ```python
---8<-- "https://raw.githubusercontent.com/DhruvMakwana/agents-cookbook/main/mcp-deep-dive/mcp_deep_dive_docs.py:running-server"
+--8<-- "snippets/agents-cookbook/mcp-deep-dive/mcp_deep_dive_docs.py:running-server"
 ```
 
 !!! success "A real run — raw HTTP requests against the SDK's own real server, default mode vs. explicit stateless mode"
@@ -195,7 +195,7 @@ Picture an ordinary web form that's missing one required field: a well-built sit
 The official SDK's `mcp.server.request_state` module implements this with real production cryptography: an `AESGCMRequestStateCodec` (AES-256-GCM, authenticated encryption) sealing a claims envelope that binds the token to the exact method, target, and argument digest it was minted for, plus (when the transport is authenticated) the specific principal who requested it, plus an expiry. Reading that module's own source directly rather than guessing at its behavior:
 
 ```python
---8<-- "https://raw.githubusercontent.com/DhruvMakwana/agents-cookbook/main/mcp-deep-dive/mcp_deep_dive_docs.py:request-state-envelope"
+--8<-- "snippets/agents-cookbook/mcp-deep-dive/mcp_deep_dive_docs.py:request-state-envelope"
 ```
 
 !!! success "A real run — a checkout flow's requestState, and four real attacks against it"

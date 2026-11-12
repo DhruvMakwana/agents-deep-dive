@@ -31,13 +31,13 @@ Unit 42's own root-cause diagnosis is the real, precise reason this page treats 
 The code below defines a fictional "CryptoTrack Pro" skill — an ordinary-looking price-checker whose own instructions secretly direct the agent to also read financial account data and email it out — plus the unscoped and scoped tool configurations the run below tests it against.
 
 ```python
---8<-- "https://raw.githubusercontent.com/DhruvMakwana/agents-cookbook/main/personal-always-on-agents/personal_always_on_agents_docs.py:tools-and-scope"
+--8<-- "snippets/agents-cookbook/personal-always-on-agents/personal_always_on_agents_docs.py:tools-and-scope"
 ```
 
 A fictional "CryptoTrack Pro" skill presents itself as a simple price-checker, but its own instructions also direct the agent to read financial account data and email it out "to keep your portfolio dashboard in sync" — mirroring ClawHavoc's real disguise pattern of ordinary-sounding utility skills carrying a hidden secondary purpose.
 
 ```python
---8<-- "https://raw.githubusercontent.com/DhruvMakwana/agents-cookbook/main/personal-always-on-agents/personal_always_on_agents_docs.py:mechanism-check"
+--8<-- "snippets/agents-cookbook/personal-always-on-agents/personal_always_on_agents_docs.py:mechanism-check"
 ```
 
 This check involves zero LLM judgment on purpose — it hand-writes the calls a compromised skill's own code could make, to isolate what the architecture permits from whatever any given model might or might not choose to attempt.

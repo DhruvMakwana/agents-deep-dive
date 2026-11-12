@@ -30,11 +30,11 @@ ToolRL asks a narrower, sharper question: given that a tool call itself (not jus
 The code below implements both a binary (exact-match) reward function and ToolRL's decomposed, component-by-component version, then runs both against a set of real tool-call completions to see where the two scoring methods actually disagree.
 
 ```python
---8<-- "https://raw.githubusercontent.com/DhruvMakwana/agents-cookbook/main/rl-search-tool-agents/rl_search_tool_agents_docs.py:reward-functions"
+--8<-- "snippets/agents-cookbook/rl-search-tool-agents/rl_search_tool_agents_docs.py:reward-functions"
 ```
 
 ```python
---8<-- "https://raw.githubusercontent.com/DhruvMakwana/agents-cookbook/main/rl-search-tool-agents/rl_search_tool_agents_docs.py:trials"
+--8<-- "snippets/agents-cookbook/rl-search-tool-agents/rl_search_tool_agents_docs.py:trials"
 ```
 
 Four real trials against the identical target action — a 30-minute "Team Sync" event on 2026-10-05 — each phrased to elicit a different, real kind of imperfection: fully specified, a vaguely-worded duration, a request that could plausibly map to a different available tool, and a paraphrased duration.

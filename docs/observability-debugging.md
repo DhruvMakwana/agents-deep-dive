@@ -24,13 +24,13 @@ The detail that matters most for actual debugging — where the real tool call a
 The code below defines the buggy tool itself — `get_daily_active_users`, which silently returns cumulative all-time users instead of yesterday's figure — the exact mislabeled value the run below has to be diagnosable from.
 
 ```python
---8<-- "https://raw.githubusercontent.com/DhruvMakwana/agents-cookbook/main/observability-debugging/observability_debugging_docs.py:buggy-tool"
+--8<-- "snippets/agents-cookbook/observability-debugging/observability_debugging_docs.py:buggy-tool"
 ```
 
 The next block wires that tool into a real agent call and emits the trace using the actual OpenTelemetry GenAI attribute names, so what follows is a real spec-shaped trace, not a mocked one.
 
 ```python
---8<-- "https://raw.githubusercontent.com/DhruvMakwana/agents-cookbook/main/observability-debugging/observability_debugging_docs.py:trace-emitter"
+--8<-- "snippets/agents-cookbook/observability-debugging/observability_debugging_docs.py:trace-emitter"
 ```
 
 !!! success "A real run — a clean 'success,' a confidently wrong answer, and a real spec-shaped trace"
@@ -43,7 +43,7 @@ The next block wires that tool into a real agent call and emits the trace using 
     **The real trace**, using the actual spec's attribute names: a `chat claude-sonnet-5` span (`gen_ai.operation.name: "chat"`, `gen_ai.provider.name: "anthropic"`, real token counts) followed by an `execute_tool get_daily_active_users` span carrying the real `gen_ai.input.messages: {"product": "Nimbus"}` and `gen_ai.output.messages: {"product": "Nimbus", "daily_active_users": 2340000}`.
 
     ```python
-    --8<-- "https://raw.githubusercontent.com/DhruvMakwana/agents-cookbook/main/observability-debugging/observability_debugging_docs.py:diagnose"
+    --8<-- "snippets/agents-cookbook/observability-debugging/observability_debugging_docs.py:diagnose"
     ```
 
     **The independent, trace-only diagnosis** — run with no access to the final answer, no re-running the agent, only the real trace's own data — inspected the `execute_tool` span's `gen_ai.output.messages` attribute and correctly flagged it: *"get_daily_active_users returned 2,340,000 — implausibly large for a single day, likely a cumulative/all-time figure mislabeled as daily."* The exact tool call, the exact wrong value, and a specific, correct hypothesis — found entirely from a trace built to the real, standard convention.

@@ -33,7 +33,7 @@ Rather than every product inventing its own instructions-file format, a real ope
 The block below runs the identical order-total formatting task twice — once with no project instructions, once with a CLAUDE.md-style instructions block delivered as a real user message, matching Anthropic's own documented delivery mechanics — so the compliance numbers in the success box below can be compared directly.
 
 ```python
---8<-- "https://raw.githubusercontent.com/DhruvMakwana/agents-cookbook/main/coding-agent-config/coding_agent_config_docs.py:claude-md-delivery"
+--8<-- "snippets/agents-cookbook/coding-agent-config/coding_agent_config_docs.py:claude-md-delivery"
 ```
 
 Anthropic's own docs are precise about how this actually works, not just that it works: *"CLAUDE.md files are markdown files that give Claude persistent instructions for a project... Claude reads them at the start of every session"* — and mechanically, *"CLAUDE.md content is delivered as a user message after the system prompt, not as part of the system prompt itself."* This repro replicates that exact delivery mechanism rather than just folding instructions into a system prompt, which is a meaningfully different, less realistic test.
@@ -52,7 +52,7 @@ Anthropic's own docs are precise about how this actually works, not just that it
 This repro's real question is whether a rule written into CLAUDE.md is something Claude merely reads and might follow, or something structurally guaranteed to hold regardless of what Claude decides — and the single most load-bearing real distinction in Anthropic's own docs, verified verbatim from the raw source, settles exactly that: *"Claude treats them as context, not enforced configuration. To block an action regardless of what Claude decides, use a PreToolUse hook instead."* And, even more directly: *"Settings rules are enforced by the client regardless of what Claude decides to do. CLAUDE.md instructions shape Claude's behavior but are not a hard enforcement layer."* Hooks themselves are defined broadly — *"user-defined shell commands, HTTP endpoints, MCP tool calls, LLM prompts, or subagents that execute automatically at specific points in Claude Code's lifecycle"* — but the specific event this repro tests, `PreToolUse`, is described precisely: *"Before a tool call executes. Can block it."*
 
 ```python
---8<-- "https://raw.githubusercontent.com/DhruvMakwana/agents-cookbook/main/coding-agent-config/coding_agent_config_docs.py:hook-vs-prompt"
+--8<-- "snippets/agents-cookbook/coding-agent-config/coding_agent_config_docs.py:hook-vs-prompt"
 ```
 
 !!! success "A real run, after a genuine design correction — no protective rule in either condition, only the hook differs"

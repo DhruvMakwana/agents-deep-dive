@@ -15,7 +15,7 @@
 Simon Willison's framing names the precondition precisely, not just the vague shape of the risk: an agent is exposed to the dangerous version of prompt injection specifically when three properties are true in the same session — access to private data ("one of the most common purposes of tools in the first place"), exposure to untrusted content ("any mechanism by which text... controlled by a malicious attacker could become available to your LLM"), and the ability to externally communicate "in a way that could be used to steal your data." The mechanism underneath it is a fact about how these models work, not a bug in any particular one: they "don't just follow *our* instructions. They will happily follow *any* instructions that make it to the model" — so once untrusted text is in context, it's competing with the developer's own instructions on equal footing, not automatically subordinate to them. Willison's own running list of real incidents (Microsoft 365 Copilot, GitHub's MCP server, GitLab's Duo Chatbot, Google Bard, Amazon Q, and more) had grown to 26 documented cases as of this writing — a living list, not a hypothetical.
 
 ```python
---8<-- "https://raw.githubusercontent.com/DhruvMakwana/agents-cookbook/main/agent-security/agent_security_docs.py:trifecta"
+--8<-- "snippets/agents-cookbook/agent-security/agent_security_docs.py:trifecta"
 ```
 
 !!! success "A real run — the exact injected email, both conditions, and an honest result"
@@ -36,7 +36,7 @@ Meta's own framing, published four months after Willison's trifecta post and exp
 A named category of supply-chain risk in the agent ecosystem targets something upstream of any single conversation: the tool or MCP server's own metadata. A tool's *description* is read by the model on every single turn where that tool might be relevant — the same weight a system prompt carries — but it's rarely read carefully, or at all, by the human deciding whether to install or trust that tool. A malicious or compromised tool description can carry an instruction the user never sees and never approved.
 
 ```python
---8<-- "https://raw.githubusercontent.com/DhruvMakwana/agents-cookbook/main/agent-security/agent_security_docs.py:tool_poisoning"
+--8<-- "snippets/agents-cookbook/agent-security/agent_security_docs.py:tool_poisoning"
 ```
 
 !!! success "A real run — an innocuous question, a poisoned tool description, a clean before/after"

@@ -31,7 +31,7 @@ Both are right about their own evidence, and the difference is task shape, not w
 The code below runs the identical three independent questions through both architectures — one call handling all three, versus a lead agent dispatching one subagent per question plus a synthesis call — so the token counts and ratio below are measured directly, not estimated.
 
 ```python
---8<-- "https://raw.githubusercontent.com/DhruvMakwana/agents-cookbook/main/multi-agent-systems/multi_agent_systems_docs.py:token_economics"
+--8<-- "snippets/agents-cookbook/multi-agent-systems/multi_agent_systems_docs.py:token_economics"
 ```
 
 !!! success "A real run — three genuinely independent questions, two architectures, real token counts"
@@ -48,7 +48,7 @@ The code below runs the identical three independent questions through both archi
 The code below has two subagents independently invent a shared fact — a fictional app's free-trial length — each blind to the other's output, to test whether Cognition's "conflicting decisions" risk actually shows up when two agents have to agree on the same underspecified detail.
 
 ```python
---8<-- "https://raw.githubusercontent.com/DhruvMakwana/agents-cookbook/main/multi-agent-systems/multi_agent_systems_docs.py:consistency_risk"
+--8<-- "snippets/agents-cookbook/multi-agent-systems/multi_agent_systems_docs.py:consistency_risk"
 ```
 
 !!! success "A real run — an honest negative result, with the real reason disclosed"

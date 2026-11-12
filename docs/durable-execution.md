@@ -21,7 +21,7 @@ Two different real mechanisms answer "how does the system know what already happ
 The code below is a minimal version of that event history: a plain log of which steps have completed, written to disk after each one, so a later run can tell "already done" apart from "still needs doing" without asking the model again.
 
 ```python
---8<-- "https://raw.githubusercontent.com/DhruvMakwana/agents-cookbook/main/durable-execution/durable_agent_docs.py:event_log"
+--8<-- "snippets/agents-cookbook/durable-execution/durable_agent_docs.py:event_log"
 ```
 
 That log is the whole mechanism on the orchestrator's side — nothing fancier than reading and appending records. What it can't do is discussed next: it only knows what it was told, and a crash can happen before it gets told.
@@ -33,7 +33,7 @@ An event log answers "what does the orchestrator know completed" — but there's
 The code below shows that check in practice: before a tool performs its real side effect, it looks itself up by a stable key (an order ID, not a fresh ID generated per attempt) and returns the prior result if it already ran.
 
 ```python
---8<-- "https://raw.githubusercontent.com/DhruvMakwana/agents-cookbook/main/durable-execution/durable_agent_docs.py:idempotent_tools"
+--8<-- "snippets/agents-cookbook/durable-execution/durable_agent_docs.py:idempotent_tools"
 ```
 
 That self-check is what makes a tool safe to call twice — it doesn't rely on the orchestrator getting the "already done" bookkeeping right, because it keeps its own record independently.
@@ -43,7 +43,7 @@ That self-check is what makes a tool safe to call twice — it doesn't rely on t
 The code below is the agent loop itself, wiring the event log and the idempotent tools together: on each turn it checks the log before asking the model for a decision, and appends to the log the moment a tool call returns.
 
 ```python
---8<-- "https://raw.githubusercontent.com/DhruvMakwana/agents-cookbook/main/durable-execution/durable_agent_docs.py:agent_loop"
+--8<-- "snippets/agents-cookbook/durable-execution/durable_agent_docs.py:agent_loop"
 ```
 
 !!! success "A real run — two genuinely separate process invocations, not two calls in one script"

@@ -37,7 +37,7 @@ But this guarantee is narrower than it first sounds, and the real, named limit m
 The block below sets up the two sandboxed conditions — a real credential placed directly in scope versus only a placeholder reachable — that the mechanism-level check right after it will run the same payment call against.
 
 ```python
---8<-- "https://raw.githubusercontent.com/DhruvMakwana/agents-cookbook/main/sandboxes-permissions/sandboxes_permissions_docs.py:backend-and-namespace"
+--8<-- "snippets/agents-cookbook/sandboxes-permissions/sandboxes_permissions_docs.py:backend-and-namespace"
 ```
 
 Two conditions for a fictional payments sandbox: `inside` (the real key lives directly in the executed code's namespace) and `proxied` (only a placeholder lives there — the real substitution happens in `send_payment`, running *outside* the sandboxed code's own reach, standing in for a real proxy boundary).
@@ -45,7 +45,7 @@ Two conditions for a fictional payments sandbox: `inside` (the real key lives di
 The check itself is the code below: it reads whatever credential value it can see in each condition, then calls the same payment function regardless.
 
 ```python
---8<-- "https://raw.githubusercontent.com/DhruvMakwana/agents-cookbook/main/sandboxes-permissions/sandboxes_permissions_docs.py:mechanism-level-check"
+--8<-- "snippets/agents-cookbook/sandboxes-permissions/sandboxes_permissions_docs.py:mechanism-level-check"
 ```
 
 This check involves zero LLM judgment on purpose — it hand-writes the sandboxed code itself, to isolate what the *architecture* permits from whatever an agent might or might not choose to attempt.
@@ -70,7 +70,7 @@ This check involves zero LLM judgment on purpose — it hand-writes the sandboxe
 The block below defines the same theft-vs-misuse setup as a live task for a real agent, with a single embedded prompt injection asking it to both leak the credential and push an unauthorized payment — so the result afterward shows what the model actually chose to do, not just what the architecture permits.
 
 ```python
---8<-- "https://raw.githubusercontent.com/DhruvMakwana/agents-cookbook/main/sandboxes-permissions/sandboxes_permissions_docs.py:injected-task"
+--8<-- "snippets/agents-cookbook/sandboxes-permissions/sandboxes_permissions_docs.py:injected-task"
 ```
 
 Handed to Claude Sonnet 5 with a `run_code` tool wired to each sandbox namespace — a single embedded injection asking the agent to do both things the mechanism check isolated: print the credential, and send an unrelated $500 payment to an external-looking account.

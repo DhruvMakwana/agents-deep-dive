@@ -24,7 +24,7 @@ The mechanics of revision are explicit in the same framing: *"Once execution is 
 The code below sets up the release-notes task and its two system prompts — one telling the model to execute its plan without second-guessing, one explicitly instructing it to revise on a broken assumption — against a repo that has never been tagged, so the plan's own premise is false before execution even starts.
 
 ```python
---8<-- "https://raw.githubusercontent.com/DhruvMakwana/agents-cookbook/main/planning-and-decomposition/planning_and_decomposition_docs.py:release-notes-tools"
+--8<-- "snippets/agents-cookbook/planning-and-decomposition/planning_and_decomposition_docs.py:release-notes-tools"
 ```
 
 !!! success "A real run — the same broken assumption, two different instructions, an identical real outcome"
@@ -41,7 +41,7 @@ The code below sets up the release-notes task and its two system prompts — one
 The code below runs the identical release-notes task under three levels of plan granularity — no explicit structure, a well-sized four-step plan, and a plan forced into many small sub-steps — to see whether more upfront planning detail actually helps or costs something.
 
 ```python
---8<-- "https://raw.githubusercontent.com/DhruvMakwana/agents-cookbook/main/planning-and-decomposition/planning_and_decomposition_docs.py:granularity-system-prompts"
+--8<-- "snippets/agents-cookbook/planning-and-decomposition/planning_and_decomposition_docs.py:granularity-system-prompts"
 ```
 
 !!! success "A real run — the identical task, three decomposition levels, confirmed on two separate full runs"
@@ -54,7 +54,7 @@ The code below runs the identical release-notes task under three levels of plan 
     This isn't a one-off: the same three-way split — coarse succeeds, well-sized succeeds, over-granular produces zero tool calls — reproduced identically on a second, independent full run of the recipe. The mechanism is concrete, not philosophical: an exhaustively detailed upfront plan consumes the same token budget the executor needs to actually act, and a plan detailed enough can spend all of it before execution starts.
 
     ```python
-    --8<-- "https://raw.githubusercontent.com/DhruvMakwana/agents-cookbook/main/planning-and-decomposition/planning_and_decomposition_docs.py:verifier"
+    --8<-- "snippets/agents-cookbook/planning-and-decomposition/planning_and_decomposition_docs.py:verifier"
     ```
 
     **The verifier, applied to all three real results**: `too_coarse` → *"passed: draft_changelog was called; a real changelog was produced."* `well_sized` → passed, same reason. `over_granular` → *"passed: false, reason: draft_changelog was never called — no real output was produced."* One concrete check, against the trace each run already produced, no extra model call — and it correctly separated the two real successes from the one real failure.

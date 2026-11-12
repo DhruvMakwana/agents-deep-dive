@@ -15,7 +15,7 @@
 Proximal Policy Optimization (PPO), the RLHF-era default, needs a learned critic (value function) to estimate how much better or worse an action was than expected — a second model, trained alongside the policy, adding real memory and instability cost. DeepSeekMath's Group Relative Policy Optimization sidesteps that entirely: "GRPO foregoes the critic model, instead estimating the baseline from group scores." Sample a group of completions to the same prompt, score each one, and use the group's own statistics as the baseline — "rewards are normalized by subtracting the group average and dividing by the group standard deviation," and "sets the advantages of all tokens in the output as the normalized reward." No critic, no separate value network — the group tells you, relative to itself, which samples were actually better.
 
 ```python
---8<-- "https://raw.githubusercontent.com/DhruvMakwana/agents-cookbook/main/training-agents/training_agents_docs.py:grpo"
+--8<-- "snippets/agents-cookbook/training-agents/training_agents_docs.py:grpo"
 ```
 
 !!! success "A real run — the exact formula, a real mixed group, and a real degenerate one"
@@ -34,7 +34,7 @@ That all-zero result above isn't a corner case nobody worries about — it's com
 DAPO's fix, dynamic sampling, is exactly what it sounds like: "we propose to over-sample and filter out prompts with the accuracy equal to 1 and 0 ... leaving all prompts in the batch with effective gradients and keeping a consistent number of prompts." Keep sampling until you find groups with real internal variance, and only train on those. This is one of DAPO's four named techniques (alongside Clip-Higher, Token-Level Policy Gradient Loss, and Overlong Reward Shaping), and the paper reports the combination reaching 50 points on AIME 2024 with a Qwen2.5-32B base model — ahead of DeepSeek-R1-Zero-Qwen-32B's 47 points, using only half the training steps.
 
 ```python
---8<-- "https://raw.githubusercontent.com/DhruvMakwana/agents-cookbook/main/training-agents/training_agents_docs.py:dapo"
+--8<-- "snippets/agents-cookbook/training-agents/training_agents_docs.py:dapo"
 ```
 
 !!! success "A real run — the exact degenerate group, filtered and replaced"
@@ -47,7 +47,7 @@ DAPO's fix, dynamic sampling, is exactly what it sounds like: "we propose to ove
 Both are answers to "what should the model be rewarded for," and they disagree about the unit that gets scored. Outcome supervision scores the final result — did the proof conclude correctly, did the task actually succeed. Process supervision scores each intermediate step on its own merits. PRM800K's own comparison is direct: "process supervision significantly outperforms outcome supervision for training models to solve problems from the challenging MATH dataset," with a process-supervised model reported solving 78% of a representative MATH test subset — and the cost of that improvement is real too: 800,000 human step-level labels went into building it. Process reward models aren't free to build well, either — a later paper's own finding: Monte-Carlo-estimated PRM labels are flawed, and consensus filtering across multiple estimates is needed to get usable step-level signal at all.
 
 ```python
---8<-- "https://raw.githubusercontent.com/DhruvMakwana/agents-cookbook/main/training-agents/training_agents_docs.py:credit_assignment"
+--8<-- "snippets/agents-cookbook/training-agents/training_agents_docs.py:credit_assignment"
 ```
 
 !!! success "A real run — a toy trajectory, both credit-assignment methods, run on the identical steps"
@@ -64,7 +64,7 @@ This is the concrete version of the credit assignment problem: reinforcement lea
 Classic RLHF is a two-stage pipeline: train a separate reward model on human preference data, then run PPO against it. Direct Preference Optimization collapses this into one step — the paper's own framing: the approach "enable[s] extraction of the corresponding optimal policy in closed form, allowing us to solve the standard RLHF problem with only a simple classification loss." No reward model, no RL sampling loop during training — just a loss computed directly over `(prompt, chosen, rejected)` triples. The reported trade-off is favorable, not just simpler: DPO is described as "stable, performant, and computationally lightweight, eliminating the need for sampling from the LM during fine-tuning," while "exceed[ing] PPO-based RLHF in ability to control sentiment of generations" and matching or improving quality in summarization and dialogue.
 
 ```python
---8<-- "https://raw.githubusercontent.com/DhruvMakwana/agents-cookbook/main/training-agents/training_agents_docs.py:dpo_pair"
+--8<-- "snippets/agents-cookbook/training-agents/training_agents_docs.py:dpo_pair"
 ```
 
 !!! success "A real run — two real completions, a real judge verdict, a real preference pair"

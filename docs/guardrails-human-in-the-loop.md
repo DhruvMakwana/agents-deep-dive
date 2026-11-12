@@ -26,13 +26,13 @@ A closely related, real, and equally concrete guideline: organizations should *"
 The code below sets up the identical refund task and defines the three gating conditions — flat-autonomous, flat-gated, and risk-tiered — that the real run below compares side by side.
 
 ```python
---8<-- "https://raw.githubusercontent.com/DhruvMakwana/agents-cookbook/main/guardrails-human-in-the-loop/guardrails_human_in_the_loop_docs.py:refund-scenario"
+--8<-- "snippets/agents-cookbook/guardrails-human-in-the-loop/guardrails_human_in_the_loop_docs.py:refund-scenario"
 ```
 
 The risk-tiered condition depends on a per-call risk function, shown next:
 
 ```python
---8<-- "https://raw.githubusercontent.com/DhruvMakwana/agents-cookbook/main/guardrails-human-in-the-loop/guardrails_human_in_the_loop_docs.py:risk-tier"
+--8<-- "snippets/agents-cookbook/guardrails-human-in-the-loop/guardrails_human_in_the_loop_docs.py:risk-tier"
 ```
 
 Risk here is computed per real tool call, from the actual arguments — not just which tool got named. A $10 `issue_refund` call and a $250 `issue_refund` call are the identical tool with very different real risk, exactly matching the "specific action... weighed against its current context" framing real risk-based gating uses.
@@ -40,7 +40,7 @@ Risk here is computed per real tool call, from the actual arguments — not just
 The loop below is what turns that per-call score into an actual decision: each tool call gets scored first, then either runs immediately or pauses and waits for approval, depending on which side of the threshold it lands on.
 
 ```python
---8<-- "https://raw.githubusercontent.com/DhruvMakwana/agents-cookbook/main/guardrails-human-in-the-loop/guardrails_human_in_the_loop_docs.py:gate-loop"
+--8<-- "snippets/agents-cookbook/guardrails-human-in-the-loop/guardrails_human_in_the_loop_docs.py:gate-loop"
 ```
 
 !!! success "A real run — the identical refund task, three real gating conditions, confirmed on two separate full runs"

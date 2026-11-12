@@ -32,7 +32,7 @@ Breunig's own six fixes for the four failure modes below map cleanly onto these 
 Breunig's definition: context poisoning is when a hallucination makes it into the context. The danger isn't the hallucination alone — it's that once it's in the conversation history, every subsequent turn treats it as an established fact, and the error compounds instead of getting caught once and discarded.
 
 ```python
---8<-- "https://raw.githubusercontent.com/DhruvMakwana/agents-cookbook/main/context-engineering/context_engineering_docs.py:poisoning"
+--8<-- "snippets/agents-cookbook/context-engineering/context_engineering_docs.py:poisoning"
 ```
 
 !!! success "A real run — the exact poisoned and quarantined histories, both full answers shown"
@@ -49,7 +49,7 @@ Breunig's definition: context poisoning is when a hallucination makes it into th
 Breunig's definition: context distraction is when the context overwhelms the training — when accumulated context pulls a model toward repeating a pattern it has seen many times in the conversation instead of reasoning about the current input fresh.
 
 ```python
---8<-- "https://raw.githubusercontent.com/DhruvMakwana/agents-cookbook/main/context-engineering/context_engineering_docs.py:distraction"
+--8<-- "snippets/agents-cookbook/context-engineering/context_engineering_docs.py:distraction"
 ```
 
 !!! success "A real run — the flawed history in full, and an honestly-reported surprise"
@@ -66,7 +66,7 @@ Breunig's definition: context distraction is when the context overwhelms the tra
 Breunig's definition: context confusion is when superfluous context — information that's present but not relevant to the task — influences the response, most commonly documented as degraded tool-selection accuracy once a tool library grows large (RAG-MCP reports accuracy roughly tripling, from about 13.6% to about 43.1%, once tool selection is filtered down instead of exposing everything).
 
 ```python
---8<-- "https://raw.githubusercontent.com/DhruvMakwana/agents-cookbook/main/context-engineering/context_engineering_docs.py:confusion"
+--8<-- "snippets/agents-cookbook/context-engineering/context_engineering_docs.py:confusion"
 ```
 
 !!! success "A real run — an honest negative result, with the real numbers and the real reason it didn't reproduce"
@@ -83,7 +83,7 @@ Breunig's definition: context confusion is when superfluous context — informat
 Breunig's definition: context clash is when parts of the context disagree — two statements in the same conversation that contradict each other, which can happen from information arriving in shards over a conversation rather than all at once (one paper reports a large model's score dropping from 98.1 to 64.1 when the same task's information was split across multiple turns instead of given complete upfront).
 
 ```python
---8<-- "https://raw.githubusercontent.com/DhruvMakwana/agents-cookbook/main/context-engineering/context_engineering_docs.py:clash"
+--8<-- "snippets/agents-cookbook/context-engineering/context_engineering_docs.py:clash"
 ```
 
 !!! success "A real run — another honest negative result, with the real reason disclosed"

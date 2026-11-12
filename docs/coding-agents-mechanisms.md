@@ -35,7 +35,7 @@ How much did that one guardrail actually matter, measured? SWE-agent's own real 
 The block below runs the same nested-conditional edit with and without the guardrail's `ast.parse` feedback after each `str_replace`, five trials per condition, to check whether removing it still costs the real 7.7-point accuracy gap SWE-agent measured in 2024.
 
 ```python
---8<-- "https://raw.githubusercontent.com/DhruvMakwana/agents-cookbook/main/coding-agents-mechanisms/coding_agents_mechanisms_docs.py:nested-edit-task"
+--8<-- "snippets/agents-cookbook/coding-agents-mechanisms/coding_agents_mechanisms_docs.py:nested-edit-task"
 ```
 
 !!! success "A real run — a genuinely error-prone nested edit, with and without real syntax feedback, five trials each"
@@ -50,7 +50,7 @@ The block below runs the same nested-conditional edit with and without the guard
 The first repro tested whether an agent's *edits* need a safety net. This one tests a different, second mechanism: whether an agent's *final answer* needs one too. A "review loop" just means giving the agent a way to actually run its own fix against a real check before calling the task done, instead of only asserting "this should work now." That real check only helps if the task is genuinely **verifiable** — meaning it has an automatic, objective pass/fail signal, not a human's opinion — the same theme Evaluating Agents covers from the grading side. This repro tests the mechanism directly: does having a real, checkable test available change whether a fix is actually correct?
 
 ```python
---8<-- "https://raw.githubusercontent.com/DhruvMakwana/agents-cookbook/main/coding-agents-mechanisms/coding_agents_mechanisms_docs.py:binary-search-bug"
+--8<-- "snippets/agents-cookbook/coding-agents-mechanisms/coding_agents_mechanisms_docs.py:binary-search-bug"
 ```
 
 !!! success "A real run — a genuinely subtle bug, verified to actually diverge, fixed with and without a real test suite"

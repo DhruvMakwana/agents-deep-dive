@@ -19,11 +19,11 @@ What actually happens: your code sends the model a list of tool schemas (name, d
 This is the entire mechanism. There's no hidden channel, no direct invocation, and critically: **no guarantee**. The model's tool request is just generated text that happens to be shaped like a function call — it can name a tool that doesn't exist, or supply arguments that don't match the schema, and nothing stops it from doing so except your code checking.
 
 ```python
---8<-- "https://raw.githubusercontent.com/DhruvMakwana/agents-cookbook/main/agent-loop-from-scratch/agent_loop_docs.py:tool_schemas"
+--8<-- "snippets/agents-cookbook/agent-loop-from-scratch/agent_loop_docs.py:tool_schemas"
 ```
 
 ```python
---8<-- "https://raw.githubusercontent.com/DhruvMakwana/agents-cookbook/main/agent-loop-from-scratch/agent_loop_docs.py:agent_loop"
+--8<-- "snippets/agents-cookbook/agent-loop-from-scratch/agent_loop_docs.py:agent_loop"
 ```
 
 ## Design principles: the tool schema is a prompt
@@ -31,13 +31,13 @@ This is the entire mechanism. There's no hidden channel, no direct invocation, a
 Two real tools back this page's demo. The first is a genuinely safe calculator — not `eval()` on whatever text the model produces, but an AST walk that only permits numeric literals and `+ - * / **`, so a malformed or adversarial expression can't do anything beyond arithmetic:
 
 ```python
---8<-- "https://raw.githubusercontent.com/DhruvMakwana/agents-cookbook/main/agent-loop-from-scratch/agent_loop_docs.py:safe_calculator"
+--8<-- "snippets/agents-cookbook/agent-loop-from-scratch/agent_loop_docs.py:safe_calculator"
 ```
 
 The second is a currency converter over a fixed, illustrative rate table:
 
 ```python
---8<-- "https://raw.githubusercontent.com/DhruvMakwana/agents-cookbook/main/agent-loop-from-scratch/agent_loop_docs.py:currency_tool"
+--8<-- "snippets/agents-cookbook/agent-loop-from-scratch/agent_loop_docs.py:currency_tool"
 ```
 
 Notice both tool descriptions carry a worked example (`'127.50 * 1.18' to add an 18% tip`, `convert_currency(150.45, 'EUR', 'USD')`), not just a type signature. That's deliberate: a schema that only says `expression: string` leaves the model guessing at format; a schema with a concrete example in the description measurably improves how reliably the model extracts the right arguments. The description is doing real work — it's the closest thing this system has to a spec the model actually reads.
@@ -49,7 +49,7 @@ The other design choice worth naming: `calculate`'s `except` branch doesn't cras
 The loop in this recipe is capped at a fixed number of iterations, and if the model still hasn't finished, it returns an honest "ran out of steps" result instead of looping forever:
 
 ```python
---8<-- "https://raw.githubusercontent.com/DhruvMakwana/agents-cookbook/main/agent-loop-from-scratch/agent_loop_docs.py:agent_loop"
+--8<-- "snippets/agents-cookbook/agent-loop-from-scratch/agent_loop_docs.py:agent_loop"
 ```
 
 Worth being precise about what this cap does and doesn't cover: it bounds how many round-trips the loop can make, which is what keeps a stuck agent from silently burning an unbounded number of API calls. It says nothing about how long any *single* tool call is allowed to run — a tool that hangs for 90 seconds isn't touched by an iteration cap at all. Production loops need both: a step budget on the loop, and an independent timeout on each tool execution.

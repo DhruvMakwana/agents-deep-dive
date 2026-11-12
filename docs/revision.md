@@ -47,7 +47,7 @@ Every page's TL;DR in one place, every page's Scenario Check merged into one com
     - **"Own the loop" is a real, named position, not just a vibe.** 12-Factor Agents' framing: most products calling themselves agentic "aren't that agentic" — real production reliability, in this view, comes from owning your own control flow rather than delegating it to a framework's abstraction.
     - **AutoGen is in maintenance mode, by its own README's words**: "It will not receive new features or enhancements and is community managed going forward. New users should start with Microsoft Agent Framework." Building on it today means building on something the vendor itself says to migrate away from.
     - **A real dependency conflict surfaced and got fixed for real, not glossed over**: the full `pydantic-ai` package pulls in `fastmcp-slim`, which requires `python-dotenv>=1.1.0` — directly conflicting with this cookbook's shared `python-dotenv==1.0.1` pin. `pydantic-ai-slim[anthropic]` (skipping the unneeded `mcp` extra) resolves it cleanly, since this recipe never uses MCP.
-    - **Framework adoption in real job descriptions is smaller than the discourse suggests.** Across 1,978 genuinely AI-technical job postings, LangChain appears in 8.1% (28 companies) and LangGraph in 5.0% (19 companies) — real, current numbers, not zero, but a small fraction of postings even in a corpus specifically filtered for AI-technical roles.
+    - **Framework adoption in real job descriptions is smaller than the discourse suggests.** In a September 21, 2026 snapshot of 1,978 genuinely AI-technical job postings, LangChain appears in 8.1% (28 companies) and LangGraph in 5.0% (19 companies) — dated numbers, not zero, but a small fraction of postings even in a corpus specifically filtered for AI-technical roles.
 
     ## Tools and Context
 
@@ -196,9 +196,9 @@ Every page's TL;DR in one place, every page's Scenario Check merged into one com
 
     ### [Benchmark Atlas](benchmark-atlas.md)
 
-    - **Benchmark leaderboards drift out of sync with reality fast, and aggregator sites make it worse.** A real, current fetch of official leaderboard data (not secondary blog posts) found SWE-bench Verified's real top score is **79.2%**, while multiple aggregator sites reported 96–97% for the same benchmark — a real, current, checkable discrepancy worth verifying against the primary source before citing any benchmark number.
+    - **Benchmark leaderboards drift out of sync with reality fast, and aggregator sites make it worse.** A September 2026 fetch of official leaderboard data (not secondary blog posts) found SWE-bench Verified's real top score is **79.2%**, while multiple aggregator sites reported 96–97% for the same benchmark — a dated, checkable discrepancy worth verifying against the primary source before citing any benchmark number.
     - **SWE-bench Verified has a real, documented contamination problem, from OpenAI's own analysis, not a critic's.** Auditing failed problems, OpenAI found *"at least 59.4% of the audited problems have flawed test cases that reject functionally correct submissions,"* and that *"all frontier models we tested were able to reproduce the original, human-written bug fix... indicating that all of them have seen at least some of the problems and solutions during training."* Their conclusion: *"we have stopped reporting SWE-bench Verified scores, and we recommend that other model developers do so too."*
-    - **"Saturated" isn't one universal state — it's benchmark-specific and sometimes domain-specific within one benchmark.** OSWorld climbed from a 12.24% launch baseline to a real current top of 90.19% (saturated). TheAgentCompany's real top score is still under 43% (clearly not). tau-bench's own real numbers show both at once: 97.8% on its older telecom domain, but only 55.2% on banking_knowledge — a harder domain added specifically because the older ones stopped differentiating models.
+    - **"Saturated" isn't one universal state — it's benchmark-specific and sometimes domain-specific within one benchmark.** OSWorld climbed from a 12.24% launch baseline to a September 2026 top of 90.19% (saturated). TheAgentCompany's September 2026 top score was under 43% (clearly not). tau-bench's own real numbers show both at once: 97.8% on its older telecom domain, but only 55.2% on banking_knowledge — a harder domain added specifically because the older ones stopped differentiating models.
     - **A real repro of tau-bench's actual grading methodology — action-state grading, and pass@1 vs. pass^k — found perfect reliability on one small, illustrative policy-compliance scenario**: 5/5 independent trials correctly refused a plausible-sounding but policy-violating cancellation request, graded by whether the policy-breaking tool was actually called, not by what the reply said. `pass_at_1: 1.0`, `pass_hat_k: true` — a small, real illustration of exactly the kind of easy scenario that stops differentiating frontier models, which is why benchmark maintainers keep adding harder ones.
 
     ### [Observability and Debugging](observability-debugging.md)
@@ -298,7 +298,7 @@ Every page's TL;DR in one place, every page's Scenario Check merged into one com
     ### [Interview Playbook](interview-playbook.md)
 
     - **The single strongest dated trend in the evidence: AI-assisted coding is becoming the interview format itself, not just the topic.** OpenAI runs a beta onsite round done "using an AI coding agent." Meta "added an AI-assisted coding round" where a small toy codebase is debugged and completed with LLM help. Sierra rebuilt its entire onsite around a 2-hour build session using any AI tooling, and removed its classic coding/algorithms interview outright. Anthropic, by contrast, explicitly disallows AI tools in its live rounds — the field hasn't converged on one answer.
-    - **Most of what's published as "agent interview questions" is prep-market content, not candidate-confirmed.** Of 106 collected questions, only 14 trace to a first-person candidate report or a company's own published process; 81 come from prep sites, listicles, and openly "synthesized" repositories. Treat frequency in prep material as evidence of what the prep industry teaches, not what interviewers actually ask.
+    - **Most of what's published as "agent interview questions" is prep-market content, not candidate-confirmed.** Of 106 collected questions, 15 trace to a first-person candidate report (14) or a company's own published process (1); the other 91 come from prep sites (33), listicles (51), and openly "synthesized" repositories (7). Treat frequency in prep material as evidence of what the prep industry teaches, not what interviewers actually ask.
     - **A real loop can change within a year.** Sierra's own May-2025 candidate reports describe a take-home support agent plus a TypeScript/React debugging round; Sierra's own April-2026 blog post describes a completely different AI-native onsite. Prepping from a year-old write-up can mean prepping for a loop that no longer exists.
     - **Job descriptions and interview reports disagree on what to emphasize.** Kubernetes appears in 19.4% of AI-tech postings and in zero candidate interview reports reached. Idempotency and durable execution show up across multiple prep sources and real interview questions but in only 1.1% of postings. Evals is the rare topic strongly present in both.
     - **The one topic with genuine candidate confirmation across multiple independent sources: production reliability under real failure, not textbook agent architecture** — Swiggy's real four-question loop was entirely about uncertainty at scale, agent evals, LLM-as-judge, and not hallucinating success after a failed tool call; Sierra's real rounds are build-and-debug tasks, not "design an agent" whiteboard questions.
@@ -673,7 +673,7 @@ Every page's TL;DR in one place, every page's Scenario Check merged into one com
           "sourceUrl": "choosing-a-framework.md"
         },
         {
-          "scenario": "Across 1,978 genuinely AI-technical job postings, LangChain appears in 8.1% (28 companies) and LangGraph in 5.0% (19 companies). A candidate argues: 'Since these percentages are low, frameworks like LangChain and LangGraph are barely used in the industry and not worth learning.'",
+          "scenario": "In a September 21, 2026 snapshot of 1,978 genuinely AI-technical job postings, LangChain appears in 8.1% (28 companies) and LangGraph in 5.0% (19 companies). A candidate argues: 'Since these percentages are low, frameworks like LangChain and LangGraph are barely used in the industry and not worth learning.'",
           "question": "What's the strongest problem with that conclusion?",
           "options": [
             "The conclusion is correct -- low percentages mean a skill is not worth learning for interviews",
@@ -684,7 +684,7 @@ Every page's TL;DR in one place, every page's Scenario Check merged into one com
           "correct": 3,
           "explanations": [
             "Draws too strong a conclusion from a relative percentage -- 'a minority of postings name it' and 'not worth learning' are very different claims, especially given the real company counts behind those percentages.",
-            "Introduces an unsupported claim of measurement error with no evidence -- the page states this is a real, current snapshot from a defined methodology.",
+            "Introduces an unsupported claim of measurement error with no evidence -- the page states this is a dated snapshot from a defined methodology.",
             "Overstates the JD data's role -- this page explicitly notes JD frequency and real interview or production usage are related but distinct signals, not the sole measure of anything.",
             "Correct. 28 and 19 distinct real companies naming these frameworks specifically is genuine, verifiable adoption -- modest relative to all AI-technical postings, but a different, more precise claim than 'barely used.'"
           ],
@@ -2060,7 +2060,7 @@ Every page's TL;DR in one place, every page's Scenario Check merged into one com
           "sourceUrl": "evaluating-agents.md"
         },
         {
-          "scenario": "A real fetch of official leaderboard data found SWE-bench Verified's actual current top score is 79.2%, while several benchmark-aggregator websites reported 96-97% for the same benchmark at around the same time.",
+          "scenario": "A September 2026 fetch of official leaderboard data found SWE-bench Verified's top score at the time is 79.2%, while several benchmark-aggregator websites reported 96-97% for the same benchmark at around the same time.",
           "question": "What is the most accurate lesson to draw from this specific discrepancy?",
           "options": [
             "A benchmark's real current score should be checked directly, not via summaries",
@@ -2117,7 +2117,7 @@ Every page's TL;DR in one place, every page's Scenario Check merged into one com
           "sourceUrl": "benchmark-atlas.md"
         },
         {
-          "scenario": "The real atlas data shows OSWorld climbing from a 12.24% launch baseline to a real current top score of 90.19%, while tau-bench's real leaderboard shows telecom at 97.8% alongside a newer banking_knowledge domain at only 55.2%.",
+          "scenario": "The real atlas data shows OSWorld climbing from a 12.24% launch baseline to a September 2026 top score of 90.19%, while tau-bench's real leaderboard shows telecom at 97.8% alongside a newer banking_knowledge domain at only 55.2%.",
           "question": "What is the most accurate generalization these two real data points together support?",
           "options": [
             "Every benchmark eventually reaches the same saturation point at the same rate",
@@ -3097,8 +3097,8 @@ Every page's TL;DR in one place, every page's Scenario Check merged into one com
           "correct": 2,
           "explanations": [
             "Draws too strong a conclusion from an acknowledged evidence gap -- this page is explicit that the candidate-confirmed sample is thin due to unreachable platforms, not a complete record of what's asked.",
-            "Overcorrects into a rule that ignores confirmation strength -- a topic confirmed once, narrowly, isn't automatically more prep-worthy than one present across dozens of current job descriptions.",
-            "Correct. The JD data is real, current evidence of relevance even without a matching interview report, and this page states the candidate-confirmed gap likely understates real coverage since major platforms were unreachable -- absence of confirmation isn't evidence of absence.",
+            "Overcorrects into a rule that ignores confirmation strength -- a topic confirmed once, narrowly, isn't automatically more prep-worthy than one present across dozens of job descriptions in the September 2026 snapshot.",
+            "Correct. The September 2026 JD data is evidence of relevance at that time even without a matching interview report, and this page states the candidate-confirmed gap likely understates real coverage since major platforms were unreachable -- absence of confirmation isn't evidence of absence.",
             "Misapplies the data -- job descriptions and live interview content answer different questions (what a role needs long-term vs. what's tested live), which is why this page tracks them separately, not a sign either dataset is broken."
           ],
           "source": "Interview Playbook",

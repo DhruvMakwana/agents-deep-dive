@@ -26,7 +26,7 @@ The practical payoff of the taxonomy isn't philosophical — it's retrieval desi
 Anthropic's own memory tool (`memory_20250818`) is a real, current, officially documented mechanism for exactly this: *"an agent records what it learns in memory files and reads them back on demand... This keeps the active context focused on the current task."* It's a plain file-operations API — `view`, `create`, `str_replace`, `insert`, `delete`, `rename` — executed entirely client-side, so the agent decides *what* to write and *where*, not just that something should persist.
 
 ```python
---8<-- "https://raw.githubusercontent.com/DhruvMakwana/agents-cookbook/main/memory-architectures/memory_architectures_docs.py:memory-store"
+--8<-- "snippets/agents-cookbook/memory-architectures/memory_architectures_docs.py:memory-store"
 ```
 
 !!! success "A real run — one case recorded, two later sessions asking different kinds of questions"
@@ -57,7 +57,7 @@ Both numbers point the same direction as this page's own repro 1: a system that 
 Persistent memory creates a real, documented attack surface: MINJA (arXiv:2503.03704) demonstrates *"The attacker injects malicious records into the memory bank by only interacting with the agent via queries and output observations"* — no direct access to the memory store required, just ordinary conversation, reportedly with injection success rates above 95% in published results. The obvious hypothesis: any sufficiently plausible false claim, once written to memory, gets trusted uncritically in a later session.
 
 ```python
---8<-- "https://raw.githubusercontent.com/DhruvMakwana/agents-cookbook/main/memory-architectures/memory_architectures_docs.py:source-tagging-system-prompt"
+--8<-- "snippets/agents-cookbook/memory-architectures/memory_architectures_docs.py:source-tagging-system-prompt"
 ```
 
 !!! success "A real run — the same injection mechanism, two different claims, two different outcomes"

@@ -33,11 +33,11 @@ Datadog's real, stated differentiator isn't a feature list — it's where the da
 The code below builds one real OTel GenAI-shaped trace payload, then fires it — with no credentials — at Langfuse's real ingestion endpoint and Helicone's real gateway, to see whether each platform's actual behavior matches the architectural split described above.
 
 ```python
---8<-- "https://raw.githubusercontent.com/DhruvMakwana/agents-cookbook/main/observability-ecosystem/observability_ecosystem_docs.py:trace-payload"
+--8<-- "snippets/agents-cookbook/observability-ecosystem/observability_ecosystem_docs.py:trace-payload"
 ```
 
 ```python
---8<-- "https://raw.githubusercontent.com/DhruvMakwana/agents-cookbook/main/observability-ecosystem/observability_ecosystem_docs.py:live-checks"
+--8<-- "snippets/agents-cookbook/observability-ecosystem/observability_ecosystem_docs.py:live-checks"
 ```
 
 The identical `gen_ai.*` attribute shape [Observability and Debugging](observability-debugging.md)'s own trace uses, sent live to Langfuse's real endpoint with no credentials, plus two real calls to Helicone's real gateway.
